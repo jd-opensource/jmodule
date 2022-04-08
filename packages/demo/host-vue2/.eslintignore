@@ -1,0 +1,6 @@
+build/*.js
+config/*.js
+/src/assets/font_jacp
+/src/assets/fonts
+node_modules
+dist

@@ -1,0 +1,33 @@
+{
+  "name": "@jmodule/plugin-webpack",
+  "version": "1.0.0",
+  "description": "模块化工程构建 Webpack 插件",
+  "keywords": [
+    "jmodule"
+  ],
+  "author": "feirpri <feirpri@gmail.com>",
+  "license": "Apache License",
+  "scripts": {
+    "lint": "eslint src/**/*.js utils/**/*.js"
+  },
+  "main": "src/index.js",
+  "dependencies": {
+    "chalk": "^2.4.2",
+    "express": "^4.17.1",
+    "glob": "^7.1.6",
+    "http-proxy": "^1.18.1",
+    "http-proxy-middleware": "^1.0.5"
+  },
+  "devDependencies": {
+    "eslint": "^7.6.0",
+    "eslint-config-airbnb-base": "^14.2.0",
+    "eslint-plugin-import": "^2.22.0"
+  },
+  "peerDependencies": {
+    "webpack": "4||5"
+  },
+  "files": [
+    "src",
+    "utils"
+  ]
+}

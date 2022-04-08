@@ -1,0 +1,27 @@
+{
+    "compilerOptions": {
+        "lib": ["ES2015", "DOM", "es2017.object"],
+        "sourceMap": true,
+        "jsx": "react",
+        "jsxFactory": "h",
+        "noUnusedLocals": true,
+        "moduleResolution": "Node",
+        "esModuleInterop": true,
+        "allowSyntheticDefaultImports": false,
+        "strict": true,
+        "allowJs": true,
+        "target": "es5",
+        "downlevelIteration": true,
+        "declaration": true,
+        "declarationDir": "./types"
+    },
+    "include": [
+        "src/**/*.ts",
+        "src/**/*.tsx",
+        "types/*.d.ts"
+    ],
+    "exclude": [
+        "node_modules",
+        "**/*.spec.ts"
+    ]
+}

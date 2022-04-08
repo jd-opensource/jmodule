@@ -1,0 +1,14 @@
+{
+  "name": "jmodule",
+  "version": "1.0.1-0",
+  "description": "FE Modulize",
+  "author": "feirpri <feirpri@gmail.com>",
+  "scripts": {},
+  "engines": {
+    "node": ">= 12.16.0",
+    "pnpm": ">= 6.0.0"
+  },
+  "devDependencies": {
+    "webpack": "4"
+  }
+}
