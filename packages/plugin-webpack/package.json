@@ -6,7 +6,7 @@
     "jmodule"
   ],
   "author": "feirpri <feirpri@gmail.com>",
-  "license": "Apache License",
+  "license": "Apache-2.0",
   "scripts": {
     "lint": "eslint src/**/*.js utils/**/*.js"
   },
