@@ -14,13 +14,11 @@ const othersModules = (process.env.otherModules || '')
 
 module.exports = {
     mode: 'modules',
-    customEntry: true,
-    experimental: true,
     devConfig: {
         modulesConfig: {
             childAppReact: {
                 type: 'app',
-                name: '照片库',
+                name: 'React Demo',
             },
             ...othersModules
         },

@@ -1,65 +1,26 @@
-import React, { Component } from "react";
-import PhotoContextProvider from "./context/PhotoContext";
-import { HashRouter, Route, Switch, Redirect } from "react-router-dom";
-import Header from "./components/Header";
-import Item from "./components/Item";
-import Search from "./components/Search";
-import NotFound from "./components/NotFound";
-class App extends Component {
-  constructor (props) {
-    super(props);
-    this.state = { remountCount: 0 };
-  }
+import './App.css';
+import { BrowserRouter, Route, Routes, Link } from 'react-router-dom'
+import ChildPageDefault from './components/default';
+import Page1 from './components/page1';
 
-  // Prevent page reload, clear input, set URL and push history on submit
-  handleSubmit = (e, history, searchInput) => {
-    e.preventDefault();
-    e.currentTarget.reset();
-    let url = `/search/${searchInput}`;
-    history.push(url);
-  };
+const basename = window.__JMODULE_HOST__ ? '/childAppReact' : '';
 
-  render() {
-    return (
-      <PhotoContextProvider>
-        <HashRouter basename="/SnapScout">
-          <div className="container">
-            <Route
-              value={this.state.remountCount}
-              render={props => (
-                <Header
-                  handleSubmit={this.handleSubmit}
-                  history={props.history}
-                />
-              )}
-            />
-            <Switch>
-              <Route
-                exact
-                path="/"
-                render={() => <Redirect to="/mountain" />}
-              />
-
-              <Route
-                path="/mountain"
-                render={() => <Item searchTerm="mountain" />}
-              />
-              <Route path="/beach" render={() => <Item searchTerm="beach" />} />
-              <Route path="/bird" render={() => <Item searchTerm="bird" />} />
-              <Route path="/food" render={() => <Item searchTerm="food" />} />
-              <Route
-                path="/search/:searchInput"
-                render={props => (
-                  <Search searchTerm={props.match.params.searchInput} />
-                )}
-              />
-              <Route component={NotFound} />
-            </Switch>
-          </div>
-        </HashRouter>
-      </PhotoContextProvider>
-    );
-  }
+function App() {
+  return (
+    <div className="child-app-react__root">
+      <h2>Child APP React</h2>
+      <BrowserRouter basename={basename}>
+        <Link className="child-app-react__link" to="/">Home</Link>
+        <Link className="child-app-react__link" to="/page1">Page1</Link>
+        <Routes>
+          <Route path="/">
+            <Route path="" element={<ChildPageDefault />} />
+            <Route path="page1" element={<Page1 />} />
+          </Route>
+        </Routes>
+      </BrowserRouter>
+    </div>
+  );
 }
 
 export default App;

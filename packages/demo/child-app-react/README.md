@@ -1,6 +1,4 @@
 # @jmodule-demo/child-app-react
-该 Demo 由 github 上公开的React Demo [SnapShot](https://github.com/Yog9/SnapShot) 改造而来
-
 
 ## Project setup
 ```sh
