@@ -6,7 +6,7 @@ if (window.__JMODULE_HOST__) {
   JModule.define('childAppReact', {
     mount(module, el, stats) {
       if (stats.mountTimes) {
-        location.href = '/childAppReact';
+        console.log('remount childAppReact');
       } else {
         createRoot(el).render(<App />);
       }

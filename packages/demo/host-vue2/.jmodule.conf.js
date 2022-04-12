@@ -20,7 +20,7 @@ module.exports = {
         modulesConfig: {
             childAppReact: {
                 type: 'app',
-                name: '照片库',
+                name: 'childAppReact',
                 url: 'http://localhost:3000/index.js',
             },
             childAppVue2: {

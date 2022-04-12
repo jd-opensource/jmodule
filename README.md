@@ -83,7 +83,7 @@ pnpm i
 pnpm run serve --filter "*child*"
 
 # 启动宿主应用并自动加载以上子应用
-pnpm run serve:modules --filter "*host"
+pnpm run serve:modules --filter "*host*"
 
 #### 单应用调试
 # 以纯净模式启动宿主应用（与前面含子应用的启动的示例相区别）
