@@ -117,7 +117,6 @@ importers:
       eslint: ^6.7.2
       eslint-plugin-vue: ^7.0.0
       vue: ^3.0.0
-      webpack: '4'
     dependencies:
       '@jmodule/client': link:../../client
       core-js: 3.21.1
@@ -131,7 +130,6 @@ importers:
       babel-eslint: 10.1.0_eslint@6.8.0
       eslint: 6.8.0
       eslint-plugin-vue: 7.20.0_eslint@6.8.0
-      webpack: 4.44.1
 
   packages/demo/host-vue2:
     specifiers:
