@@ -1,6 +1,6 @@
 {
   "name": "@jmodule/client",
-  "version": "4.1.9",
+  "version": "4.2.0",
   "description": "JModule运行时",
   "author": "feirpri <feirpri@gmail.com>",
   "license": "MIT",
@@ -39,5 +39,17 @@
     "dist",
     "types"
   ],
-  "types": "types/index.d.ts"
+  "types": "types/index.d.ts",
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/jdtdevops/jmodule.git"
+  },
+  "keywords": [
+    "jmodule",
+    "micro"
+  ],
+  "bugs": {
+    "url": "https://github.com/jdtdevops/jmodule/issues"
+  },
+  "homepage": "https://github.com/jdtdevops/jmodule#readme"
 }
