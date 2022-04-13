@@ -96,6 +96,6 @@ pnpm run serve --filter "@jmodule-demo/child-app-react"
 ## License
 [License](LICENSE)
 
-## 交流QQ群
-![京东行云开源交流QQ群](./assets/qq_qrcode.jpg)
+## 微信交流群
+![京东行云开源交流群](./assets/weixin-group.png)
 
