@@ -29,5 +29,13 @@
   "files": [
     "src",
     "utils"
-  ]
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/jdtdevops/jmodule.git"
+  },
+  "bugs": {
+    "url": "https://github.com/jdtdevops/jmodule/issues"
+  },
+  "homepage": "https://github.com/jdtdevops/jmodule#readme"
 }
