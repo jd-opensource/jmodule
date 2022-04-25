@@ -458,9 +458,6 @@ export class JModule extends ModuleHook {
             }
         }).then(() => {
             const res = path.reduce((obj, key) => (obj || {})[key], moduleExports);
-            if (res === undefined) {
-                throw new Error(`未找到模块: ${namespace}`);
-            }
             moduleCache[namespace] = res;
             return res;
         });
