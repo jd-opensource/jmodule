@@ -204,7 +204,7 @@ export class Resource {
         if (this.initScriptElement) {
             return Promise.resolve();
         }
-        const urlDefer: Promise<string> = this.type === 'json' ? fetch(this.url)
+        const urlDefer: Promise<string> = this.type === 'json' ? fetch(patchInitUrl(this.url))
             .then(res => res.json())
             .then((jsonRes) => {
                 const jsString = `JModule.applyResource(${JSON.stringify(jsonRes)}, "${this.url}")`;
