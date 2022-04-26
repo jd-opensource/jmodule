@@ -598,12 +598,11 @@ export class JModule extends ModuleHook {
             autoApplyStyle?: boolean,
         } = { autoApplyStyle: true },
     ): Promise<Resource|void> {
-        if (this.status > MODULE_STATUS.loading) {
-            return this.resource;
-        }
-        this.status = MODULE_STATUS.loading;
         const { resource } = this;
-        resource.init();
+        if (this.status < MODULE_STATUS.loading) {
+            this.status = MODULE_STATUS.loading;
+            resource.init();
+        }
         await resource.afterInit;
         if (targetStatus === 'preload') {
             resource.preload(options?.elementModifier);
