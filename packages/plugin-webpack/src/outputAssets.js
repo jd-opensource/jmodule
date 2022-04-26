@@ -31,7 +31,7 @@ module.exports = function outputAssets(compilation, outputJson = false, filename
     }
     const last = compilation.getAsset(filename);
     if (last) {
-        if (!last.info?.createdByJModule) {
+        if (!(last.info && last.info.createdByJModule)) {
             // 该资源文件已经存在，但是不是由 JModule 创建的，则抛出异常
             throw new Error(`${filename} 已存在. 请设置 moduleEntryFile 为其它值`);
         }
