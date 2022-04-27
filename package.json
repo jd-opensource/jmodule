@@ -4,12 +4,24 @@
   "description": "FE Modulize",
   "author": "feirpri <feirpri@gmail.com>",
   "license": "Apache-2.0",
-  "scripts": {},
+  "scripts": {
+    "commit": "git-cz"
+  },
   "engines": {
     "node": ">= 12.16.0",
     "pnpm": ">= 6.0.0"
   },
   "devDependencies": {
+    "@commitlint/cli": "^16.2.3",
+    "@commitlint/config-conventional": "^16.2.1",
+    "commitizen": "^4.2.4",
+    "cz-conventional-changelog": "^3.3.0",
+    "husky": "^7.0.4",
     "webpack": "4"
+  },
+  "config": {
+    "commitizen": {
+      "path": "./node_modules/cz-conventional-changelog"
+    }
   }
 }
