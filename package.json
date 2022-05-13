@@ -3,7 +3,7 @@
   "version": "1.0.1-0",
   "description": "FE Modulize",
   "author": "feirpri <feirpri@gmail.com>",
-  "license": "Apache-2.0",
+  "license": "MIT",
   "scripts": {
     "commit": "git-cz"
   },
