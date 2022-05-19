@@ -89,6 +89,9 @@ pnpm run serve --filter "@jmodule-demo/host-vue2"
 pnpm run serve --filter "@jmodule-demo/child-app-react"
 ```
 
+## 文档  
+[文档](https://jmodule.jd.com)
+
 
 ## License
 [License](LICENSE)
