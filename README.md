@@ -29,12 +29,6 @@ module.exports = {
   plugins: [
     new WebpackJmodulePlugin({
       mode: 'modules',
-      externalAlias: isModulesMode ? { // 通常用于以动态路由的方式接入宿主应用时，将对框架部分的引用指向宿主应用引入的框架
-        axios: '$node_modules.axios',
-        vue: '$node_modules.vue',
-        '@/store': '$platform.store',
-        '@/router': '$platform.router',
-      } : {},
       devConfig: { // 开发联调时配置
         currentServer: 'http://localhost:8084', // 子应用 server
         platformServer: 'http://platformServer.com', // 主应用 server
@@ -47,6 +41,9 @@ module.exports = {
     }),
   ];
 }
+
+// 在入口文件中添加
+JModule.define(moduleKey, { mount() {} })
 ```
 
 ### SCENE: 作为宿主应用加载子应用
