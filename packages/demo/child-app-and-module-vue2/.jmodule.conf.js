@@ -16,8 +16,6 @@ const othersModules = (process.env.otherModules || '')
 
 module.exports = {
     mode: 'modules',
-    customEntry: true,
-    experimental: true,
     devConfig: {
         modulesConfig: {
             childAppVue2: {

@@ -6,8 +6,6 @@ const platformLocalPort = process.env.platformLocalPort || 8092;
 
 module.exports = {
     mode: 'modules',
-    experimental: true,
-    customEntry: true,
     devConfig: process.env.NODE_ENV === 'development' ? {
         modulesConfig: {
             childAppVue3: {
