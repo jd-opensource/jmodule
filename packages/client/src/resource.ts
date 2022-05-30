@@ -1,5 +1,14 @@
 // 处理 webpack 的async chunk
 function overrideCreateElement() {
+    const patchElement = (val: string, element: HTMLElement) => {
+        const files = (localStorage.getItem(AsyncFilesListKey) || '').split(',');
+        const file = files.find(file => val.includes(file));
+        const value = localStorage.getItem(`${AsyncFilesMapPrefix}${file}`);
+        const [targetUrl, jmoduleFrom] = value ? JSON.parse(value) : [val, undefined];
+        element.dataset.jmoduleFrom = jmoduleFrom;
+        element.setAttribute('href', targetUrl);
+    }
+
     document.createElement = new Proxy(document.createElement, {
         apply(target, context, args) {
             const originRes = Reflect.apply(target, context, args);
@@ -9,14 +18,7 @@ function overrideCreateElement() {
                         return originRes.getAttribute('src');
                     },
                     set(val) {
-                        const value = Resource.getTrueResourceUrl(val);
-                        if (!value) {
-                            originRes.setAttribute('src', val);
-                            return;
-                        }
-                        const { resource, filepath } = value;
-                        originRes.dataset.jmoduleFrom = resource.url;
-                        originRes.setAttribute('src', resource.resolveUrl(filepath));
+                        patchElement(val, originRes);
                     },
                 });
             }
@@ -26,14 +28,7 @@ function overrideCreateElement() {
                         return originRes.getAttribute('href');
                     },
                     set(val) {
-                        const value = Resource.getTrueResourceUrl(val);
-                        if (!value) {
-                            originRes.setAttribute('href', val);
-                            return;
-                        }
-                        const { resource, filepath } = value;
-                        originRes.dataset.jmoduleFrom = resource.url;
-                        originRes.setAttribute('href', resource.resolveUrl(filepath));
+                        patchElement(val, originRes);
                     },
                 });
             }
@@ -96,6 +91,9 @@ export interface ResourceOptions {
     type?: string,
     prefix?: string,
 };
+
+const AsyncFilesMapPrefix = 'jmodule:filesMap:';
+const AsyncFilesListKey = 'jmodule:filesList';
 
 const scriptCacheByUrl: { [url: string]: HTMLScriptElement } = {};
 /**
@@ -180,17 +178,20 @@ export class Resource {
         return resource && filepath ? { resource, filepath } : undefined;
     }
 
-    static setResourceData(metadata: ResourceMetadata, sourceUrl?: string): Resource {
+    static setResourceData(metadata: ResourceMetadata, sourceUrl: string): Resource {
         const resource = Resource.getResource(sourceUrl);
         if (resource) {
             const { asyncFiles = [] } = metadata;
             asyncFiles.forEach(file => {
-                const oldResource = Resource.asyncFilesMap[file];
-                if (oldResource && oldResource !== resource) {
+                const key = `${AsyncFilesMapPrefix}${file}`;
+                const res = localStorage.getItem(key);
+                const targetUrl = resource.resolveUrl(file);
+                if (res && !res.includes(targetUrl)) {
                     const errorMessage = `建立异步组件索引 "${file}" 出现冲突，可能会导致异步组件加载异常`;
-                    console.error(errorMessage, oldResource, resource);
+                    console.error(errorMessage, res, resource);
                 }
-                Resource.asyncFilesMap[file] = resource;
+                localStorage.setItem(key, JSON.stringify([targetUrl, resource.url]));
+                localStorage.setItem(AsyncFilesListKey, `${localStorage.getItem(AsyncFilesListKey) || ''},${file}`);
             });
             resource.metadata = metadata;
             resource.resolveInit();
