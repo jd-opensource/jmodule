@@ -16,7 +16,7 @@ export function overrideCreateElement() {
         const [targetUrl, jmoduleFrom] = value ? JSON.parse(value) : [val, undefined];
         // eslint-disable-next-line no-param-reassign
         element.dataset.jmoduleFrom = jmoduleFrom;
-        element.setAttribute('href', targetUrl);
+        return targetUrl;
     };
 
     const localCreateElement = document.createElement;
@@ -35,7 +35,7 @@ export function overrideCreateElement() {
                         return originRes.getAttribute('src');
                     },
                     set(val) {
-                        patchElement(val, originRes);
+                        originRes.setAttribute('src', patchElement(val, originRes));
                     },
                 });
             }
@@ -45,7 +45,7 @@ export function overrideCreateElement() {
                         return originRes.getAttribute('href');
                     },
                     set(val) {
-                        patchElement(val, originRes);
+                        originRes.setAttribute('href', patchElement(val, originRes));
                     },
                 });
             }
@@ -53,3 +53,4 @@ export function overrideCreateElement() {
         },
     });
 }
+

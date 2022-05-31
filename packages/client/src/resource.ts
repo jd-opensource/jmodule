@@ -1,5 +1,7 @@
 import { AsyncFilesListKey, AsyncFilesMapPrefix, overrideCreateElement } from './globalPatch';
 
+overrideCreateElement();
+
 function injectElementModifier (
     element: HTMLElement, 
     elementModifier?: (element: HTMLElement) => void
@@ -26,7 +28,7 @@ interface RequestModifier {
     (arg: { url: string, from: string }): RequestInit;
 }
 
-async function loadScriptByFetch(
+async function resolveUrlByFetch(
     url: string,
     from: string,
     requestModifier?: RequestModifier,
@@ -39,14 +41,12 @@ async function loadScriptByFetch(
     const { prefix, suffix } = responseWrapper || {};
     const resBuffer = new Uint8Array(await res.arrayBuffer());
     const encoder = new TextEncoder();
-    const script = document.createElement('script');
-    script.src = URL.createObjectURL(
+    return URL.createObjectURL(
         new Blob(
             [encoder.encode(`${prefix || ''};`), resBuffer, encoder.encode(`;${suffix || ''}`)],
             { type: 'application/javascript' },
         ),
     );
-    document.body.append(script);
 }
 
 function addStyle(url: string, elementModifier?: (element: HTMLElement) => void): HTMLLinkElement {
@@ -76,6 +76,11 @@ export enum ResourceStatus {
     StyleResolved = 5,
     StyleRemoved = 6,
     ScriptError = 7,
+}
+
+export enum LoadStrategy {
+    Fetch = 0,
+    Element = 1,
 }
 
 export interface ResourceOptions {
@@ -113,6 +118,7 @@ export class Resource {
     afterApplyScript!: Promise<HTMLScriptElement[]>;
     afterInit!: Promise<void>;
     preloaded = false;
+    strategy = LoadStrategy.Element; // 默认，直接用标签方式加载
 
     /**
      * @constructor
@@ -140,8 +146,9 @@ export class Resource {
     }
 
     static enableAsyncChunk() {
-        console.warn('执行 enableAsyncChunk 会覆盖原生的 document.createElement 方法，有一定风险');
-        overrideCreateElement();
+        console.warn('Resource.enableAsyncChunk() is deprecated, just remove it');
+        // console.warn('执行 enableAsyncChunk 会覆盖原生的 document.createElement 方法，有一定风险');
+        // overrideCreateElement();
     }
 
     static getResource(sourceUrl?: string): Resource | void {
@@ -201,6 +208,7 @@ export class Resource {
                 const blob = new Blob([jsString], { type: 'text/javascript' });
                 return URL.createObjectURL(blob);
             }) : Promise.resolve(patchInitUrl(this.url));
+        // 加载初始化脚本 index.js/index.json
         return urlDefer.then((url) => loadScript(url, this.url, (script) => {
             script.async = true;
             this.initScriptElement = script;
@@ -235,7 +243,7 @@ export class Resource {
         this.status = status;
     }
 
-    applyScript(elementModifier?: (element: HTMLElement) => void): Promise<HTMLScriptElement[]> {
+    async applyScript(elementModifier?: (element: HTMLElement) => void): Promise<HTMLScriptElement[]> {
         if (!this.metadata) {
             return Promise.reject(new Error('no resource metadata'));
         }
@@ -243,11 +251,14 @@ export class Resource {
             return Promise.resolve(this.scriptElements);
         }
         this.appliedScript = true;
-        const jsUrls = this.metadata.js || [];
         this.setStatus(ResourceStatus.ApplyScript);
         this.scriptElements = [];
-        return Promise.all(jsUrls.map(url => loadScript(
-            this.resolveUrl(url),
+        const jsUrls = (this.metadata.js || []).map(url => this.resolveUrl(url));
+        const entryUrls = this.strategy === LoadStrategy.Fetch
+            ? await Promise.all(jsUrls.map(url => resolveUrlByFetch(url, this.url, undefined)))
+            : jsUrls;
+        return Promise.all(entryUrls.map(url => loadScript(
+            url,
             this.url,
             script => {
                 injectElementModifier(script, elementModifier);
