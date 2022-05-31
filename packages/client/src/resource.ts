@@ -1,41 +1,5 @@
-// 处理 webpack 的async chunk
-function overrideCreateElement() {
-    const patchElement = (val: string, element: HTMLElement) => {
-        const files = (sessionStorage.getItem(AsyncFilesListKey) || '').split(',');
-        const file = files.find(file => val.includes(file));
-        const value = sessionStorage.getItem(`${AsyncFilesMapPrefix}${file}`);
-        const [targetUrl, jmoduleFrom] = value ? JSON.parse(value) : [val, undefined];
-        element.dataset.jmoduleFrom = jmoduleFrom;
-        element.setAttribute('href', targetUrl);
-    }
+import { AsyncFilesListKey, AsyncFilesMapPrefix, overrideCreateElement } from './globalPatch';
 
-    document.createElement = new Proxy(document.createElement, {
-        apply(target, context, args) {
-            const originRes = Reflect.apply(target, context, args);
-            if (args[0] === 'script') {
-                Object.defineProperty(originRes, 'src', {
-                    get() {
-                        return originRes.getAttribute('src');
-                    },
-                    set(val) {
-                        patchElement(val, originRes);
-                    },
-                });
-            }
-            if (args[0] === 'link') {
-                Object.defineProperty(originRes, 'href', {
-                    get() {
-                        return originRes.getAttribute('href');
-                    },
-                    set(val) {
-                        patchElement(val, originRes);
-                    },
-                });
-            }
-            return originRes;
-        }
-    });
-}
 function injectElementModifier (
     element: HTMLElement, 
     elementModifier?: (element: HTMLElement) => void
@@ -45,17 +9,44 @@ function injectElementModifier (
     }
     return element;
 }
-function loadScript(url: string, from: string, cb?: (script: HTMLScriptElement) => void): Promise<HTMLScriptElement> {
+function loadScript(url: string, from: string, elementModifier?: (script: HTMLScriptElement) => void): Promise<HTMLScriptElement> {
     const script = document.createElement('script');
     script.setAttribute('src', url); // skip proxy
     script.async = false;
     script.dataset.jmoduleFrom = from;
-    cb && cb(script)
+    elementModifier && elementModifier(script);
     document.body.appendChild(script);
     return new Promise((resolve, reject) => {
         script.onerror = () => reject(new Error(`LoadScriptError: ${url}`));
         script.onload = () => resolve(script);
     });
+}
+
+interface RequestModifier {
+    (arg: { url: string, from: string }): RequestInit;
+}
+
+async function loadScriptByFetch(
+    url: string,
+    from: string,
+    requestModifier?: RequestModifier,
+    responseWrapper?: { prefix?: string, suffix?: string },
+) {
+    const res = await fetch(url, requestModifier ? requestModifier({ url, from }) : undefined);
+    if (!res.ok) {
+        throw new Error(`LoadScriptError: ${url}`);
+    }
+    const { prefix, suffix } = responseWrapper || {};
+    const resBuffer = new Uint8Array(await res.arrayBuffer());
+    const encoder = new TextEncoder();
+    const script = document.createElement('script');
+    script.src = URL.createObjectURL(
+        new Blob(
+            [encoder.encode(`${prefix || ''};`), resBuffer, encoder.encode(`;${suffix || ''}`)],
+            { type: 'application/javascript' },
+        ),
+    );
+    document.body.append(script);
 }
 
 function addStyle(url: string, elementModifier?: (element: HTMLElement) => void): HTMLLinkElement {
@@ -92,8 +83,6 @@ export interface ResourceOptions {
     prefix?: string,
 };
 
-const AsyncFilesMapPrefix = 'jmodule:filesMap:';
-const AsyncFilesListKey = 'jmodule:filesList';
 
 const scriptCacheByUrl: { [url: string]: HTMLScriptElement } = {};
 /**

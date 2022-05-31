@@ -29,5 +29,6 @@ module.exports = {
     }],
     'no-nested-ternary': [1],
     'linebreak-style': 0,
+    'import/prefer-default-export': 0
   }
 }
