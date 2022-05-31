@@ -1,9 +1,9 @@
 // 处理 webpack 的async chunk
 function overrideCreateElement() {
     const patchElement = (val: string, element: HTMLElement) => {
-        const files = (localStorage.getItem(AsyncFilesListKey) || '').split(',');
+        const files = (sessionStorage.getItem(AsyncFilesListKey) || '').split(',');
         const file = files.find(file => val.includes(file));
-        const value = localStorage.getItem(`${AsyncFilesMapPrefix}${file}`);
+        const value = sessionStorage.getItem(`${AsyncFilesMapPrefix}${file}`);
         const [targetUrl, jmoduleFrom] = value ? JSON.parse(value) : [val, undefined];
         element.dataset.jmoduleFrom = jmoduleFrom;
         element.setAttribute('href', targetUrl);
@@ -184,14 +184,14 @@ export class Resource {
             const { asyncFiles = [] } = metadata;
             asyncFiles.forEach(file => {
                 const key = `${AsyncFilesMapPrefix}${file}`;
-                const res = localStorage.getItem(key);
+                const res = sessionStorage.getItem(key);
                 const targetUrl = resource.resolveUrl(file);
                 if (res && !res.includes(targetUrl)) {
                     const errorMessage = `建立异步组件索引 "${file}" 出现冲突，可能会导致异步组件加载异常`;
                     console.error(errorMessage, res, resource);
                 }
-                localStorage.setItem(key, JSON.stringify([targetUrl, resource.url]));
-                localStorage.setItem(AsyncFilesListKey, `${localStorage.getItem(AsyncFilesListKey) || ''},${file}`);
+                sessionStorage.setItem(key, JSON.stringify([targetUrl, resource.url]));
+                sessionStorage.setItem(AsyncFilesListKey, `${sessionStorage.getItem(AsyncFilesListKey) || ''},${file}`);
             });
             resource.metadata = metadata;
             resource.resolveInit();
