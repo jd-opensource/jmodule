@@ -1,5 +1,5 @@
 interface handle {
-    (...args: any[]): any[];
+    (...args: any[]): any[] | Promise<any[]>;
 }
 export declare class ModuleHook {
     /**

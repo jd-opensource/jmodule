@@ -1,8 +1,5 @@
 import { ResourceType } from '../config';
 
-const CodePrefix = (sourceUrl: string, currentUrl: string) => `(() => {const window = JModuleManager?.createWindow({ sourceUrl: '${sourceUrl}', currentUrl: '${currentUrl}' }) || window;with(window){`;
-const CodeSuffix = '}})()';
-
 export async function resolveUrlByFetch(
     currentUrl: string,
     sourceUrl: string,
@@ -12,24 +9,16 @@ export async function resolveUrlByFetch(
     if (resource.cachedUrlMap[currentUrl]) {
         return resource.cachedUrlMap[currentUrl];
     }
-    const [options] = resource.constructor.runHookSync('resource:fetch', {
+    const [options] = await resource.constructor.runHook('resource:getFetchOptions', {
         currentUrl, type, resource, fetchOptions: {},
     });
-    const res = await fetch(currentUrl, options.fetchOptions);
-    if (!res.ok) {
+    const response = await fetch(currentUrl, options.fetchOptions);
+    if (!response.ok) {
         throw new Error(`LoadScriptError: ${currentUrl}`);
     }
-    if (type !== ResourceType.Script) {
-        return URL.createObjectURL(await res.blob());
-    }
-    const resBuffer = new Uint8Array(await res.arrayBuffer());
-    const encoder = new TextEncoder();
-    const prefix = CodePrefix(sourceUrl, currentUrl);
-    const suffix = CodeSuffix;
-    return URL.createObjectURL(
-        new Blob(
-            [encoder.encode(`${prefix || ''};`), resBuffer, encoder.encode(`;${suffix || ''}`)],
-            { type },
-        ),
-    );
+    const blob = await response.blob();
+    const [res] = await resource.constructor.runHook('resource:transformFetchResult', {
+        currentUrl, sourceUrl, type, resource, value: blob,
+    });
+    return URL.createObjectURL(res.blob);
 }

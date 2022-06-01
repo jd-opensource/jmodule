@@ -3,8 +3,7 @@ import { ResourceType, ResourceStatus, ResourceLoadStrategy } from './config';
 import { resolveUrlByFetch } from './utils/fetchCode';
 import JModuleManager from './globalManager';
 import { ModuleHook } from './hook';
-
-overrideCreateElement();
+import { wrapperFetchedCodeHook } from './utils/wrapperFetchedCode';
 
 function injectElementModifier (
     element: HTMLElement, 
@@ -336,3 +335,7 @@ export class Resource extends ModuleHook {
         JModuleManager.removeInstance('resource', this.url);
     }
 }
+
+overrideCreateElement();
+
+Resource.addHook('resource:transformFetchResult', wrapperFetchedCodeHook);

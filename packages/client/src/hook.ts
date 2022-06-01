@@ -1,5 +1,5 @@
 /* eslint-disable no-console */
-interface handle { (...args: any[]): any[] };
+interface handle { (...args: any[]): any[] | Promise<any[]> };
 const hooks: { [key: string]: handle[] } = {};
 
 async function runEach(inputArgs: any[], i: number, fns: handle[] = []): Promise<any[]> {
@@ -15,7 +15,7 @@ function runEachSync(inputArgs: any[], i: number, fns: handle[] = []): any[] {
     if (!fn) {
         return inputArgs;
     }
-    return runEachSync(fn(...inputArgs), i + 1, fns);
+    return runEachSync((fn(...inputArgs) as any[]), i + 1, fns);
 }
 
 export class ModuleHook {

@@ -169,7 +169,7 @@ async function initModule(module: JModule, pkg: ModuleMetadata): Promise<JModule
         ModuleDebug.print({
             type: 'error',
             key,
-            message: e.message || '未找到模块注册信息, 或模块参数错误',
+            message: (e as Error).message || '未找到模块注册信息, 或模块参数错误',
             instance: e,
         });
         throw e;
