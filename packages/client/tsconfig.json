@@ -1,6 +1,6 @@
 {
     "compilerOptions": {
-        "lib": ["ES2015", "DOM", "es2017.object"],
+        "lib": ["DOM", "DOM.Iterable", "ES2020"],
         "sourceMap": true,
         "jsx": "react",
         "jsxFactory": "h",
@@ -16,12 +16,14 @@
         "declarationDir": "./types"
     },
     "include": [
+        "src/type.d.ts",
+        "src/global.d.ts",
+        "src/utils/*.ts",
         "src/**/*.ts",
         "src/**/*.tsx",
         "types/*.d.ts"
     ],
     "exclude": [
-        "node_modules",
         "**/*.spec.ts"
     ]
 }

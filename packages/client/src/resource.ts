@@ -1,4 +1,8 @@
 import { AsyncFilesListKey, AsyncFilesMapPrefix, overrideCreateElement } from './globalPatch';
+import { ResourceType, ResourceStatus, ResourceLoadStrategy } from './config';
+import { resolveUrlByFetch } from './utils/fetchCode';
+import JModuleManager from './globalManager';
+import { ModuleHook } from './hook';
 
 overrideCreateElement();
 
@@ -24,31 +28,6 @@ function loadScript(url: string, from: string, elementModifier?: (script: HTMLSc
     });
 }
 
-interface RequestModifier {
-    (arg: { url: string, from: string }): RequestInit;
-}
-
-async function resolveUrlByFetch(
-    url: string,
-    from: string,
-    requestModifier?: RequestModifier,
-    responseWrapper?: { prefix?: string, suffix?: string },
-) {
-    const res = await fetch(url, requestModifier ? requestModifier({ url, from }) : undefined);
-    if (!res.ok) {
-        throw new Error(`LoadScriptError: ${url}`);
-    }
-    const { prefix, suffix } = responseWrapper || {};
-    const resBuffer = new Uint8Array(await res.arrayBuffer());
-    const encoder = new TextEncoder();
-    return URL.createObjectURL(
-        new Blob(
-            [encoder.encode(`${prefix || ''};`), resBuffer, encoder.encode(`;${suffix || ''}`)],
-            { type: 'application/javascript' },
-        ),
-    );
-}
-
 function addStyle(url: string, elementModifier?: (element: HTMLElement) => void): HTMLLinkElement {
     const styleDom = document.createElement('link');
     styleDom.setAttribute('rel', 'stylesheet');
@@ -67,22 +46,6 @@ export interface ResourceMetadata {
     asyncFiles: string[],
 }
 
-export enum ResourceStatus {
-    Init = 0,
-    InitScriptLoaded = 1,
-    InitScriptError = 2,
-    ApplyScript = 3,
-    ScriptResolved = 4,
-    StyleResolved = 5,
-    StyleRemoved = 6,
-    ScriptError = 7,
-}
-
-export enum LoadStrategy {
-    Fetch = 0,
-    Element = 1,
-}
-
 export interface ResourceOptions {
     type?: string,
     prefix?: string,
@@ -95,15 +58,14 @@ const scriptCacheByUrl: { [url: string]: HTMLScriptElement } = {};
  * @class
  * @param {String<url>} 资源地址
  */
-export class Resource {
-    private static resourceInsCache: { [key: string]: Resource | undefined } = {};
-    private resolveInit!: () => void;
-    private rejectInit!: (error: Error) => void;
+export class Resource extends ModuleHook {
     private resolveScript!: (elements: HTMLScriptElement[]) => void;
     private rejectScript!: (error: Error) => void;
     private appliedScript: boolean = false;
     private static asyncFilesMap: { [key: string]: Resource | undefined } = {};
-
+    
+    resolveInit!: () => void;
+    rejectInit!: (error: Error) => void;
     metadata?: ResourceMetadata;
     url: string = '';
     initScriptElement?: HTMLScriptElement;
@@ -118,17 +80,23 @@ export class Resource {
     afterApplyScript!: Promise<HTMLScriptElement[]>;
     afterInit!: Promise<void>;
     preloaded = false;
-    strategy = LoadStrategy.Element; // 默认，直接用标签方式加载
+    strategy = ResourceLoadStrategy.Element; // 默认，直接用标签方式加载
+    styleLoading = false;
+    scriptLoading = false;
+    cachedUrlMap: {
+        [key: string]: string
+    } = {};
 
     /**
      * @constructor
      */
     constructor(url: string, options?: ResourceOptions) {
+        super();
         if (!url && typeof url !== 'string') {
             throw new Error('创建 Resource 实例异常, 缺少sourceUrl');
         }
-        if (Resource.resourceInsCache[url]) {
-            return <Resource>Resource.resourceInsCache[url];
+        if (JModuleManager.getInstance('resource', 'url')) {
+            return <Resource>JModuleManager.getInstance('resource', 'url');
         }
         this.url = url;
         this.server = new URL(url).origin;
@@ -142,23 +110,16 @@ export class Resource {
             this.resolveScript = resolve;
             this.rejectScript = reject;
         });
-        Resource.resourceInsCache[url] = this;
+        JModuleManager.registerInstance('resource', 'url', this);
     }
 
     static enableAsyncChunk() {
         console.warn('Resource.enableAsyncChunk() is deprecated, just remove it');
-        // console.warn('执行 enableAsyncChunk 会覆盖原生的 document.createElement 方法，有一定风险');
-        // overrideCreateElement();
     }
 
     static getResource(sourceUrl?: string): Resource | void {
-        const key = sourceUrl || (document.currentScript as HTMLScriptElement)?.src;
-        if (!key) {
-            return;
-        }
-        // 移除缓存url patch
-        const noPatchedUrl = key.replace(/(\?|&)__v__=\d+$/, '');
-        return Resource.resourceInsCache[noPatchedUrl];
+        console.warn('Resource.getResource() is deprecated, use JModuleManager.getInstance() instead');
+        return JModuleManager.getInstance('resource', sourceUrl);
     }
 
     static getTrueResourceUrl(url: string): { resource: Resource, filepath: string } | void {
@@ -175,7 +136,7 @@ export class Resource {
     }
 
     static setResourceData(metadata: ResourceMetadata, sourceUrl: string): Resource {
-        const resource = Resource.getResource(sourceUrl);
+        const resource = JModuleManager.getInstance('resource', sourceUrl);
         if (resource) {
             const { asyncFiles = [] } = metadata;
             asyncFiles.forEach(file => {
@@ -193,7 +154,9 @@ export class Resource {
             resource.resolveInit();
             return resource;
         } else {
-            throw new Error('未找到对应的 resource 实例');
+            const err = new Error(`未找到${sourceUrl}对应的 resource 实例`);
+            resource.rejectInit(err);
+            throw err;
         }
     }
 
@@ -243,19 +206,27 @@ export class Resource {
         this.status = status;
     }
 
-    async applyScript(elementModifier?: (element: HTMLElement) => void): Promise<HTMLScriptElement[]> {
+    async applyScript(elementModifier?: ElementModifier): Promise<HTMLScriptElement[]> {
         if (!this.metadata) {
             return Promise.reject(new Error('no resource metadata'));
+        }
+        if (this.scriptLoading) {
+            return Promise.reject(new Error('applyScript 已在执行中'));
         }
         if (this.appliedScript) {
             return Promise.resolve(this.scriptElements);
         }
         this.appliedScript = true;
+        this.scriptLoading = true;
         this.setStatus(ResourceStatus.ApplyScript);
         this.scriptElements = [];
         const jsUrls = (this.metadata.js || []).map(url => this.resolveUrl(url));
-        const entryUrls = this.strategy === LoadStrategy.Fetch
-            ? await Promise.all(jsUrls.map(url => resolveUrlByFetch(url, this.url, undefined)))
+        const entryUrls = this.strategy === ResourceLoadStrategy.Fetch
+            ? await Promise.all(jsUrls.map(url => resolveUrlByFetch(
+                url,
+                this.url,
+                ResourceType.Script,
+            )))
             : jsUrls;
         return Promise.all(entryUrls.map(url => loadScript(
             url,
@@ -265,22 +236,27 @@ export class Resource {
                 this.scriptElements.push(script);
             },
         ))).then(() => {
+            this.scriptLoading = false;
             this.setStatus(ResourceStatus.ScriptResolved);
             this.resolveScript(this.scriptElements);
             return this.scriptElements;
         }).catch((error) => {
+            this.scriptLoading = false;
             this.setStatus(ResourceStatus.ScriptError);
             this.rejectScript(error);
             throw error;
         });
     }
 
-    applyStyle(elementModifier?: (element: HTMLElement) => void): Promise<HTMLLinkElement[]> {
+    async applyStyle(elementModifier?: ElementModifier): Promise<HTMLLinkElement[]> {
         if (!this.metadata) {
             return Promise.reject(new Error('no resource metadata'));
         }
         const { css = [] } = this.metadata;
         const { length } = this.styleElements;
+        if (this.styleLoading) {
+            return Promise.reject(new Error('applyStyle 已在执行中'));
+        }
         if (css.length === length) {
             if (!this.styleMounted) {
                 this.styleElements.forEach(item => document.head.appendChild(item));
@@ -289,13 +265,23 @@ export class Resource {
             }
             return Promise.resolve(this.styleElements);
         }
-        this.styleElements = css.map(url => addStyle(this.resolveUrl(url), elementModifier));
+        this.styleLoading = true;
+        const cssUrls = (this.metadata.css || []).map(url => this.resolveUrl(url));
+        const entryUrls = this.strategy === ResourceLoadStrategy.Fetch
+            ? await Promise.all(cssUrls.map(url => resolveUrlByFetch(
+                url,
+                this.url,
+                ResourceType.Style,
+            )))
+            : cssUrls;
+        this.styleElements = entryUrls.map(url => addStyle(url, elementModifier));
         this.appendedAsyncStyleElements?.forEach(item => document.head.appendChild(item));
         this.styleMounted = true;
+        this.styleLoading = false;
         return Promise.resolve(this.styleElements);
     }
 
-    preload(elementModifier?: (element: HTMLElement) => void) {
+    preload(elementModifier?: ElementModifier) {
         if (!this.metadata) {
             return Promise.reject(new Error('no resource metadata'));
         }
@@ -308,11 +294,19 @@ export class Resource {
             { type: 'style', urls: css },
         ].forEach(({ type, urls }) => {
             urls.forEach(url => {
-                const preloadLink = document.createElement("link");
-                preloadLink.href = this.resolveUrl(url);
-                preloadLink.rel = "preload";
-                preloadLink.as = type;
-                document.head.appendChild(injectElementModifier(preloadLink, elementModifier));
+                const targetUrl = this.resolveUrl(url);
+                if (this.strategy === ResourceLoadStrategy.Fetch) {
+                    const resourceType = type === 'script' ? ResourceType.Script : ResourceType.Style;
+                    resolveUrlByFetch(targetUrl, this.url, resourceType).then(resUrl => {
+                        this.cachedUrlMap[targetUrl] = resUrl;
+                    });
+                } else {
+                    const preloadLink = document.createElement("link");
+                    preloadLink.href = targetUrl;
+                    preloadLink.rel = "preload";
+                    preloadLink.as = type;
+                    document.head.appendChild(injectElementModifier(preloadLink, elementModifier));
+                }
             });
         });
         this.preloaded = true;
@@ -325,7 +319,7 @@ export class Resource {
         // 同步的 link
         (this.styleElements || []).forEach(item => item.remove());
         // 异步组件创建的 link
-        const asyncLinks = document.querySelectorAll(`link[data-jmodule-from="${this.url}"]`);
+        const asyncLinks = document.querySelectorAll(`link[data-jmodule-from="${this.url}"], style[data-jmodule-from="${this.url}"]`);
         asyncLinks.forEach(item => item.remove());
         this.appendedAsyncStyleElements = asyncLinks;
         this.styleMounted = false;
@@ -339,6 +333,6 @@ export class Resource {
         this.initScriptElement = undefined;
         this.scriptElements = [];
         this.styleElements = []; // 解除对DOM的引用关系
-        Resource.resourceInsCache[this.url] = undefined; // 移除实例缓存
+        JModuleManager.removeInstance('resource', this.url);
     }
 }

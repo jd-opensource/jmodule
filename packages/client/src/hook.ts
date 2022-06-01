@@ -41,7 +41,7 @@ export class ModuleHook {
     static removeHook(hookName: string, handle: handle) {
         const index = hooks[hookName].indexOf(handle);
         hooks[hookName] = hooks[hookName] || [];
-        if (handle && index > -1) {
+        if (index > -1) {
             hooks[hookName].splice(index, 1);
         }
     }

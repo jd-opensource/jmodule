@@ -1,34 +1,24 @@
 // http://eslint.org/docs/user-guide/configuring
 module.exports = {
   root: true,
-  parser: 'babel-eslint',
+  // parser: 'babel-eslint',
   parserOptions: {
     sourceType: 'module'
   },
+  "parser": "@typescript-eslint/parser",
+  "plugins": ["@typescript-eslint"],
   env: {
     browser: true,
   },
-  extends: 'airbnb-base',
+  "extends": ["eslint:recommended", "plugin:@typescript-eslint/recommended"],
+  // extends: 'airbnb-base',
   // add your custom rules here
   'rules': {
-    // don't require .vue extension when importing
-    'import/extensions': ['error', 'always', {
-      'js': 'never',
-      'vue': 'never'
-    }],
-    // allow optionalDependencies
-    'import/no-extraneous-dependencies': ['error', {
-      'optionalDependencies': ['test/unit/index.js']
-    }],
-    'import/no-unresolved': [2],
     // allow debugger during development
     'no-debugger': process.env.NODE_ENV === 'production' ? 2 : 0,
-    'indent': ['error', 4],
-    'no-param-reassign': [1, {
-      "props": true
-    }],
+    'indent': ['error', 2],
+    "no-undef": "off",
     'no-nested-ternary': [1],
     'linebreak-style': 0,
-    'import/prefer-default-export': 0
   }
 }

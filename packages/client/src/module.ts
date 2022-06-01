@@ -2,7 +2,7 @@ import { ModuleDebug } from './debug';
 import { ResourceMetadata, Resource } from './resource';
 import { DepResolver } from './depResolver';
 import { ModuleHook } from './hook';
-import { Matcher } from '../utils/matcher';
+import { Matcher } from './utils/matcher';
 
 /* eslint no-underscore-dangle: ["error", { "allowAfterThis": true }] */
 /* eslint-disable no-eval */
@@ -593,10 +593,7 @@ export class JModule extends ModuleHook {
      */
     async load(
         targetStatus: 'init'|'preload'|'load' = 'load',
-        options: {
-            elementModifier?: (element: HTMLElement) => void,
-            autoApplyStyle?: boolean,
-        } = { autoApplyStyle: true },
+        options: LoadOptions = { autoApplyStyle: true },
     ): Promise<Resource|void> {
         const { resource } = this;
         if (this.status < MODULE_STATUS.loading) {
@@ -605,12 +602,12 @@ export class JModule extends ModuleHook {
         }
         await resource.afterInit;
         if (targetStatus === 'preload') {
-            resource.preload(options?.elementModifier);
+            resource.preload(options.elementModifier);
         }
         if (targetStatus === 'load') {
-            resource.applyScript(options?.elementModifier);
+            resource.applyScript(options.elementModifier);
             if (options.autoApplyStyle) {
-                resource.applyStyle(options?.elementModifier);
+                resource.applyStyle(options.elementModifier);
             }
         }
         return resource;

@@ -1,17 +1,9 @@
+import { ResourceStatus, ResourceLoadStrategy } from './config';
+import { ModuleHook } from './hook';
 export interface ResourceMetadata {
     js: string[];
     css: string[];
     asyncFiles: string[];
-}
-declare enum ResourceStatus {
-    Init = 0,
-    InitScriptLoaded = 1,
-    InitScriptError = 2,
-    ApplyScript = 3,
-    ScriptResolved = 4,
-    StyleResolved = 5,
-    StyleRemoved = 6,
-    ScriptError = 7
 }
 export interface ResourceOptions {
     type?: string;
@@ -22,18 +14,18 @@ export interface ResourceOptions {
  * @class
  * @param {String<url>} 资源地址
  */
-export declare class Resource {
-    private static resourceInsCache;
-    private resolveInit;
-    private rejectInit;
+export declare class Resource extends ModuleHook {
     private resolveScript;
     private rejectScript;
     private appliedScript;
     private static asyncFilesMap;
+    resolveInit: () => void;
+    rejectInit: (error: Error) => void;
     metadata?: ResourceMetadata;
     url: string;
     initScriptElement?: HTMLScriptElement;
     styleElements: HTMLLinkElement[];
+    appendedAsyncStyleElements?: NodeListOf<Element>;
     scriptElements: HTMLScriptElement[];
     server: string;
     styleMounted: boolean;
@@ -42,6 +34,13 @@ export declare class Resource {
     prefix?: string;
     afterApplyScript: Promise<HTMLScriptElement[]>;
     afterInit: Promise<void>;
+    preloaded: boolean;
+    strategy: ResourceLoadStrategy;
+    styleLoading: boolean;
+    scriptLoading: boolean;
+    cachedUrlMap: {
+        [key: string]: string;
+    };
     /**
      * @constructor
      */
@@ -52,13 +51,13 @@ export declare class Resource {
         resource: Resource;
         filepath: string;
     } | void;
-    static setResourceData(metadata: ResourceMetadata, sourceUrl?: string): Resource;
+    static setResourceData(metadata: ResourceMetadata, sourceUrl: string): Resource;
     init(): Promise<void | HTMLScriptElement>;
     resolveUrl(url: string): string;
     setStatus(status: ResourceStatus): void;
-    applyScript(elementModifier?: (element: HTMLElement) => void): Promise<HTMLScriptElement[]>;
-    applyStyle(elementModifier?: (element: HTMLElement) => void): Promise<HTMLLinkElement[]>;
-    preload(elementModifier?: (element: HTMLElement) => void): Promise<never> | undefined;
+    applyScript(elementModifier?: ElementModifier): Promise<HTMLScriptElement[]>;
+    applyStyle(elementModifier?: ElementModifier): Promise<HTMLLinkElement[]>;
+    preload(elementModifier?: ElementModifier): Promise<never> | undefined;
     /**
      * 移除样式
      */
@@ -68,4 +67,3 @@ export declare class Resource {
      */
     destroy(): void;
 }
-export {};

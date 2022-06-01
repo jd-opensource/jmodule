@@ -1,5 +1,6 @@
 import { ResourceMetadata, Resource } from './resource';
 import { ModuleHook } from './hook';
+import { Matcher } from './utils/matcher';
 export interface ModuleOptions {
     type?: string;
     key: string;
@@ -21,6 +22,9 @@ export interface ModuleMetadata {
 }
 declare function define(moduleKey: string, metadata: ModuleMetadata): Promise<JModule>;
 declare function define(metadata: ModuleMetadata): Promise<JModule>;
+declare type HashObject = {
+    [key: string]: any;
+};
 export declare enum MODULE_STATUS {
     bootFailure = -2,
     loadFailure = -1,
@@ -31,10 +35,6 @@ export declare enum MODULE_STATUS {
     booting = 4,
     done = 5,
     resourceInited = 6
-}
-export interface JModuleOptions {
-    autoApplyScript: boolean;
-    autoApplyStyle: boolean;
 }
 /**
  * @class
@@ -56,7 +56,6 @@ export interface JModuleOptions {
 export declare class JModule extends ModuleHook {
     private static _debug?;
     private completeResolver;
-    static options: JModuleOptions;
     type?: string;
     key: string;
     name: string;
@@ -156,7 +155,7 @@ export declare class JModule extends ModuleHook {
      * import Vue from '$node_modules.vue';
      * @return {JModule}
      */
-    static export(obj?: {}): typeof JModule;
+    static export(obj?: {}, matcher?: Matcher): typeof JModule;
     /**
      * 定义模块
      * @param  {String} moduleKey 定义模块唯一标识
@@ -173,7 +172,7 @@ export declare class JModule extends ModuleHook {
      * });
      */
     static define: typeof define;
-    static applyResource(resourceMetadata: ResourceMetadata, resourceLoaderUrl?: string): void;
+    static applyResource(resourceMetadata: ResourceMetadata, resourceLoaderUrl?: string): Resource;
     /**
      * 引用平台暴露的对象
      *
@@ -182,15 +181,17 @@ export declare class JModule extends ModuleHook {
      * @param  {Object} config      通过编译工具注入的相关环境参数
      * @return {var}
      */
-    static import(namespace?: string, config?: {}): any;
+    static import(namespace?: string, config?: HashObject | Matcher): any;
     static _import(namespace?: string, config?: {}): any;
     /**
      * 加载模块
      * @method
-     * @param  {Object} options  配置项
-     * @param  {Boolean} [options.appendStyle] 应用样式， 默认为 true
+     * @param  {'init'|'preload'|'load'} targetStatus 期望目标，默认 load 向下兼容
+     * @param  {Object} options
+     * @param  {(element: HTMLElement) => void} options.elementModifier preload 元素修改器
+     * @param  {Boolean} options.autoApplyStyle load的同时加载样式
      * @return {Promise}
      */
-    load(): Promise<Resource | void>;
+    load(targetStatus?: 'init' | 'preload' | 'load', options?: LoadOptions): Promise<Resource | void>;
 }
 export {};
