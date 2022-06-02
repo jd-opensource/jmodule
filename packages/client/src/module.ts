@@ -545,7 +545,7 @@ export class JModule extends ModuleHook {
         if (!loaderUrl) {
             throw new Error('浏览器不支持 document.currentScript');
         }
-        return Resource.setResourceData(resourceMetadata, loaderUrl);
+        return Resource.setResourceData(resourceMetadata, loaderUrl.replace(/(\?|&)__v__=\d+$/, ''));
     }
 
     /**

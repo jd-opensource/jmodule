@@ -1,4 +1,4 @@
-import { AsyncFilesListKey, AsyncFilesMapPrefix, overrideCreateElement } from './globalPatch';
+import { AsyncFilesMapPrefix, AsyncFilesListKey } from './config';
 import { ResourceType, ResourceStatus, ResourceLoadStrategy } from './config';
 import { resolveUrlByFetch } from './utils/fetchCode';
 import JModuleManager from './globalManager';
@@ -19,6 +19,7 @@ function loadScript(url: string, from: string, elementModifier?: (script: HTMLSc
     script.setAttribute('src', url); // skip proxy
     script.async = false;
     script.dataset.jmoduleFrom = from;
+    script.dataset.loadedBy = url;
     elementModifier && elementModifier(script);
     document.body.appendChild(script);
     return new Promise((resolve, reject) => {
@@ -94,8 +95,8 @@ export class Resource extends ModuleHook {
         if (!url && typeof url !== 'string') {
             throw new Error('创建 Resource 实例异常, 缺少sourceUrl');
         }
-        if (JModuleManager.getInstance('resource', 'url')) {
-            return <Resource>JModuleManager.getInstance('resource', 'url');
+        if (JModuleManager.getInstance('resource', url)) {
+            return <Resource>JModuleManager.getInstance('resource', url);
         }
         this.url = url;
         this.server = new URL(url).origin;
@@ -109,7 +110,7 @@ export class Resource extends ModuleHook {
             this.resolveScript = resolve;
             this.rejectScript = reject;
         });
-        JModuleManager.registerInstance('resource', 'url', this);
+        JModuleManager.registerInstance('resource', url, this);
     }
 
     static enableAsyncChunk() {
@@ -137,25 +138,26 @@ export class Resource extends ModuleHook {
     static setResourceData(metadata: ResourceMetadata, sourceUrl: string): Resource {
         const resource = JModuleManager.getInstance('resource', sourceUrl);
         if (resource) {
-            const { asyncFiles = [] } = metadata;
-            asyncFiles.forEach(file => {
-                const key = `${AsyncFilesMapPrefix}${file}`;
-                const res = sessionStorage.getItem(key);
-                const targetUrl = resource.resolveUrl(file);
-                if (res && !res.includes(targetUrl)) {
-                    const errorMessage = `建立异步组件索引 "${file}" 出现冲突，可能会导致异步组件加载异常`;
-                    console.error(errorMessage, res, resource);
-                }
-                sessionStorage.setItem(key, JSON.stringify([targetUrl, resource.url]));
-                sessionStorage.setItem(AsyncFilesListKey, `${sessionStorage.getItem(AsyncFilesListKey) || ''},${file}`);
-            });
+            if (resource.strategy === ResourceLoadStrategy.Element) {
+                const { asyncFiles = [] } = metadata;
+                asyncFiles.forEach(file => {
+                    const trimmedFile = file.replace(/\?.+$/, '');
+                    const key = `${AsyncFilesMapPrefix}${trimmedFile}`;
+                    const res = sessionStorage.getItem(key);
+                    const targetUrl = resource.resolveUrl(file);
+                    if (res && !res.includes(targetUrl)) {
+                        const errorMessage = `建立异步组件索引 "${file}" 出现冲突，可能会导致异步组件加载异常`;
+                        console.error(errorMessage, res, resource);
+                    }
+                    sessionStorage.setItem(key, JSON.stringify([targetUrl, resource.url]));
+                    sessionStorage.setItem(AsyncFilesListKey, `${sessionStorage.getItem(AsyncFilesListKey) || ''},${trimmedFile}`);
+                });
+            }
             resource.metadata = metadata;
             resource.resolveInit();
             return resource;
         } else {
-            const err = new Error(`未找到${sourceUrl}对应的 resource 实例`);
-            resource.rejectInit(err);
-            throw err;
+            throw new Error(`未找到${sourceUrl}对应的 resource 实例`);
         }
     }
 
@@ -281,34 +283,41 @@ export class Resource extends ModuleHook {
     }
 
     preload(elementModifier?: ElementModifier) {
-        if (!this.metadata) {
-            return Promise.reject(new Error('no resource metadata'));
-        }
-        if (this.preloaded) {
-            return;
-        }
-        const { css = [], js = [] } = this.metadata;
-        [
-            { type: 'script', urls: js },
-            { type: 'style', urls: css },
-        ].forEach(({ type, urls }) => {
-            urls.forEach(url => {
-                const targetUrl = this.resolveUrl(url);
-                if (this.strategy === ResourceLoadStrategy.Fetch) {
-                    const resourceType = type === 'script' ? ResourceType.Script : ResourceType.Style;
-                    resolveUrlByFetch(targetUrl, this.url, resourceType).then(resUrl => {
-                        this.cachedUrlMap[targetUrl] = resUrl;
-                    });
-                } else {
-                    const preloadLink = document.createElement("link");
-                    preloadLink.href = targetUrl;
-                    preloadLink.rel = "preload";
-                    preloadLink.as = type;
-                    document.head.appendChild(injectElementModifier(preloadLink, elementModifier));
-                }
+        const fn = () => {
+            if (!this.metadata) {
+                return Promise.reject(new Error('no resource metadata'));
+            }
+            if (this.preloaded) {
+                return;
+            }
+            const { css = [], js = [] } = this.metadata;
+            [
+                { type: 'script', urls: js },
+                { type: 'style', urls: css },
+            ].forEach(({ type, urls }) => {
+                urls.forEach(url => {
+                    const targetUrl = this.resolveUrl(url);
+                    if (this.strategy === ResourceLoadStrategy.Fetch) {
+                        const resourceType = type === 'script' ? ResourceType.Script : ResourceType.Style;
+                        resolveUrlByFetch(targetUrl, this.url, resourceType).then(resUrl => {
+                            this.cachedUrlMap[targetUrl] = resUrl;
+                        });
+                    } else {
+                        const preloadLink = document.createElement("link");
+                        preloadLink.href = targetUrl;
+                        preloadLink.rel = "preload";
+                        preloadLink.as = type;
+                        document.head.appendChild(injectElementModifier(preloadLink, elementModifier));
+                    }
+                });
             });
-        });
-        this.preloaded = true;
+            this.preloaded = true;
+        };
+        if (window.requestIdleCallback) {
+            window.requestIdleCallback(fn);
+        } else {
+            window.setTimeout(fn, 500);
+        }
     }
 
     /**
@@ -335,7 +344,5 @@ export class Resource extends ModuleHook {
         JModuleManager.removeInstance('resource', this.url);
     }
 }
-
-overrideCreateElement();
 
 Resource.addHook('resource:transformFetchResult', wrapperFetchedCodeHook);

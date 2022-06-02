@@ -3,10 +3,10 @@ export declare function wrapperFetchedCodeHook(options: {
     currentUrl: string;
     sourceUrl: string;
     type: ResourceType;
-    value: Blob;
+    buffer: Uint8Array;
 }): Promise<{
     currentUrl: string;
     sourceUrl: string;
     type: ResourceType;
-    value: Blob;
+    buffer: Uint8Array;
 }[]>;

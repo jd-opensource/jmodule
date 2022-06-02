@@ -1,23 +1,22 @@
 import { ResourceType } from '../config';
 
-const CodePrefix = (sourceUrl: string, currentUrl: string) => `(() => {const window = JModuleManager?.createWindow({ sourceUrl: '${sourceUrl}', currentUrl: '${currentUrl}' }) || window;with(window){`;
-const CodeSuffix = '}})()';
+const CodePrefix = (sourceUrl: string, currentUrl: string) => `(() => {
+    const options = { sourceUrl: '${sourceUrl}', currentUrl: '${currentUrl}' };
+    const document = JModuleManager?.createDocument?.(options) || document;`;
+const CodeSuffix = '})()';
 
-export async function wrapperFetchedCodeHook(options: { currentUrl: string, sourceUrl: string, type: ResourceType, value: Blob }) {
-    if (options.type !== ResourceType.Script || !(options.value instanceof Blob)) {
+export async function wrapperFetchedCodeHook(options: { currentUrl: string, sourceUrl: string, type: ResourceType, buffer: Uint8Array }) {
+    if (!options.type.includes('javascript') || !(options.buffer instanceof Uint8Array)) {
         return [options];
     }
-    const { currentUrl, sourceUrl, type, value } = options;
-    const buffer = await value.arrayBuffer();
-    const resBuffer = new Uint8Array(buffer);
+    const { buffer, ...others } = options;
     const encoder = new TextEncoder();
-    const prefix = CodePrefix(sourceUrl, currentUrl);
-    const suffix = CodeSuffix;
     return [{
-        currentUrl, sourceUrl, type,
-        value: new Blob(
-            [encoder.encode(`${prefix || ''};`), resBuffer, encoder.encode(`;${suffix || ''}`)],
-            { type },
-        )
+        ...others,
+        buffer: new Uint8Array([
+            ...encoder.encode(`${CodePrefix(options.sourceUrl, options.currentUrl)}`),
+            ...buffer,
+            ...encoder.encode(`${CodeSuffix}`),
+        ]),
     }];
 }

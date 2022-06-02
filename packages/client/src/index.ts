@@ -1,3 +1,4 @@
+import './globalManager';
 import { JModule, MODULE_STATUS } from './module';
 
 export { DepResolver } from './depResolver';
