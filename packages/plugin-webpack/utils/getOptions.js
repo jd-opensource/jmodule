@@ -8,6 +8,7 @@ const defaultOptions = {
     externalAlias: {},
     features: ['magic-modules', '$module', 'argvToRuntime'],
     moduleEntryFile: 'index.js',
+    mode: 'modules',
 };
 
 module.exports = function getOptions(options, compiler) {
@@ -16,13 +17,12 @@ module.exports = function getOptions(options, compiler) {
     const { mode, devConfig, ...others } = originOptions;
 
     // 处理基础编译配置
-    const localOptions = Object.assign({
-        isModulesMode: mode === 'modules',
-    }, defaultOptions, others);
+    const localOptions = Object.assign(defaultOptions, others);
     // 默认输出文件
     if (others.outputJSON && !others.moduleEntryFile) {
         localOptions.moduleEntryFile = `${defaultOptions.moduleEntryFile}on`;
     }
+    localOptions.isModulesMode = localOptions.mode === 'modules';
 
     // 填充 moduleConfig
     const { modulesConfig = {}, currentServer = '' } = devConfig || {};
