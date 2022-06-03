@@ -23,6 +23,7 @@ export enum ResourceLoadStrategy {
 declare global {
     interface Window {
         JModuleManager: any;
+        JModule: any;
     }
 }
 

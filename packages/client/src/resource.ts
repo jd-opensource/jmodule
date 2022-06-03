@@ -49,10 +49,12 @@ export interface ResourceMetadata {
 export interface ResourceOptions {
     type?: string,
     prefix?: string,
+    strategy?: ResourceLoadStrategy,
 };
 
 
 const scriptCacheByUrl: { [url: string]: HTMLScriptElement } = {};
+
 /**
  * 基于URL的资源管理，与模块无关
  * @class
@@ -75,12 +77,12 @@ export class Resource extends ModuleHook {
     server!: string;
     styleMounted: boolean = false;
     status: ResourceStatus = ResourceStatus.Init;
-    type!: string;
+    type!: string; // 入口资源类型
     prefix?: string;
     afterApplyScript!: Promise<HTMLScriptElement[]>;
     afterInit!: Promise<void>;
     preloaded = false;
-    strategy = ResourceLoadStrategy.Element; // 默认，直接用标签方式加载
+    strategy!: ResourceLoadStrategy; // 默认，直接用标签方式加载
     styleLoading = false;
     scriptLoading = false;
     cachedUrlMap: {
@@ -95,8 +97,8 @@ export class Resource extends ModuleHook {
         if (!url && typeof url !== 'string') {
             throw new Error('创建 Resource 实例异常, 缺少sourceUrl');
         }
-        if (JModuleManager.getInstance('resource', url)) {
-            return <Resource>JModuleManager.getInstance('resource', url);
+        if (JModuleManager.resource(url)) {
+            return <Resource>JModuleManager.resource(url);
         }
         this.url = url;
         this.server = new URL(url).origin;
@@ -110,7 +112,8 @@ export class Resource extends ModuleHook {
             this.resolveScript = resolve;
             this.rejectScript = reject;
         });
-        JModuleManager.registerInstance('resource', url, this);
+        this.strategy = options?.strategy || ResourceLoadStrategy.Element;
+        JModuleManager.resource(url, this);
     }
 
     static enableAsyncChunk() {
@@ -119,7 +122,7 @@ export class Resource extends ModuleHook {
 
     static getResource(sourceUrl?: string): Resource | void {
         console.warn('Resource.getResource() is deprecated, use JModuleManager.getInstance() instead');
-        return JModuleManager.getInstance('resource', sourceUrl);
+        return JModuleManager.resource(sourceUrl);
     }
 
     static getTrueResourceUrl(url: string): { resource: Resource, filepath: string } | void {
@@ -136,7 +139,7 @@ export class Resource extends ModuleHook {
     }
 
     static setResourceData(metadata: ResourceMetadata, sourceUrl: string): Resource {
-        const resource = JModuleManager.getInstance('resource', sourceUrl);
+        const resource = JModuleManager.resource(sourceUrl);
         if (resource) {
             if (resource.strategy === ResourceLoadStrategy.Element) {
                 const { asyncFiles = [] } = metadata;
@@ -178,6 +181,7 @@ export class Resource extends ModuleHook {
             this.initScriptElement = script;
             scriptCacheByUrl[this.url] = script;
         })).catch((e) => {
+            console.error(`资源加载失败: ${this.url}`);
             this.rejectInit(e);
         });
     }
@@ -209,10 +213,10 @@ export class Resource extends ModuleHook {
 
     async applyScript(elementModifier?: ElementModifier): Promise<HTMLScriptElement[]> {
         if (!this.metadata) {
-            return Promise.reject(new Error('no resource metadata'));
+            return Promise.reject(new Error(`no resource metadata: ${this.url}`));
         }
         if (this.scriptLoading) {
-            return Promise.reject(new Error('applyScript 已在执行中'));
+            return Promise.reject(new Error(`applyScript 已在执行中: ${this.url}`));
         }
         if (this.appliedScript) {
             return Promise.resolve(this.scriptElements);
@@ -341,7 +345,7 @@ export class Resource extends ModuleHook {
         this.initScriptElement = undefined;
         this.scriptElements = [];
         this.styleElements = []; // 解除对DOM的引用关系
-        JModuleManager.removeInstance('resource', this.url);
+        JModuleManager.resource(this.url, null);
     }
 }
 

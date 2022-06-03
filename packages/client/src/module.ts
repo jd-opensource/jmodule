@@ -3,11 +3,16 @@ import { ResourceMetadata, Resource } from './resource';
 import { DepResolver } from './depResolver';
 import { ModuleHook } from './hook';
 import { Matcher } from './utils/matcher';
+import { ResourceLoadStrategy } from './config';
 
 /* eslint no-underscore-dangle: ["error", { "allowAfterThis": true }] */
 /* eslint-disable no-eval */
 
 /* 调试模式打印信息：路由变更信息，初始化模块实例、资源实例信息，模块状态变更信息 */
+
+const manager = window.JModuleManager;
+
+const currentScript = document.currentScript || {};
 
 export interface ModuleOptions {
     type?: string,
@@ -17,6 +22,7 @@ export interface ModuleOptions {
     server?: string,
     autoBootstrap?: boolean,
     resourceType?: string,
+    resourceLoadStrategy: ResourceLoadStrategy,
     resourcePrefix?: string,
     resource?: Resource,
 }
@@ -101,8 +107,7 @@ const {
     filter,
     resolveModule,
     debug,
-    // @ts-ignore: JModule.config detect
-} = (window.JModule || {}).config || {};
+} = manager.getInitialConfig();
 const filterModule = (conf: ModuleOptions) => {
     const { key } = conf;
     let errorMsg;
@@ -121,16 +126,16 @@ const filterModule = (conf: ModuleOptions) => {
 };
 
 async function getAndCheckModule(key: string): Promise<JModule> {
-    const module = moduleMap[key];
+    const module = manager.jmodule(key);
     if (module) {
         return Promise.resolve(module);
     }
-    if (typeof resolveModule !== 'function') {
+    if (typeof resolveModule !== 'function' || !manager.defaultJModule) {
         return Promise.reject(new Error(`${key}:模块未注册`));
     }
     return (<ResolveModule>resolveModule)(key).then(async (moduleConf) => {
         /* eslint-disable no-use-before-define */
-        const [tempModule] = await JModule.registerModules([moduleConf]);
+        const [tempModule] = await manager.defaultJModule.registerModules([moduleConf]);
         if (tempModule) {
             return Promise.resolve(<JModule>tempModule);
         } else {
@@ -140,28 +145,29 @@ async function getAndCheckModule(key: string): Promise<JModule> {
 }
 async function initModule(module: JModule, pkg: ModuleMetadata): Promise<JModule> {
     const { key } = module;
+    const runHook = (module.constructor as any).runHook;
     ModuleDebug.print({ key, message: '开始执行初始化函数', instance: pkg });
     try {
         // module init
-        await ModuleHook.runHook('beforeInit', module, pkg);
+        await runHook('beforeInit', module, pkg);
         if (typeof pkg.init === 'function') {
             ModuleDebug.printContinue('执行 init 函数');
             await pkg.init(module);
         }
-        await ModuleHook.runHook('afterInit', module, pkg);
+        await runHook('afterInit', module, pkg);
 
         // imports
-        await ModuleHook.runHook('beforeImports', module, pkg);
+        await runHook('beforeImports', module, pkg);
         (pkg.imports || []).forEach((moduleKey: string) => {
             ModuleDebug.printContinue('加载依赖模块');
             getAndCheckModule(moduleKey).then(item => item.load());
         });
-        await ModuleHook.runHook('afterImports', module, pkg);
+        await runHook('afterImports', module, pkg);
 
         // exports
-        await ModuleHook.runHook('beforeExports', module, pkg);
+        await runHook('beforeExports', module, pkg);
         Object.assign(moduleExports, { [key]: pkg.exports });
-        await ModuleHook.runHook('afterExports', module, pkg);
+        await runHook('afterExports', module, pkg);
 
         return module;
     } catch(e) {
@@ -228,7 +234,7 @@ export class JModule extends ModuleHook {
         resolve: ModuleResolver,
         reject: () => void,
     };
-
+    static id: number;
     type?: string;
     key: string;
     name: string;
@@ -251,6 +257,7 @@ export class JModule extends ModuleHook {
     constructor({
         key, url, server, name, autoBootstrap = true,
         resourceType, resourcePrefix, resource, type,
+        resourceLoadStrategy,
         ...others
     }: ModuleOptions) {
         const domain = server || extractOrigin(url);
@@ -316,6 +323,7 @@ export class JModule extends ModuleHook {
             : new Resource(url, {
                 type: resourceType,
                 prefix: resourcePrefix,
+                strategy: resourceLoadStrategy,
             });
         /**
          * 加载模块后自动运行
@@ -334,7 +342,13 @@ export class JModule extends ModuleHook {
          */
         this.metadata = others;
 
+        // 建立资源与 module 之间的状态更新
         watchModuleStatus.bind(this, this.resource);
+
+        // 登记资源地址 与 moduleKey 之间的映射关系
+        manager.mapResourceUrlAndModuleKey(this.resource.url, this.key);
+
+        manager.jmodule(this.key, this);
     }
 
     set status(status) {
@@ -401,8 +415,8 @@ export class JModule extends ModuleHook {
      * @param  {String} key moduleKey
      * @return {jModuleInstance}
      */
-    static getModule(key: string): JModule {
-        return moduleMap[key];
+    static getModule(key: string): JModule|undefined {
+        return manager.jmodule(key);
     }
 
     /**
@@ -411,21 +425,21 @@ export class JModule extends ModuleHook {
      * @param  {String} key moduleKey
      * @return {Promise<jModuleInstance>}
      */
-    static async getModuleAsync(key: string, timeout: number): Promise<JModule> {
-        const module = JModule.getModule(key);
+    static async getModuleAsync(key: string, timeout?: number): Promise<JModule> {
+        const module = manager.jmodule(key);
         return module ? Promise.resolve(module) : new Promise((resolve, reject) => {
             if (timeout) {
                 const timer = setTimeout(() => {
                     clearTimeout(timer);
-                    if (!JModule.getModule(key)) {
+                    if (!manager.jmodule(key)) {
                         reject(new Error(`find moudle ${key} timeout`));
                     }
                 }, timeout);
             }
             function resolverListener() {
-                if (JModule.getModule(key)) {
+                if (manager.jmodule(key)) {
                     window.removeEventListener('module.afterRegister', resolverListener);
-                    resolve(JModule.getModule(key));
+                    resolve(manager.jmodule(key));
                 }
             }
             window.addEventListener('module.afterRegister', resolverListener);
@@ -443,18 +457,25 @@ export class JModule extends ModuleHook {
      *     });
      * @return {Promise<var>}
      */
-    static require(namespace: string): Promise<any> {
+    static async require(namespace: string): Promise<any> {
+        const path = namespace.split('.');
+        const moduleKey = path[0];
+        const targetModule = await JModule.getModuleAsync(moduleKey);
+        if (!targetModule) {
+            return Promise.reject(`module ${moduleKey} not found`);
+        }
+        if (targetModule.constructor !== JModule && !moduleMap[moduleKey]) {
+            return (targetModule.constructor as any).require(namespace);
+        }
+        // 找到注册另一个应用的构造函数
         if (moduleCache[namespace]) {
             return Promise.resolve(moduleCache[namespace]);
         }
-        const path = namespace.split('.');
         return new Promise((resolve) => {
-            const moduleName = path[0];
-            const module = moduleMap[moduleName];
-            if (module && module.status === MODULE_STATUS.done) {
+            if (targetModule && targetModule.status === MODULE_STATUS.done) {
                 resolve(null);
             } else {
-                window.addEventListener(`module.${moduleName}.${MODULE_STATUS.done}`, resolve);
+                window.addEventListener(`module.${moduleKey}.${MODULE_STATUS.done}`, resolve);
             }
         }).then(() => {
             const res = path.reduce((obj, key) => (obj || {})[key], moduleExports);
@@ -545,9 +566,23 @@ export class JModule extends ModuleHook {
         if (!loaderUrl) {
             throw new Error('浏览器不支持 document.currentScript');
         }
+        // 任意 Resource 执行该函数均等价
         return Resource.setResourceData(resourceMetadata, loaderUrl.replace(/(\?|&)__v__=\d+$/, ''));
     }
 
+    static getMeta() {
+        const { src: url, dataset } = <HTMLScriptElement>currentScript || {};
+        if (!url) {
+            return {};
+        }
+        return {
+            url,
+            server: new URL(url).origin,
+            resourceUrl: dataset.jmoduleFrom,
+        };
+    }
+
+    // todo
     /**
      * 引用平台暴露的对象
      *
@@ -556,17 +591,20 @@ export class JModule extends ModuleHook {
      * @param  {Object} config      通过编译工具注入的相关环境参数
      * @return {var}
      */
-    static import(namespace = '', config: HashObject|Matcher = defaultExportsMatcher) { // 用于导入平台接口
+    static import(namespace = '', config: HashObject|Matcher = defaultExportsMatcher, force = false) { // 用于导入平台接口
         if (namespace === '$module.meta') {
-            const { src: url, dataset } = <HTMLScriptElement>document.currentScript || {};
-            if (!url) {
-                return {};
+            return this.getMeta();
+        }
+        
+        // todo: 如何优化？
+        if (!force) {
+            const { dataset } = <HTMLScriptElement>currentScript || {};
+            const sourceUrl = dataset?.jmoduleFrom;
+            // 从 sourceUrl 找到对应的 module
+            const [targetModule] = manager.getModulesByResourceUrl(sourceUrl) || [];
+            if (targetModule && targetModule.constructor !== JModule) {
+                return targetModule.constructor.import(namespace, config, true);
             }
-            return {
-                url,
-                server: new URL(url).origin,
-                resourceUrl: dataset.jmoduleFrom,
-            };
         }
         const matchedExports = new Matcher(config).getCache();
         const res = namespace.split('.').reduce((res, key) => (res || {})[key], matchedExports);
@@ -613,4 +651,6 @@ export class JModule extends ModuleHook {
         return resource;
     }
 }
+
+JModule.id = manager.registerJModule(JModule);
 JModule.debug = debug;

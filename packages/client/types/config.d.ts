@@ -20,6 +20,7 @@ export declare enum ResourceLoadStrategy {
 declare global {
     interface Window {
         JModuleManager: any;
+        JModule: any;
     }
 }
 export declare const AsyncFilesMapPrefix = "jmodule:filesMap:";

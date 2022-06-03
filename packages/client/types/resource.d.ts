@@ -8,6 +8,7 @@ export interface ResourceMetadata {
 export interface ResourceOptions {
     type?: string;
     prefix?: string;
+    strategy?: ResourceLoadStrategy;
 }
 /**
  * 基于URL的资源管理，与模块无关

@@ -1,6 +1,7 @@
 import { ResourceMetadata, Resource } from './resource';
 import { ModuleHook } from './hook';
 import { Matcher } from './utils/matcher';
+import { ResourceLoadStrategy } from './config';
 export interface ModuleOptions {
     type?: string;
     key: string;
@@ -9,6 +10,7 @@ export interface ModuleOptions {
     server?: string;
     autoBootstrap?: boolean;
     resourceType?: string;
+    resourceLoadStrategy: ResourceLoadStrategy;
     resourcePrefix?: string;
     resource?: Resource;
 }
@@ -56,6 +58,7 @@ export declare enum MODULE_STATUS {
 export declare class JModule extends ModuleHook {
     private static _debug?;
     private completeResolver;
+    static id: number;
     type?: string;
     key: string;
     name: string;
@@ -78,7 +81,7 @@ export declare class JModule extends ModuleHook {
     /**
      * @constructor
      */
-    constructor({ key, url, server, name, autoBootstrap, resourceType, resourcePrefix, resource, type, ...others }: ModuleOptions);
+    constructor({ key, url, server, name, autoBootstrap, resourceType, resourcePrefix, resource, type, resourceLoadStrategy, ...others }: ModuleOptions);
     set status(status: MODULE_STATUS);
     /**
      * 获取模块状态
@@ -104,14 +107,14 @@ export declare class JModule extends ModuleHook {
      * @param  {String} key moduleKey
      * @return {jModuleInstance}
      */
-    static getModule(key: string): JModule;
+    static getModule(key: string): JModule | undefined;
     /**
      * 根据 moduleKey 异步获取模块实例
      * @static
      * @param  {String} key moduleKey
      * @return {Promise<jModuleInstance>}
      */
-    static getModuleAsync(key: string, timeout: number): Promise<JModule>;
+    static getModuleAsync(key: string, timeout?: number): Promise<JModule>;
     /**
      * 引用其它模块暴露的功能
      *
@@ -173,6 +176,15 @@ export declare class JModule extends ModuleHook {
      */
     static define: typeof define;
     static applyResource(resourceMetadata: ResourceMetadata, resourceLoaderUrl?: string): Resource;
+    static getMeta(): {
+        url?: undefined;
+        server?: undefined;
+        resourceUrl?: undefined;
+    } | {
+        url: string;
+        server: string;
+        resourceUrl: string | undefined;
+    };
     /**
      * 引用平台暴露的对象
      *
@@ -181,7 +193,7 @@ export declare class JModule extends ModuleHook {
      * @param  {Object} config      通过编译工具注入的相关环境参数
      * @return {var}
      */
-    static import(namespace?: string, config?: HashObject | Matcher): any;
+    static import(namespace?: string, config?: HashObject | Matcher, force?: boolean): any;
     static _import(namespace?: string, config?: {}): any;
     /**
      * 加载模块

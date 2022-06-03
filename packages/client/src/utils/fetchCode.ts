@@ -6,7 +6,7 @@ export async function resolveUrlByFetch(
     sourceUrl: string,
     type: ResourceType,
 ) {
-    const resource = window.JModuleManager.getInstance('resource', sourceUrl);
+    const resource = window.JModuleManager.resource(sourceUrl);
     if (resource.cachedUrlMap[currentUrl]) {
         return resource.cachedUrlMap[currentUrl];
     }
