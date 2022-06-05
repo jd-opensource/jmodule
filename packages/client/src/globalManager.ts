@@ -19,6 +19,10 @@ if (!window.JModuleManager) {
 
         private static resourceUrlAndModuleKeyMap: Record<string, string[]> = {};
 
+        private static fileMapCache: Record<string, [string, string|undefined]> = {};
+
+        private static fileListCache: string[] = [];
+
         static nextJModuleId = 0;
 
         static defaultJModule?: () => JModule;
@@ -29,6 +33,27 @@ if (!window.JModuleManager) {
 
         static getInitialConfig() {
             return initialConfig;
+        }
+
+        static getFileMapCache(key: string) {
+            return this.fileMapCache[key];
+        }
+
+        static setFileMapCache(key: string, val: [string, string]) {
+            const oldTarget = this.fileMapCache[key]?.[0];
+            if (oldTarget && oldTarget !== val[0]) {
+                const errorMessage = `建立异步组件索引 "${key}" 出现冲突，可能会导致异步组件加载异常`;
+                console.error(errorMessage, val);
+            }
+            return this.fileMapCache[key] = val;
+        }
+
+        static appendFileList(url: string) {
+            this.fileListCache.push(url);
+        }
+
+        static getFileList() {
+            return this.fileListCache;
         }
 
         static resource(sourceUrl: string, instance?: Resource|null): Resource|undefined {

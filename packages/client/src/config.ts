@@ -26,8 +26,3 @@ declare global {
         JModule: any;
     }
 }
-
-export const AsyncFilesMapPrefix = 'jmodule:filesMap:';
-
-export const AsyncFilesListKey = 'jmodule:filesList';
-

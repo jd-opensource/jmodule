@@ -1,4 +1,3 @@
-import { AsyncFilesMapPrefix, AsyncFilesListKey } from './config';
 import { ResourceType, ResourceStatus, ResourceLoadStrategy } from './config';
 import { resolveUrlByFetch } from './utils/fetchCode';
 import JModuleManager from './globalManager';
@@ -40,6 +39,39 @@ function patchInitUrl(url: string): string {
     return `${url}${url.indexOf('?') > 0 ? '&' : '?' }__v__=${Date.now()}`;
 }
 
+const queryReg = /\?.+$/;
+
+function cacheUrlMap(metadata: ResourceMetadata, sourceUrl: string) {
+    const { asyncFiles = [] } = metadata;
+    asyncFiles.forEach(file => {
+        const key = file.replace(queryReg, '');
+        const targetUrl = resolveUrl(file, sourceUrl, metadata);
+        manager.setFileMapCache(key, [targetUrl, sourceUrl]);
+        manager.appendFileList(key);
+    });
+}
+
+function resolveUrl(url: string, sourceUrl: string, metadata?: ResourceMetadata, prefix?: string): string {
+    try {
+        if (url.startsWith('X_WEBPACK_SERVER')) {
+            console.warn('X_WEBPACK_SERVER 已废弃, 下个版本将弃用');
+            if (metadata?.asyncFiles) {
+                // 新版：相对路径
+                url = url.replace(/^X_WEBPACK_SERVER\/?/, '');
+            } else { // 旧版：绝对路径
+                url = url.replace(/^X_WEBPACK_SERVER/, '');
+            }
+        }
+        if (!prefix) {
+            return new URL(url, sourceUrl).href;
+        }
+        return `${prefix}${url}`;
+    } catch (e) {
+        // ignore error: 浏览器不支持（IE）或者 参数异常
+        return url;
+    }
+}
+
 export interface ResourceMetadata {
     js: string[],
     css: string[],
@@ -54,6 +86,8 @@ export interface ResourceOptions {
 
 
 const scriptCacheByUrl: { [url: string]: HTMLScriptElement } = {};
+
+const manager = window.JModuleManager;
 
 /**
  * 基于URL的资源管理，与模块无关
@@ -141,21 +175,6 @@ export class Resource extends ModuleHook {
     static setResourceData(metadata: ResourceMetadata, sourceUrl: string): Resource {
         const resource = JModuleManager.resource(sourceUrl);
         if (resource) {
-            if (resource.strategy === ResourceLoadStrategy.Element) {
-                const { asyncFiles = [] } = metadata;
-                asyncFiles.forEach(file => {
-                    const trimmedFile = file.replace(/\?.+$/, '');
-                    const key = `${AsyncFilesMapPrefix}${trimmedFile}`;
-                    const res = sessionStorage.getItem(key);
-                    const targetUrl = resource.resolveUrl(file);
-                    if (res && !res.includes(targetUrl)) {
-                        const errorMessage = `建立异步组件索引 "${file}" 出现冲突，可能会导致异步组件加载异常`;
-                        console.error(errorMessage, res, resource);
-                    }
-                    sessionStorage.setItem(key, JSON.stringify([targetUrl, resource.url]));
-                    sessionStorage.setItem(AsyncFilesListKey, `${sessionStorage.getItem(AsyncFilesListKey) || ''},${trimmedFile}`);
-                });
-            }
             resource.metadata = metadata;
             resource.resolveInit();
             return resource;
@@ -187,24 +206,7 @@ export class Resource extends ModuleHook {
     }
 
     resolveUrl(url: string) {
-        try {
-            if (url.startsWith('X_WEBPACK_SERVER')) {
-                console.warn('X_WEBPACK_SERVER 已废弃, 下个版本将弃用');
-                if (this.metadata && this.metadata.asyncFiles) {
-                    // 新版：相对路径
-                    url = url.replace(/^X_WEBPACK_SERVER\/?/, '');
-                } else { // 旧版：绝对路径
-                    url = url.replace(/^X_WEBPACK_SERVER/, '');
-                }
-            }
-            if (!this.prefix) {
-                return new URL(url, this.url).href;
-            }
-            return `${this.prefix}${url}`;
-        } catch (e) {
-            // ignore error: 浏览器不支持（IE）或者 参数异常
-            return url;
-        }
+        return resolveUrl(url, this.url, this.metadata, this.prefix);
     }
 
     setStatus(status: ResourceStatus) {
@@ -232,12 +234,13 @@ export class Resource extends ModuleHook {
                 this.url,
                 ResourceType.Script,
             )))
-            : jsUrls;
+            : (cacheUrlMap(this.metadata, this.url), jsUrls);
         return Promise.all(entryUrls.map(url => loadScript(
             url,
             this.url,
             script => {
                 injectElementModifier(script, elementModifier);
+                script.dataset.jmoduleFrom = this.url;
                 this.scriptElements.push(script);
             },
         ))).then(() => {
@@ -279,7 +282,11 @@ export class Resource extends ModuleHook {
                 ResourceType.Style,
             )))
             : cssUrls;
-        this.styleElements = entryUrls.map(url => addStyle(url, elementModifier));
+        this.styleElements = entryUrls.map(url => {
+            const el = addStyle(url, elementModifier);
+            el.dataset.jmoduleFrom = this.url;
+            return el;
+        });
         this.appendedAsyncStyleElements?.forEach(item => document.head.appendChild(item));
         this.styleMounted = true;
         this.styleLoading = false;

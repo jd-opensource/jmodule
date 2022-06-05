@@ -1,21 +1,18 @@
 // 处理script加载时异步文件加载问题
 
-
-import { AsyncFilesMapPrefix, AsyncFilesListKey } from '../config';
-
 // 处理 webpack 的async chunk
 export function patchCreateElement(originalCreateElement: typeof document.createElement) {
+    const manager = window.JModuleManager;
     // eslint-disable-next-line no-underscore-dangle
     if ((document.createElement as any).__original__) {
         return;
     }
 
     const patchElement = (val: string, element: HTMLElement) => {
-        const files = (sessionStorage.getItem(AsyncFilesListKey) || '').split(',');
+        const files: string[] = manager.getFileList();
         const file = files.find(item => item && val.includes(item));
-        const value = sessionStorage.getItem(`${AsyncFilesMapPrefix}${file}`);
-        const [targetUrl, jmoduleFrom] = value ? JSON.parse(value) : [val, undefined];
-        // eslint-disable-next-line no-param-reassign
+        const value = manager.getFileMapCache(file);
+        const [targetUrl, jmoduleFrom] = value || [val, undefined];
         element.dataset.jmoduleFrom = jmoduleFrom;
         return targetUrl;
     };
