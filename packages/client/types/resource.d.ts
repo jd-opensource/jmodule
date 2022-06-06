@@ -58,7 +58,7 @@ export declare class Resource extends ModuleHook {
     setStatus(status: ResourceStatus): void;
     applyScript(elementModifier?: ElementModifier): Promise<HTMLScriptElement[]>;
     applyStyle(elementModifier?: ElementModifier): Promise<HTMLLinkElement[]>;
-    preload(elementModifier?: ElementModifier): void;
+    preload(elementModifier?: ElementModifier): Promise<never> | undefined;
     /**
      * 移除样式
      */
