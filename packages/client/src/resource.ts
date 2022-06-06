@@ -294,41 +294,34 @@ export class Resource extends ModuleHook {
     }
 
     preload(elementModifier?: ElementModifier) {
-        const fn = () => {
-            if (!this.metadata) {
-                return Promise.reject(new Error('no resource metadata'));
-            }
-            if (this.preloaded) {
-                return;
-            }
-            const { css = [], js = [] } = this.metadata;
-            [
-                { type: 'script', urls: js },
-                { type: 'style', urls: css },
-            ].forEach(({ type, urls }) => {
-                urls.forEach(url => {
-                    const targetUrl = this.resolveUrl(url);
-                    if (this.strategy === ResourceLoadStrategy.Fetch) {
-                        const resourceType = type === 'script' ? ResourceType.Script : ResourceType.Style;
-                        resolveUrlByFetch(targetUrl, this.url, resourceType).then(resUrl => {
-                            this.cachedUrlMap[targetUrl] = resUrl;
-                        });
-                    } else {
-                        const preloadLink = document.createElement("link");
-                        preloadLink.href = targetUrl;
-                        preloadLink.rel = "preload";
-                        preloadLink.as = type;
-                        document.head.appendChild(injectElementModifier(preloadLink, elementModifier));
-                    }
-                });
-            });
-            this.preloaded = true;
-        };
-        if (window.requestIdleCallback) {
-            window.requestIdleCallback(fn);
-        } else {
-            window.setTimeout(fn, 500);
+        if (!this.metadata) {
+            return Promise.reject(new Error('no resource metadata'));
         }
+        if (this.preloaded) {
+            return;
+        }
+        const { css = [], js = [] } = this.metadata;
+        [
+            { type: 'script', urls: js },
+            { type: 'style', urls: css },
+        ].forEach(({ type, urls }) => {
+            urls.forEach(url => {
+                const targetUrl = this.resolveUrl(url);
+                if (this.strategy === ResourceLoadStrategy.Fetch) {
+                    const resourceType = type === 'script' ? ResourceType.Script : ResourceType.Style;
+                    resolveUrlByFetch(targetUrl, this.url, resourceType).then(resUrl => {
+                        this.cachedUrlMap[targetUrl] = resUrl;
+                    });
+                } else {
+                    const preloadLink = document.createElement("link");
+                    preloadLink.href = targetUrl;
+                    preloadLink.rel = "preload";
+                    preloadLink.as = type;
+                    document.head.appendChild(injectElementModifier(preloadLink, elementModifier));
+                }
+            });
+        });
+        this.preloaded = true;
     }
 
     /**

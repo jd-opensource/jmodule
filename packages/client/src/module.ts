@@ -633,22 +633,32 @@ export class JModule extends ModuleHook {
         targetStatus: 'init'|'preload'|'load' = 'load',
         options: LoadOptions = { autoApplyStyle: true },
     ): Promise<Resource|void> {
-        const { resource } = this;
-        if (this.status < MODULE_STATUS.loading) {
-            this.status = MODULE_STATUS.loading;
-            resource.init();
-        }
-        await resource.afterInit;
-        if (targetStatus === 'preload') {
-            resource.preload(options.elementModifier);
+        const fn = async () => {
+            const { resource } = this;
+            if (this.status < MODULE_STATUS.loading) {
+                this.status = MODULE_STATUS.loading;
+                resource.init();
+            }
+            await resource.afterInit;
+            if (targetStatus === 'preload') {
+                resource.preload(options.elementModifier);
+            } 
+            if (targetStatus === 'load') {
+                resource.applyScript(options.elementModifier);
+                if (options.autoApplyStyle) {
+                    resource.applyStyle(options.elementModifier);
+                }
+            }
+            return resource;
         }
         if (targetStatus === 'load') {
-            resource.applyScript(options.elementModifier);
-            if (options.autoApplyStyle) {
-                resource.applyStyle(options.elementModifier);
-            }
+            return fn();
         }
-        return resource;
+        if (window.requestIdleCallback) {
+            window.requestIdleCallback(fn);
+        } else {
+            window.setTimeout(fn, 500);
+        }
     }
 }
 
