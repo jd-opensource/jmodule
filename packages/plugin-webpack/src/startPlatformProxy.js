@@ -24,7 +24,7 @@ function defineModule(moduleKey, modulesConfig = {}) {
 function getModulesDefineString(modulesList) {
     const modulesJsonStr = JSON.stringify(modulesList);
     // dev 模式默认情况下不分离 style，appendStyle 将不会生效
-    return `JModule.registerModules(${modulesJsonStr}).then((modules) => {
+    return `(JModuleManager && JModuleManager.defaultJModule || JModule).registerModules(${modulesJsonStr}).then((modules) => {
         modules.forEach(module => module.load());
     });`;
 }
@@ -131,7 +131,7 @@ module.exports = function startPlatformProxy({
                 const content = buffer.toString('utf8');
                 return content
                     .replace(/([\w'"\s\/]+>)([\s\n]*)(<\/head>){1}?/ig, (a, b, c, d) => `${b}${preConfiguration}${d}`)
-                    .replace(/([\w'"\s\/]+>)([\s\n]*)(<\/html>[\s\n]*$)/ig, (a, b, c, d) => `${b}<script src="${modulesUrl}"></script>${d}`);
+                    .replace(/([\w'"\s\/]+>)([\s\n]*)(<\/html>[\s\n]*$)/ig, (a, b, c, d) => `${b}<script defer src="${modulesUrl}"></script>${d}`);
             }).then((str) => res.end(str)).catch((e) => {
                 res.end(e);
             });
