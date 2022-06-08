@@ -53,6 +53,9 @@ function define(moduleKey: any, metadata?: any): Promise<JModule> {
             let defer = Promise.resolve()
                 .then(() => initModule(module, localMetadata))
                 .then((res) => {
+                    const { activate, deactivate } = (module.constructor as any).getDefinedType(module.type);
+                    module.activate = activate;
+                    module.deactivate = deactivate;
                     module.status = MODULE_STATUS.done; // 初始化完成
                     return res;
                 })
@@ -211,6 +214,11 @@ function extractOrigin(url = '') {
 
 type ModuleResolver = (value: JModule) => void;
 
+export type TypeHandler = (module: JModule, options: ModuleMetadata) => ({
+    activate: (parentEl: Element) => Promise <void>,
+    deactivate: () => Promise <void>,
+})
+
 /**
  * @class
  * @constructor
@@ -234,6 +242,7 @@ export class JModule extends ModuleHook {
         resolve: ModuleResolver,
         reject: () => void,
     };
+    private static typeHandlers: { [key: string]: TypeHandler } = {};
     static id: number;
     type?: string;
     key: string;
@@ -244,6 +253,8 @@ export class JModule extends ModuleHook {
     isRemoteModule?: boolean;
     domain: string;
     bootstrap?: { (): Promise<JModule> };
+    activate?: { (parentEl: Element): Promise<void> };
+    deactivate?: { (): Promise<void> };
     resource: Resource;
     metadata?:{[key: string]: any};
     hooks: {
@@ -400,6 +411,28 @@ export class JModule extends ModuleHook {
     static get debug(): boolean {
         return JModule._debug || false;
     }
+
+    /**
+     * 定义子应用类型的处理逻辑
+     * @param  {String} type 子应用类型
+     * @param  {TypeHandler} typeHandler 类型处理函数
+     */
+    static defineType(type: string, typeHandler: TypeHandler) {
+        JModule.typeHandlers[type] = typeHandler;
+    }
+
+    /**
+     * 读取子应用类型的处理函数
+     * @param  {String} type 子应用类型
+     * @return  {TypeHandler} 类型处理函数
+     */
+    static getDefinedType(type: string) {
+        return JModule.typeHandlers[type] || (() => ({
+            activate: () => {},
+            deactivate: () => {},
+        }));
+    }
+
 
     /**
      * 获取已注册的模块列表

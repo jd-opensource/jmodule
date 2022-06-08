@@ -1,0 +1,60 @@
+{
+  "name": "@jmodule/host",
+  "version": "4.3.0-0",
+  "description": "JModule运行时",
+  "author": "feirpri <feirpri@gmail.com>",
+  "license": "MIT",
+  "scripts": {
+    "build": "node ./build/build.js",
+    "lint": "eslint --ext .js src"
+  },
+  "main": "./dist/index.js",
+  "browserslist": [
+    "> 1%",
+    "last 2 versions",
+    "not ie <= 10"
+  ],
+  "dependencies": {
+    "@jmodule/client": "workspace: *"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.1.0",
+    "@babel/plugin-transform-arrow-functions": "^7.0.0",
+    "@babel/plugin-transform-runtime": "^7.5.5",
+    "@babel/preset-env": "^7.1.0",
+    "@babel/runtime": "^7.5.5",
+    "@types/requestidlecallback": "^0.3.4",
+    "babel-eslint": "^9.0.0",
+    "babel-loader": "^8.0.2",
+    "eslint": "^5.6.0",
+    "eslint-config-airbnb-base": "^13.1.0",
+    "eslint-friendly-formatter": "^4.0.1",
+    "eslint-loader": "^2.1.1",
+    "eslint-plugin-import": "^2.14.0",
+    "friendly-errors-webpack-plugin": "^1.7.0",
+    "ts-loader": "^7.0.4",
+    "tslib": "^2.0.0",
+    "typedoc": "^0.22.15",
+    "typescript": "^3.9.3",
+    "webpack": "^4.41.6",
+    "worker-loader": "^2.0.0"
+  },
+  "files": [
+    "src",
+    "dist",
+    "types"
+  ],
+  "types": "types/index.d.ts",
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/jdtdevops/jmodule.git"
+  },
+  "keywords": [
+    "jmodule",
+    "micro"
+  ],
+  "bugs": {
+    "url": "https://github.com/jdtdevops/jmodule/issues"
+  },
+  "homepage": "https://github.com/jdtdevops/jmodule#readme"
+}

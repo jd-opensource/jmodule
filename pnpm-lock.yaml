@@ -184,6 +184,53 @@ importers:
       eslint-plugin-vue: 6.2.2_eslint@6.8.0
       vue-template-compiler: 2.6.14
 
+  packages/host:
+    specifiers:
+      '@babel/core': ^7.1.0
+      '@babel/plugin-transform-arrow-functions': ^7.0.0
+      '@babel/plugin-transform-runtime': ^7.5.5
+      '@babel/preset-env': ^7.1.0
+      '@babel/runtime': ^7.5.5
+      '@jmodule/client': 'workspace: *'
+      '@types/requestidlecallback': ^0.3.4
+      babel-eslint: ^9.0.0
+      babel-loader: ^8.0.2
+      eslint: ^5.6.0
+      eslint-config-airbnb-base: ^13.1.0
+      eslint-friendly-formatter: ^4.0.1
+      eslint-loader: ^2.1.1
+      eslint-plugin-import: ^2.14.0
+      friendly-errors-webpack-plugin: ^1.7.0
+      ts-loader: ^7.0.4
+      tslib: ^2.0.0
+      typedoc: ^0.22.15
+      typescript: ^3.9.3
+      webpack: ^4.41.6
+      worker-loader: ^2.0.0
+    dependencies:
+      '@jmodule/client': link:../client
+    devDependencies:
+      '@babel/core': 7.17.9
+      '@babel/plugin-transform-arrow-functions': 7.16.7_@babel+core@7.17.9
+      '@babel/plugin-transform-runtime': 7.17.0_@babel+core@7.17.9
+      '@babel/preset-env': 7.16.11_@babel+core@7.17.9
+      '@babel/runtime': 7.17.8
+      '@types/requestidlecallback': 0.3.4
+      babel-eslint: 9.0.0
+      babel-loader: 8.1.0_ed05edf5a1bcf160e672866665559b4b
+      eslint: 5.16.0
+      eslint-config-airbnb-base: 13.2.0_67868b859778e000d863e44a6dde8f50
+      eslint-friendly-formatter: 4.0.1
+      eslint-loader: 2.2.1_eslint@5.16.0+webpack@4.44.2
+      eslint-plugin-import: 2.25.4_eslint@5.16.0
+      friendly-errors-webpack-plugin: 1.7.0_webpack@4.44.2
+      ts-loader: 7.0.5_typescript@3.9.10
+      tslib: 2.3.1
+      typedoc: 0.22.15_typescript@3.9.10
+      typescript: 3.9.10
+      webpack: 4.44.2
+      worker-loader: 2.0.0_webpack@4.44.2
+
   packages/plugin-webpack:
     specifiers:
       chalk: ^2.4.2
@@ -5285,6 +5332,22 @@ packages:
       webpack: 4.44.1
     dev: true
 
+  /babel-loader/8.1.0_ed05edf5a1bcf160e672866665559b4b:
+    resolution: {integrity: sha512-7q7nC1tYOrqvUrN3LQK4GwSk/TQorZSOlO9C+RZDZpODgyN4ZlCqE5q9cDsyWOliN+aU9B4JX01xK9eJXowJLw==}
+    engines: {node: '>= 6.9'}
+    peerDependencies:
+      '@babel/core': ^7.0.0
+      webpack: '>=2'
+    dependencies:
+      '@babel/core': 7.17.9
+      find-cache-dir: 2.1.0
+      loader-utils: 1.4.0
+      mkdirp: 0.5.5
+      pify: 4.0.1
+      schema-utils: 2.7.1
+      webpack: 4.44.2
+    dev: true
+
   /babel-plugin-dynamic-import-node/2.3.3:
     resolution: {integrity: sha512-jZVI+s9Zg3IqA/kdi0i6UDCybUI3aSBLnglhYbSSjKlV7yF1F/5LWv8MakQmvYpnbJDS6fcBL2KzHSxNCMtWSQ==}
     dependencies:
@@ -7709,6 +7772,22 @@ packages:
       webpack: 4.44.1
     dev: true
 
+  /eslint-loader/2.2.1_eslint@5.16.0+webpack@4.44.2:
+    resolution: {integrity: sha512-RLgV9hoCVsMLvOxCuNjdqOrUqIj9oJg8hF44vzJaYqsAHuY9G2YAeN3joQ9nxP0p5Th9iFSIpKo+SD8KISxXRg==}
+    deprecated: This loader has been deprecated. Please use eslint-webpack-plugin
+    peerDependencies:
+      eslint: '>=1.6.0 <7.0.0'
+      webpack: '>=2.0.0 <5.0.0'
+    dependencies:
+      eslint: 5.16.0
+      loader-fs-cache: 1.0.3
+      loader-utils: 1.4.0
+      object-assign: 4.1.1
+      object-hash: 1.3.1
+      rimraf: 2.7.1
+      webpack: 4.44.2
+    dev: true
+
   /eslint-loader/2.2.1_eslint@6.8.0+webpack@4.44.1:
     resolution: {integrity: sha512-RLgV9hoCVsMLvOxCuNjdqOrUqIj9oJg8hF44vzJaYqsAHuY9G2YAeN3joQ9nxP0p5Th9iFSIpKo+SD8KISxXRg==}
     deprecated: This loader has been deprecated. Please use eslint-webpack-plugin
@@ -8607,7 +8686,7 @@ packages:
       unpipe: 1.0.0
 
   /find-cache-dir/0.1.1:
-    resolution: {integrity: sha1-yN765XyKUqinhPnjHFfHQumToLk=}
+    resolution: {integrity: sha512-Z9XSBoNE7xQiV6MSgPuCfyMokH2K7JdpRkOYE1+mu3d4BFJtx3GW+f6Bo4q8IX6rlf5MYbLBKW0pjl2cWdkm2A==}
     engines: {node: '>=0.10.0'}
     dependencies:
       commondir: 1.0.1
@@ -8645,7 +8724,7 @@ packages:
     dev: true
 
   /find-up/1.1.2:
-    resolution: {integrity: sha1-ay6YIrGizgpgq2TWEOzK1TyyTQ8=}
+    resolution: {integrity: sha512-jvElSjyuo4EMQGoTwo1uJU5pQMwTW5lS1x05zzfJuTIyLR3zwO27LYrxNg+dlvKpGOuGy/MzBdXh80g0ve5+HA==}
     engines: {node: '>=0.10.0'}
     dependencies:
       path-exists: 2.1.0
@@ -8802,6 +8881,17 @@ packages:
       error-stack-parser: 2.0.6
       string-width: 2.1.1
       webpack: 4.44.1
+    dev: true
+
+  /friendly-errors-webpack-plugin/1.7.0_webpack@4.44.2:
+    resolution: {integrity: sha512-K27M3VK30wVoOarP651zDmb93R9zF28usW4ocaK3mfQeIEI5BPht/EzZs5E8QLLwbLRJQMwscAjDxYPb1FuNiw==}
+    peerDependencies:
+      webpack: ^2.0.0 || ^3.0.0 || ^4.0.0
+    dependencies:
+      chalk: 1.1.3
+      error-stack-parser: 2.0.6
+      string-width: 2.1.1
+      webpack: 4.44.2
     dev: true
 
   /from2/2.3.0:
@@ -10815,7 +10905,7 @@ packages:
     dev: true
 
   /jsesc/0.5.0:
-    resolution: {integrity: sha1-597mbjXW/Bb3EP6R1c9p9w8IkR0=}
+    resolution: {integrity: sha512-uZz5UnB7u4T9LvwmFqXii7pZSouaRPorGs5who1Ip7VO0wxanFvBL7GkM6dTHlgX+jhBApRetaWpnDabOeTcnA==}
     hasBin: true
     dev: true
 
@@ -11112,7 +11202,7 @@ packages:
     dev: true
 
   /lodash.debounce/4.0.8:
-    resolution: {integrity: sha1-gteb/zCmfEAF/9XiUVMArZyk168=}
+    resolution: {integrity: sha512-FT1yDzDYEoYWhnSGnpE/4Kj1fLZkDFyqRb7fNt6FdYOSxlUWAtp42Eh6Wb0rGIv/m9Bgo7x4GhQbm5Ys4SG5ow==}
     dev: true
 
   /lodash.defaultsdeep/4.6.1:
@@ -12300,7 +12390,7 @@ packages:
     dev: true
 
   /path-exists/2.1.0:
-    resolution: {integrity: sha1-D+tsZPD8UY2adU3V77YscCJ2H0s=}
+    resolution: {integrity: sha512-yTltuKuhtNeFJKa1PiRzfLAU5182q1y4Eb4XCJ3PBqyzEDkAZRzBrKKBct682ls9reBVHf9udYLN5Nd+K1B9BQ==}
     engines: {node: '>=0.10.0'}
     dependencies:
       pinkie-promise: 2.0.1
@@ -12404,14 +12494,14 @@ packages:
     dev: true
 
   /pinkie-promise/2.0.1:
-    resolution: {integrity: sha1-ITXW36ejWMBprJsXh3YogihFD/o=}
+    resolution: {integrity: sha512-0Gni6D4UcLTbv9c57DfxDGdr41XfgUjqWZu492f0cIGr16zDU06BWP/RAEvOuo7CQ0CNjHaLlM59YJJFm3NWlw==}
     engines: {node: '>=0.10.0'}
     dependencies:
       pinkie: 2.0.4
     dev: true
 
   /pinkie/2.0.4:
-    resolution: {integrity: sha1-clVrgM+g1IqXToDnckjoDtT3+HA=}
+    resolution: {integrity: sha512-MnUuEycAemtSaeFSjXKW/aroV7akBbY+Sv+RkyqFjgAe73F+MR0TBWKBRDkmfWq/HiFmdavfZ1G7h4SPZXaCSg==}
     engines: {node: '>=0.10.0'}
     dev: true
 
@@ -12421,7 +12511,7 @@ packages:
     dev: true
 
   /pkg-dir/1.0.0:
-    resolution: {integrity: sha1-ektQio1bstYp1EcFb/TpyTFM89Q=}
+    resolution: {integrity: sha512-c6pv3OE78mcZ92ckebVDqg0aWSoKhOTbwCV6qbCWMk546mAL9pZln0+QsN/yQ7fkucd4+yJPLrCBXNt8Ruk+Eg==}
     engines: {node: '>=0.10.0'}
     dependencies:
       find-up: 1.1.2
@@ -14019,7 +14109,7 @@ packages:
     resolution: {integrity: sha512-uWjbaKIK3T1OSVptzX7Nl6PvQ3qAGtKEtVRjRuazjfL3Bx5eI409VZSqgND+4UNnmzLVdPj9FqFJNPqBZFve4w==}
     hasBin: true
     dependencies:
-      glob: 7.1.6
+      glob: 7.2.3
     dev: true
 
   /rimraf/3.0.2:
@@ -16504,6 +16594,17 @@ packages:
       loader-utils: 1.4.0
       schema-utils: 0.4.7
       webpack: 4.44.1
+    dev: true
+
+  /worker-loader/2.0.0_webpack@4.44.2:
+    resolution: {integrity: sha512-tnvNp4K3KQOpfRnD20m8xltE3eWh89Ye+5oj7wXEEHKac1P4oZ6p9oTj8/8ExqoSBnk9nu5Pr4nKfQ1hn2APJw==}
+    engines: {node: '>= 6.9.0 || >= 8.9.0'}
+    peerDependencies:
+      webpack: ^3.0.0 || ^4.0.0-alpha.0 || ^4.0.0
+    dependencies:
+      loader-utils: 1.4.0
+      schema-utils: 0.4.7
+      webpack: 4.44.2
     dev: true
 
   /worker-rpc/0.1.1:
