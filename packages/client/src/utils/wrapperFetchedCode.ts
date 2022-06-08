@@ -1,7 +1,7 @@
 import { Resource } from '../resource';
 import { ResourceType } from '../config';
 
-const CodePrefix = `((context) => {const document = JModuleManager?.createDocument?.(context) || document;`;
+const CodePrefix = '((context) => {const document = JModuleManager?.createDocument?.(context) || document;';
 const CodeSuffix = (sourceUrl: string, currentUrl: string) => `})({ sourceUrl: '${ sourceUrl }', currentUrl: '${ currentUrl }' })`;
 
 interface WrapperOptions {
@@ -10,7 +10,7 @@ interface WrapperOptions {
     type: ResourceType;
     buffer: Uint8Array;
     resource: Resource;
-};
+}
 
 export async function wrapperFetchedCodeHook(options: WrapperOptions) {
     if (!options.type.includes('javascript') || !(options.buffer instanceof Uint8Array)) {

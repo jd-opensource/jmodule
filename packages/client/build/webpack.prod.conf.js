@@ -1,6 +1,5 @@
 const path = require('path');
-const FriendlyErrorsPlugin = require('friendly-errors-webpack-plugin');
-const eslintFormatter = require('eslint-friendly-formatter');
+const ESLintPlugin = require('eslint-webpack-plugin');
 
 const workDir = process.cwd();
 
@@ -15,38 +14,22 @@ const configs = {
     },
     devtool: 'source-map',
     resolve: {
-        extensions: ['.js', '.vue', '.json', '.ts', '.tsx'],
+        extensions: ['.js', '.ts', '.tsx'],
     },
     module: {
         rules: [{
-            test: /\.(js)$/,
-            loader: 'eslint-loader',
-            enforce: 'pre',
-            include: [path.resolve('src')],
-            options: {
-                formatter: eslintFormatter,
-            },
-        }, {
-            test: /\.js$/,
-            loader: 'babel-loader',
-            include: [path.resolve('src')],
-        }, {
-            test: /\.tsx?$/,
+            test: /\.ts$/,
             use: 'ts-loader',
             exclude: /node_modules/,
-        }, {
-            test: /\.worker\.(j|t)s$/,
-            use: {
-                loader: 'worker-loader',
-                options: {
-                    inline: true,
-                    fallback: false,
-                },
-            },
         }],
     },
     plugins: [
-        new FriendlyErrorsPlugin(),
+        new ESLintPlugin({
+            fix: process.argv.includes('--fix'),
+            failOnError: true,
+            extensions: ['.ts'],
+            threads: true,
+        })
     ],
 };
 

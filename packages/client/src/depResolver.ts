@@ -1,11 +1,13 @@
-const cacheStore: { [key: string]: any } = {};
-interface DefaultObject { [key: string]: any };
+const cacheStore: Record<string, any> = {};
+
+type Resolver = (config: Record<string, any>) => Record<string, any>;
+
 export class DepResolver {
     cacheBy?: string;
     result?: any;
-    resolver: (config: DefaultObject) => {};
+    resolver: Resolver;
 
-    constructor(resolver: (config: DefaultObject) => {}, options: { cacheBy?: string } = {}) {
+    constructor(resolver: Resolver, options: { cacheBy?: string } = {}) {
         if (!resolver || typeof resolver !== 'function') {
             throw new Error('DepResolver 参数错误，必须为函数');
         }
@@ -15,7 +17,7 @@ export class DepResolver {
         this.result = undefined;
     }
 
-    resolve(config: DefaultObject = {}) {
+    resolve(config: Record<string, any> = {}) {
         const { cacheBy } = this;
         const useCache = cacheBy && config[cacheBy];
         if (useCache && cacheStore[useCache]) {

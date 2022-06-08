@@ -1,5 +1,5 @@
 /* eslint-disable no-console */
-interface handle { (...args: any[]): any[] | Promise<any[]> };
+interface handle { (...args: any[]): any[] | Promise<any[]> }
 const hooks: { [key: string]: handle[] } = {};
 
 async function runEach(inputArgs: any[], i: number, fns: handle[] = []): Promise<any[]> {

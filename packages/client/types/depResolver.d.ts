@@ -1,13 +1,11 @@
-interface DefaultObject {
-    [key: string]: any;
-}
+declare type Resolver = (config: Record<string, any>) => Record<string, any>;
 export declare class DepResolver {
     cacheBy?: string;
     result?: any;
-    resolver: (config: DefaultObject) => {};
-    constructor(resolver: (config: DefaultObject) => {}, options?: {
+    resolver: Resolver;
+    constructor(resolver: Resolver, options?: {
         cacheBy?: string;
     });
-    resolve(config?: DefaultObject): any;
+    resolve(config?: Record<string, any>): any;
 }
 export {};

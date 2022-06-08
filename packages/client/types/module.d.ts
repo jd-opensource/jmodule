@@ -16,14 +16,14 @@ export interface ModuleOptions {
 }
 export interface ModuleMetadata {
     key?: string;
-    init(module: JModule): void;
+    init?: (module: JModule) => void;
     imports?: string[];
     exports?: {
         [key: string]: any;
     };
 }
-declare function define(moduleKey: string, metadata: ModuleMetadata): Promise<JModule>;
-declare function define(metadata: ModuleMetadata): Promise<JModule>;
+declare function define(moduleKey: string, metadata: ModuleMetadata & Record<string, any>): Promise<JModule>;
+declare function define(metadata: ModuleMetadata & Record<string, any>): Promise<JModule>;
 declare type HashObject = {
     [key: string]: any;
 };
@@ -82,7 +82,7 @@ export declare class JModule extends ModuleHook {
         (): Promise<void>;
     };
     resource: Resource;
-    metadata?: {
+    metadata: {
         [key: string]: any;
     };
     hooks: {

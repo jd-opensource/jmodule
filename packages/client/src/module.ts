@@ -29,13 +29,13 @@ export interface ModuleOptions {
 
 export interface ModuleMetadata {
     key?: string,
-    init(module: JModule): void,
+    init?: (module: JModule) => void,
     imports?: string[],
     exports?: { [key: string]: any },
 }
 
-function define(moduleKey: string, metadata: ModuleMetadata): Promise<JModule>;
-function define(metadata: ModuleMetadata): Promise<JModule>;
+function define(moduleKey: string, metadata: ModuleMetadata & Record<string, any>): Promise<JModule>;
+function define(metadata: ModuleMetadata & Record<string, any>): Promise<JModule>;
 function define(moduleKey: any, metadata?: any): Promise<JModule> {
     let localKey: string;
     let localMetadata: ModuleMetadata;
@@ -256,7 +256,7 @@ export class JModule extends ModuleHook {
     activate?: { (parentEl: Element): Promise<void> };
     deactivate?: { (): Promise<void> };
     resource: Resource;
-    metadata?:{[key: string]: any};
+    metadata:{[key: string]: any};
     hooks: {
         complete: Promise<JModule>;
     };

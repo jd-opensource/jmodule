@@ -82,7 +82,7 @@ export interface ResourceOptions {
     type?: string,
     prefix?: string,
     strategy?: ResourceLoadStrategy,
-};
+}
 
 
 const scriptCacheByUrl: { [url: string]: HTMLScriptElement } = {};
@@ -97,19 +97,19 @@ const manager = window.JModuleManager;
 export class Resource extends ModuleHook {
     private resolveScript!: (elements: HTMLScriptElement[]) => void;
     private rejectScript!: (error: Error) => void;
-    private appliedScript: boolean = false;
+    private appliedScript = false;
     private static asyncFilesMap: { [key: string]: Resource | undefined } = {};
     
     resolveInit!: () => void;
     rejectInit!: (error: Error) => void;
     metadata?: ResourceMetadata;
-    url: string = '';
+    url = '';
     initScriptElement?: HTMLScriptElement;
     styleElements: HTMLLinkElement[] = [];
     appendedAsyncStyleElements?: NodeListOf<Element>;
     scriptElements: HTMLScriptElement[] = [];
     server!: string;
-    styleMounted: boolean = false;
+    styleMounted = false;
     status: ResourceStatus = ResourceStatus.Init;
     type!: string; // 入口资源类型
     prefix?: string;
