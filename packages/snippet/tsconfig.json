@@ -2,8 +2,6 @@
     "compilerOptions": {
         "lib": ["DOM", "DOM.Iterable", "ES2020"],
         "sourceMap": true,
-        "jsx": "react",
-        "jsxFactory": "h",
         "noUnusedLocals": true,
         "moduleResolution": "Node",
         "esModuleInterop": true,
@@ -13,7 +11,8 @@
         "target": "es5",
         "downlevelIteration": true,
         "declaration": true,
-        "declarationDir": "./types"
+        "declarationDir": "./types",
+        "noEmitHelpers": true
     },
     "include": [
         "src/type.d.ts",

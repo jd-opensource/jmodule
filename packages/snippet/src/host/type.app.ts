@@ -3,7 +3,7 @@ import { JModule, ModuleMetadata } from '@jmodule/client';
 const areaCache: Record<string, HTMLDivElement> = {};
 const mountTimes: Record<string, number> = {};
 const bootstrapped: Record<string, boolean> = {};
-let lastActivatedModuleKey: string|null = null;
+let lastActivatedModuleKey: string | null = null;
 
 async function initAndGetArea(module: JModule, areaEl: Element) {
     areaCache[module.key] = areaCache[module.key] || document.createElement('div');
@@ -30,7 +30,13 @@ async function mountModule(module: JModule, parentEl: Element) {
     mountTimes[module.key] = (mountTimes[module.key] || 0) + 1;
 }
 
-JModule.defineType('app', (module: JModule, options: ModuleMetadata) => {
+export type AppTypeMetadata = ModuleMetadata & {
+    bootstrap?: (module: JModule) => Promise<void>;
+    mount: (module: JModule, parentEl: Element, options: { mountTimes: number }) => Promise<void>;
+    unmount?: (module: JModule, parentEl: Element) => Promise<void>;
+}
+
+export default function appTypeHandler(module: JModule, options: AppTypeMetadata) {
     Object.assign(module.metadata, options);
     return {
         async activate(parentEl: Element) {
@@ -50,4 +56,4 @@ JModule.defineType('app', (module: JModule, options: ModuleMetadata) => {
             lastActivatedModuleKey = null;
         },
     };
-});
+}

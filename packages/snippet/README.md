@@ -1,9 +1,9 @@
-该项目用于子模块/子应用定义、注册、加载、数据共享
+JModule 接入辅助工具
 
 ## 安装
 
 ```bash
-npm i @jmodule/client
+npm i @jmodule/snippet
 ```
 
 ## 使用
