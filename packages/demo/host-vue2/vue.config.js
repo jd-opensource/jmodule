@@ -9,7 +9,6 @@ module.exports = {
         plugins,
     },
     devServer: {
-        disableHostCheck: true,
         port: 8080,
     },
 }

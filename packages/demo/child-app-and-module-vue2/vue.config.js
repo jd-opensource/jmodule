@@ -7,7 +7,6 @@ module.exports = {
         ],
     },
     devServer: {
-        disableHostCheck: true,
         port: 3001,
         open: false,
         headers: {

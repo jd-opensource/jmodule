@@ -12,7 +12,6 @@ import router from '@/router';
 import { modules } from '../jmodule';
 
 export default {
-  name: 'Home',
   data() {
     return {
       modules,

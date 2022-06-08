@@ -31,8 +31,9 @@
   },
   "devDependencies": {
     "@jmodule/plugin-webpack": "workspace:*",
+    "opn": "^6.0.0",
     "react-app-rewired": "^2.2.1",
-    "react-scripts": "4"
+    "react-scripts": "5"
   },
   "homepage": "http://localhost:3000/"
 }

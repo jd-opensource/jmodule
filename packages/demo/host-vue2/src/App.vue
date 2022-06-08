@@ -7,7 +7,7 @@
 
 <script>
 import Vue from 'vue';
-import Menu from './views/Menu'
+import Menu from './views/TestMenu'
 
 export default Vue.extend({
   components: { DemoMenu: Menu },
