@@ -12,8 +12,6 @@ async function initAndGetArea(module: JModule, areaEl: Element) {
 }
 
 async function bootstrapModule(module: JModule) {
-    await module.load();
-    await module.hooks.complete;
     if (!bootstrapped[module.key]) {
         await module.metadata?.bootstrap?.(module);
         bootstrapped[module.key] = true;
@@ -42,6 +40,9 @@ export default function appTypeHandler(module: JModule, options: AppTypeMetadata
         async activate(parentEl: Element) {
             if (lastActivatedModuleKey === module.key) {
                 return;
+            }
+            if (!parentEl) {
+                throw new Error('parentEl is required');
             }
             // 初始化新应用
             await bootstrapModule(module);

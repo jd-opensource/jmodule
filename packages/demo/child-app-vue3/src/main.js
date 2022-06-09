@@ -1,5 +1,6 @@
 import { createApp } from 'vue'
 import App from './App.vue'
+import { JModule } from '@jmodule/client';
 
 const app = createApp(App);
 if (window.__JMODULE_HOST__) {

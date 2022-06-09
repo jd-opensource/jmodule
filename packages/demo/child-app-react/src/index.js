@@ -1,5 +1,6 @@
 import { createRoot } from 'react-dom/client';
 import App from './App';
+import { JModule } from '@jmodule/client';
 
 if (window.__JMODULE_HOST__) {
   /* eslint-disable */

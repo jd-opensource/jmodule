@@ -21,7 +21,7 @@ function getAssets(compilation) {
 }
 module.exports = function outputAssets(compilation, outputJson = false, filename, V4) {
     const jsonString = JSON.stringify(getAssets(compilation), null, 4);
-    const data = outputJson ? jsonString : `JModule.applyResource(${jsonString})`;
+    const data = outputJson ? jsonString : `(JModuleManager && JModuleManager.defaultJModule || JModule).applyResource(${jsonString})`;
     if (V4) {
         compilation.assets[filename] = {
             source: () => data,

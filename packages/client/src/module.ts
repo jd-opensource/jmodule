@@ -53,7 +53,7 @@ function define(moduleKey: any, metadata?: any): Promise<JModule> {
             let defer = Promise.resolve()
                 .then(() => initModule(module, localMetadata))
                 .then((res) => {
-                    const { activate, deactivate } = (module.constructor as any).getDefinedType(module.type);
+                    const { activate, deactivate } = (module.constructor as any).getDefinedType(module.type)(module, metadata);
                     module.activate = activate;
                     module.deactivate = deactivate;
                     module.status = MODULE_STATUS.done; // 初始化完成

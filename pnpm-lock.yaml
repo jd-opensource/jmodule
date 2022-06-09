@@ -83,6 +83,7 @@ importers:
 
   packages/demo/child-app-react:
     specifiers:
+      '@jmodule/client': 'workspace: *'
       '@jmodule/plugin-webpack': workspace:*
       cra-template: 1.1.3
       opn: ^6.0.0
@@ -92,6 +93,7 @@ importers:
       react-router-dom: ^6.3.0
       react-scripts: '5'
     dependencies:
+      '@jmodule/client': link:../../client
       cra-template: 1.1.3
       react: 18.0.0
       react-dom: 18.0.0_react@18.0.0
@@ -131,6 +133,7 @@ importers:
     specifiers:
       '@jmodule/client': workspace:*
       '@jmodule/plugin-webpack': workspace:*
+      '@jmodule/snippet': workspace:*
       '@vue/cli-plugin-babel': '5'
       '@vue/cli-plugin-eslint': '5'
       '@vue/cli-plugin-router': '5'
@@ -146,6 +149,7 @@ importers:
       vuex: ^2.3.1
     dependencies:
       '@jmodule/client': link:../../client
+      '@jmodule/snippet': link:../../snippet
       chokidar: 3.5.1
       core-js: 3.21.1
       regenerator-runtime: 0.13.9
@@ -192,26 +196,23 @@ importers:
       eslint-webpack-plugin: ^3.1.1
       ts-loader: ^7.0.4
       tslib: ^2.0.0
-      typedoc: ^0.22.15
       typescript: ^4
       vue: '2'
       vue-router: ^3.0.1
       vuex: ^3.0.1
       webpack: ^5
-    dependencies:
-      '@jmodule/client': link:../client
     optionalDependencies:
       vue: 2.6.14
       vue-router: 3.5.3
       vuex: 3.6.2_vue@2.6.14
     devDependencies:
+      '@jmodule/client': link:../client
       '@types/requestidlecallback': 0.3.4
       '@typescript-eslint/eslint-plugin': 5.27.1_71cce2e779800f4fed25fc95f1c5f174
       eslint: 8.17.0
       eslint-webpack-plugin: 3.1.1_eslint@8.17.0+webpack@5.73.0
       ts-loader: 7.0.5_typescript@4.6.3
       tslib: 2.3.1
-      typedoc: 0.22.15_typescript@4.6.3
       typescript: 4.6.3
       webpack: 5.73.0
 

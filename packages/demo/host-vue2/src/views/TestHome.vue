@@ -13,13 +13,12 @@
 </template>
 
 <script>
-import { modules } from '../jmodule';
-
 export default {
-    data() {
-        return {
-            modules,
-        };
+    props: {
+        modules: {
+          type: Array,
+          default: () => [],
+        },
     },
 }
 </script>

@@ -8,6 +8,7 @@
   },
   "dependencies": {
     "@jmodule/client": "workspace:*",
+    "@jmodule/snippet": "workspace:*",
     "chokidar": "3",
     "core-js": "^3.6.5",
     "regenerator-runtime": "^0.13.9",
@@ -37,7 +38,9 @@
     "parserOptions": {
       "parser": "@babel/eslint-parser"
     },
-    "rules": {}
+    "rules": {
+      "no-debugger": 0
+    }
   },
   "browserslist": [
     "> 1%",

@@ -5,7 +5,7 @@ export declare type Vue2RouteTypeMetadata = ModuleMetadata & {
     storeModules?: Record<string, any>;
     route: RouteConfig;
 };
-declare const _default: (router?: VueRouter | undefined, store?: Store<any> | undefined, routeAdapter?: (module: JModule, route: RouteConfig) => RouteConfig) => (module: JModule, options: Vue2RouteTypeMetadata) => {
+declare const _default: (router?: VueRouter | undefined, store?: Store<any> | undefined, getParentRouteName?: ((module: JModule) => string) | undefined) => (module: JModule, options: Vue2RouteTypeMetadata) => {
     activate(): Promise<void>;
     deactivate(): Promise<void>;
 };

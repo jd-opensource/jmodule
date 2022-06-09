@@ -9,18 +9,18 @@
 
 <script>
 import router from '@/router';
-import { modules } from '../jmodule';
 
 export default {
-  data() {
-    return {
-      modules,
-    }
+  props: {
+    modules: {
+      type: Array,
+      default: () => [],
+    },
   },
   methods: {
     activeModule(module) {
       router.push({
-        path: `/${module.key}`,
+        path: `/${module.key}/`,
         metadata: { module }
       });
     },

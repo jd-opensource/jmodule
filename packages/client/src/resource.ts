@@ -97,6 +97,8 @@ const manager = window.JModuleManager;
 export class Resource extends ModuleHook {
     private resolveScript!: (elements: HTMLScriptElement[]) => void;
     private rejectScript!: (error: Error) => void;
+    private styleLoading?: Promise<HTMLLinkElement[]>;
+    private scriptLoading?: Promise<HTMLScriptElement[]>;
     private appliedScript = false;
     private static asyncFilesMap: { [key: string]: Resource | undefined } = {};
     
@@ -117,8 +119,6 @@ export class Resource extends ModuleHook {
     afterInit!: Promise<void>;
     preloaded = false;
     strategy!: ResourceLoadStrategy; // 默认，直接用标签方式加载
-    styleLoading = false;
-    scriptLoading = false;
     cachedUrlMap: {
         [key: string]: string
     } = {};
@@ -217,25 +217,24 @@ export class Resource extends ModuleHook {
         if (!this.metadata) {
             return Promise.reject(new Error(`no resource metadata: ${this.url}`));
         }
-        if (this.scriptLoading) {
-            return Promise.reject(new Error(`applyScript 已在执行中: ${this.url}`));
-        }
         if (this.appliedScript) {
             return Promise.resolve(this.scriptElements);
         }
+        if (this.scriptLoading) {
+            return this.scriptLoading;
+        }
         this.appliedScript = true;
-        this.scriptLoading = true;
         this.setStatus(ResourceStatus.ApplyScript);
         this.scriptElements = [];
         const jsUrls = (this.metadata.js || []).map(url => this.resolveUrl(url));
-        const entryUrls = this.strategy === ResourceLoadStrategy.Fetch
+        const getEntryUrls = async () => this.strategy === ResourceLoadStrategy.Fetch
             ? await Promise.all(jsUrls.map(url => resolveUrlByFetch(
                 url,
                 this.url,
                 ResourceType.Script,
             )))
-            : (cacheUrlMap(this.metadata, this.url), jsUrls);
-        return Promise.all(entryUrls.map(url => loadScript(
+            : (cacheUrlMap(this.metadata as ResourceMetadata, this.url), jsUrls);
+        this.scriptLoading = getEntryUrls().then((entryUrls) => Promise.all(entryUrls.map(url => loadScript(
             url,
             this.url,
             script => {
@@ -243,17 +242,16 @@ export class Resource extends ModuleHook {
                 script.dataset.jmoduleFrom = this.url;
                 this.scriptElements.push(script);
             },
-        ))).then(() => {
-            this.scriptLoading = false;
+        )))).then(() => {
             this.setStatus(ResourceStatus.ScriptResolved);
             this.resolveScript(this.scriptElements);
             return this.scriptElements;
         }).catch((error) => {
-            this.scriptLoading = false;
             this.setStatus(ResourceStatus.ScriptError);
             this.rejectScript(error);
             throw error;
         });
+        return this.scriptLoading;
     }
 
     async applyStyle(elementModifier?: ElementModifier): Promise<HTMLLinkElement[]> {
@@ -262,9 +260,6 @@ export class Resource extends ModuleHook {
         }
         const { css = [] } = this.metadata;
         const { length } = this.styleElements;
-        if (this.styleLoading) {
-            return Promise.reject(new Error('applyStyle 已在执行中'));
-        }
         if (css.length === length) {
             if (!this.styleMounted) {
                 this.styleElements.forEach(item => document.head.appendChild(item));
@@ -273,24 +268,28 @@ export class Resource extends ModuleHook {
             }
             return Promise.resolve(this.styleElements);
         }
-        this.styleLoading = true;
+        if (this.styleLoading) {
+            return this.styleLoading;
+        }
         const cssUrls = (this.metadata.css || []).map(url => this.resolveUrl(url));
-        const entryUrls = this.strategy === ResourceLoadStrategy.Fetch
+        const getEntryUrls = async () => this.strategy === ResourceLoadStrategy.Fetch
             ? await Promise.all(cssUrls.map(url => resolveUrlByFetch(
                 url,
                 this.url,
                 ResourceType.Style,
             )))
             : cssUrls;
-        this.styleElements = entryUrls.map(url => {
+        this.styleLoading = getEntryUrls().then(entryUrls => entryUrls.map(url => {
             const el = addStyle(url, elementModifier);
             el.dataset.jmoduleFrom = this.url;
             return el;
+        })).then((elements) => {
+            this.styleElements = elements;
+            this.appendedAsyncStyleElements?.forEach(item => document.head.appendChild(item));
+            this.styleMounted = true;
+            return this.styleElements;
         });
-        this.appendedAsyncStyleElements?.forEach(item => document.head.appendChild(item));
-        this.styleMounted = true;
-        this.styleLoading = false;
-        return Promise.resolve(this.styleElements);
+        return this.styleLoading;
     }
 
     preload(elementModifier?: ElementModifier) {

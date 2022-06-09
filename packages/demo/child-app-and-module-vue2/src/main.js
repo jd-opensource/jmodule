@@ -1,4 +1,5 @@
 import Vue from 'vue'
+import { JModule } from '@jmodule/client';
 import App from './App.vue'
 import { initRouter } from './router'
 

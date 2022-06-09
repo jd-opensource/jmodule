@@ -18,6 +18,8 @@ export interface ResourceOptions {
 export declare class Resource extends ModuleHook {
     private resolveScript;
     private rejectScript;
+    private styleLoading?;
+    private scriptLoading?;
     private appliedScript;
     private static asyncFilesMap;
     resolveInit: () => void;
@@ -37,8 +39,6 @@ export declare class Resource extends ModuleHook {
     afterInit: Promise<void>;
     preloaded: boolean;
     strategy: ResourceLoadStrategy;
-    styleLoading: boolean;
-    scriptLoading: boolean;
     cachedUrlMap: {
         [key: string]: string;
     };

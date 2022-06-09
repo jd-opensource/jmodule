@@ -8,7 +8,7 @@
         "allowSyntheticDefaultImports": false,
         "strict": true,
         "allowJs": true,
-        "target": "es5",
+        "target": "esnext",
         "downlevelIteration": true,
         "declaration": true,
         "declarationDir": "./types",

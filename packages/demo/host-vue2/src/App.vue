@@ -1,17 +1,26 @@
 <template>
   <div id="app">
-    <demo-menu class="demo-menu" />
-    <router-view class="demo-main"/>
+    <demo-menu class="demo-menu" :modules="modules" />
+    <router-view class="demo-main" :modules="modules" />
   </div>
 </template>
 
 <script>
 import Vue from 'vue';
-import Menu from './views/TestMenu'
+import Menu from './views/TestMenu';
+
+window.__JMODULE_HOST__ = 'host2-vue2';
+
+const modules = []
+
+window.addEventListener('module.afterRegister', ({ detail }) => {
+    modules.push(...detail);
+});
 
 export default Vue.extend({
   components: { DemoMenu: Menu },
-})
+  data() { return { modules }; }
+});
 </script>
 
 <style>

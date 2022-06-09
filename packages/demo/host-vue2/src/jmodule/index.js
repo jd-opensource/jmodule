@@ -1,31 +1,55 @@
-import { JModule, Resource } from '@jmodule/client';
-import { JMODULE_TYPE_APP, JMODULE_TYPE_MODULE } from './type';
-import { appAdapter } from './appAdapter';
-import { moduleAdapter } from './moduleAdapter';
-import './shareData';
+import Vue from 'vue';
+import { JModule } from '@jmodule/client';
+import AppTypeDefine from '@jmodule/snippet/host/type.app';
+import Vue2RoutesTypeDefine from '@jmodule/snippet/host/type.routes.vue2';
+import ModuleRender from '../views/ModuleRender.vue';
+import router from '../router';
+import store from '../store';
 
-Resource.enableAsyncChunk();
+export const JMODULE_TYPE_APP = 'app';
+export const JMODULE_TYPE_MODULE = 'module';
 
-window.JModule = JModule;
-window.__JMODULE_HOST__ = 'host2-vue2';
+// 增加对完整子应用（微应用）支持
+JModule.defineType(JMODULE_TYPE_APP, AppTypeDefine);
 
-JModule.addHook('afterInit', (module, pkg) => {
-    if (module.type === JMODULE_TYPE_APP) {
-        // eslint-disable-next-line no-debugger
-        return appAdapter(module, pkg);
-    }
-    if (module.type === JMODULE_TYPE_MODULE) {
-        return moduleAdapter(module, pkg);
-    }
-    return [module, pkg];
+// 增加对动态路由类型的子应用（微模块）适配
+JModule.defineType(JMODULE_TYPE_MODULE, Vue2RoutesTypeDefine(router, store));
+
+// 为子应用增加自己的路由
+JModule.addHook('afterInit', (module) => {
+    router.addRoute({
+        path: module.type === 'app' ? `/${module.key}*` : `/${module.key}`,
+        name: module.key,
+        component: ModuleRender,
+    });
 });
 
-
-// allModules
-const modules = []
-
-window.addEventListener('module.afterRegister', ({ detail }) => {
-    modules.push(...detail);
+// 可以给子应用共享一些组件
+// 共享宿主应用的接口给子应用
+JModule.export({
+    $platform: {
+        log(...args) {
+            console.group('LogByHost');
+            console.log(...args);
+            console.groupEnd('LogByHost');
+        },
+    },
+    $node_modules: {
+        vue: Vue,
+    },
 });
 
-export { modules };
+// 注册子应用
+/***
+// 开发环境下插件会自动注入类似注册代码，不需要手动注册
+
+JModule.registerModules([{
+    "key": "childAppReact",
+    "name": "childAppReact",
+    "type": "app",
+    "url": "http://localhost:3000/index.js"
+}]).then((modules) => {
+    modules.forEach(module => module.load());
+});
+
+***/
