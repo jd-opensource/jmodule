@@ -1,6 +1,6 @@
 {
   "name": "@jmodule/snippet",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "JModule Snippet",
   "author": "feirpri <feirpri@gmail.com>",
   "license": "MIT",
@@ -18,7 +18,7 @@
     "not ie <= 10"
   ],
   "devDependencies": {
-    "@jmodule/client": "workspace: *",
+    "@jmodule/client": "^4.3.0-0",
     "@types/requestidlecallback": "^0.3.4",
     "@typescript-eslint/eslint-plugin": "^5.27.1",
     "eslint": "8",
