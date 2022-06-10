@@ -10,14 +10,14 @@ VueRouter.prototype.push = function push(location, onResolve, onReject) {
 
 Vue.use(VueRouter)
 
-export const initRouter = (base = process.env.BASE_URL, module) => new VueRouter({
+export const initRouter = (base = process.env.BASE_URL, childAppMode) => new VueRouter({
     mode: 'history',
     base,
     routes: [
         {
             path: '/',
             component: {
-                render: h => h('div', module ? 'Running as child app' : 'Independent Running'),
+                render: h => h('div', childAppMode ? 'Running as child app' : 'Independent Running'),
             },
         }
     ]

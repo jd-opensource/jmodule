@@ -2,30 +2,18 @@ import Vue from 'vue'
 import { JModule } from '@jmodule/client';
 import App from './App.vue'
 import { initRouter } from './router'
+import Vue2AppDefine from '@jmodule/snippet/app/app.vue2';
 
 Vue.config.productionTip = false
 
 if (window.__JMODULE_HOST__) {
   // 创建一个 app 类型的子应用
-  const ChildAppKey = 'childAppVue2';
-  let vueIns;
-  let router;
-  // eslint-disable-next-line no-undef
-  JModule.define(ChildAppKey, {
-    bootstrap(module) {
-      router = initRouter(ChildAppKey, module);
-      vueIns = new Vue({
-        router,
-        render: h => h(App)
-      }).$mount();
-    },
-    mount(module, el) {
-      el.appendChild(vueIns.$el);
-      const { history } = router;
-      history.transitionTo(history.getCurrentLocation(history.base));
-    },
-  });
-
+  Vue2AppDefine(
+    'childAppVue2',
+    router => new Vue({ router, render: h => h(App) }),
+    base => initRouter(base, true),
+  );
+  
   /* ***********
    *
    *  案例演示：

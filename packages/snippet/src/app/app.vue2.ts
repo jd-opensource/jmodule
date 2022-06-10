@@ -3,10 +3,10 @@ import Vue from 'vue';
 import VueRouter from 'vue-router';
 
 let instance: Vue;
-let router: VueRouter;
+let router: VueRouter|undefined;
 
 interface CreateInstance {
-    (router: VueRouter): Vue;
+    (router?: VueRouter): Vue;
 }
 
 interface CreateRouter {
@@ -16,16 +16,17 @@ interface CreateRouter {
 export default (
     appKey: string,
     createInstance: CreateInstance,
-    createRouter: CreateRouter
+    createRouter?: CreateRouter
 ) => JModule.define(appKey, {
     bootstrap: (module: JModule) => {
-        router = createRouter(`/${module.key}`);
+        router = createRouter?.(`/${module.key}`);
     },
     mount(module: JModule, el: HTMLDivElement) {
         instance = createInstance(router);
         instance = instance.$mount(el);
     },
     unmount() {
+        instance.$el.remove();
         instance.$destroy();
     },
 });

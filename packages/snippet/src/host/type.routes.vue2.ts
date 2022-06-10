@@ -22,15 +22,13 @@ export default (
     if (router && route) {
         router.addRoute(parentRouteName, route);
         module.metadata.defaultRouteName = route.name;
+        const parent = router?.getRoutes().find(item => item.name === parentRouteName);
+        // 设置路由自动跳转
+        parent && (parent.redirect = { name: module.metadata.defaultRouteName });
     }
     return {
         async activate() {
             module.resource.applyStyle();
-            const { currentRoute } = router || {};
-            if (router && currentRoute && (currentRoute.name === parentRouteName)) {
-                const parent = router?.getRoutes().find(item => item.name === parentRouteName);
-                parent && (parent.redirect = { name: module.metadata.defaultRouteName });
-            }
         },
         async deactivate() {
             module.resource.removeStyle();

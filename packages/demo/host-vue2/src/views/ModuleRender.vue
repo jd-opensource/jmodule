@@ -18,7 +18,6 @@ export default {
     },
     mounted() {
         this.updateModule();
-        console.log(this.$router);
     },
     methods: {
         async updateModule() {
@@ -27,8 +26,8 @@ export default {
                 // 卸载旧模块。在当前组件但切换了应用，需要卸载
                 await this.currentModule?.deactivate();
                 // 新模块，
-                // 加载
                 this.currentModule = JModule.getModule(moduleKey);
+                // 加载
                 this.currentModule.load();
                 await this.currentModule.hooks.complete;
                 // 激活
