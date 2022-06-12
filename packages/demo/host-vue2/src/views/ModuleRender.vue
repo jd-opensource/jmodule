@@ -40,6 +40,9 @@ export default {
     watch: {
         '$route.path': {
             handler() {
+                // 这段代码预计会有一个bug:
+                // 在 updateModule 执行过程中如果发生路由变化，可能会破坏原执行流程
+                // 实际实现时需要细化
                 this.updateModule();
             },
         },
