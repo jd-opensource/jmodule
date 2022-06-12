@@ -3,76 +3,12 @@ import { ResourceMetadata, Resource } from './resource';
 import { DepResolver } from './depResolver';
 import { ModuleHook } from './hook';
 import { Matcher } from './utils/matcher';
-import { ResourceLoadStrategy } from './config';
-
-/* eslint no-underscore-dangle: ["error", { "allowAfterThis": true }] */
-/* eslint-disable no-eval */
+import { ModuleOptions, ModuleMetadata, MODULE_STATUS } from './config';
+import manager from './globalManager';
 
 /* 调试模式打印信息：路由变更信息，初始化模块实例、资源实例信息，模块状态变更信息 */
 
-const manager = window.JModuleManager;
-
 const currentScript = document.currentScript || {};
-
-export interface ModuleOptions {
-    type?: string,
-    key: string,
-    name: string,
-    url: string,
-    server?: string,
-    autoBootstrap?: boolean,
-    resourceType?: string,
-    resourceLoadStrategy: ResourceLoadStrategy,
-    resourcePrefix?: string,
-    resource?: Resource,
-}
-
-export interface ModuleMetadata {
-    key?: string,
-    init?: (module: JModule) => void,
-    imports?: string[],
-    exports?: { [key: string]: any },
-}
-
-function define(moduleKey: string, metadata: ModuleMetadata & Record<string, any>): Promise<JModule>;
-function define(metadata: ModuleMetadata & Record<string, any>): Promise<JModule>;
-function define(moduleKey: any, metadata?: any): Promise<JModule> {
-    let localKey: string;
-    let localMetadata: ModuleMetadata;
-    /* eslint-disable */
-    if (!metadata) {
-        localKey = moduleKey.key;
-        localMetadata = moduleKey;
-    } else {
-        localKey = moduleKey;
-        localMetadata = metadata;
-    }
-    return getAndCheckModule(localKey).then((module) => {
-        module.bootstrap = () => {
-            module.status = MODULE_STATUS.booting;
-            const targetConstructor = module.constructor as any;
-            let defer = targetConstructor.runHook('beforeDefine', module, localMetadata)
-                .then(() => initModule(module, localMetadata))
-                .then(() => {
-                    targetConstructor.runHook('afterDefine', module, localMetadata)
-                    module.status = MODULE_STATUS.done; // 初始化完成
-                    return module;
-                })
-                .catch((err: Error) => {
-                    module.status = MODULE_STATUS.bootFailure;
-                    throw err;
-                });
-            module.bootstrap = () => defer; // 重写bootstrap, 避免重复执行
-            return defer;
-        }
-        // 模块状态：已定义
-        module.status = MODULE_STATUS.defined;
-        if (module.autoBootstrap) {
-            return module.bootstrap();
-        }
-        return module;
-    });
-}
 
 type HashObject = { [key: string]: any };
 const moduleMap: { [key: string]: JModule } = {};
@@ -80,17 +16,6 @@ const moduleExports: HashObject = {};
 const defaultExportsMatcher = new Matcher({});
 const moduleCache: { [namespace: string]: any } = {}; // 缓存require的模块
 
-export enum MODULE_STATUS {
-    bootFailure = -2,
-    loadFailure = -1,
-    inited = 0,
-    loading = 1,
-    loaded = 2,
-    defined = 3,
-    booting = 4,
-    done = 5,
-    resourceInited = 6,
-};
 const moduleLog = {
     [MODULE_STATUS.inited]: '已创建模块实例',
     [MODULE_STATUS.loading]: '正在加载模块资源',
@@ -103,11 +28,9 @@ const moduleLog = {
     [MODULE_STATUS.resourceInited]: '资源初始化完成',
 };
 
-interface ResolveModule { (moduleKey: string): Promise<ModuleOptions> };
 const filteredModules: { [moduleKey: string]: string } = {};
 const {
     filter,
-    resolveModule,
     debug,
 } = manager.getInitialConfig();
 const filterModule = (conf: ModuleOptions) => {
@@ -127,65 +50,11 @@ const filterModule = (conf: ModuleOptions) => {
     return true;
 };
 
-async function getAndCheckModule(key: string): Promise<JModule> {
-    const module = manager.jmodule(key);
-    if (module) {
-        return Promise.resolve(module);
-    }
-    if (typeof resolveModule !== 'function' || !manager.defaultJModule) {
-        return Promise.reject(new Error(`${key}:模块未注册`));
-    }
-    return (<ResolveModule>resolveModule)(key).then(async (moduleConf) => {
-        /* eslint-disable no-use-before-define */
-        const [tempModule] = await manager.defaultJModule.registerModules([moduleConf]);
-        if (tempModule) {
-            return Promise.resolve(<JModule>tempModule);
-        } else {
-            return Promise.reject(new Error(`${key}: 注册失败，原因：${filteredModules[key]}`));
-        }
-    });
-}
-async function initModule(module: JModule, pkg: ModuleMetadata): Promise<JModule> {
-    const { key } = module;
-    const runHook = (module.constructor as any).runHook;
-    ModuleDebug.print({ key, message: '开始执行初始化函数', instance: pkg });
-    try {
-        // module init
-        if (typeof pkg.init === 'function') {
-            ModuleDebug.printContinue('执行 init 函数');
-            await pkg.init(module);
-        }
-        await runHook('afterInit', module, pkg);
-
-        // imports
-        (pkg.imports || []).forEach((moduleKey: string) => {
-            ModuleDebug.printContinue('加载依赖模块');
-            getAndCheckModule(moduleKey).then(item => item.load());
-        });
-        await runHook('afterImports', module, pkg);
-
-        // exports
-        Object.assign(moduleExports, { [key]: pkg.exports });
-        await runHook('afterExports', module, pkg);
-
-        return module;
-    } catch(e) {
-        console.error(e);
-        ModuleDebug.print({
-            type: 'error',
-            key,
-            message: (e as Error).message || '未找到模块注册信息, 或模块参数错误',
-            instance: e,
-        });
-        throw e;
-    }
-}
-
 function watchModuleStatus(this: JModule, resource: Resource) {
-    resource.afterInit.catch((e) => {
+    resource.afterInit.catch(() => {
         this.status = MODULE_STATUS.loadFailure;
     });
-    resource.afterApplyScript.catch((e) => {
+    resource.afterApplyScript.catch(() => {
         this.status = MODULE_STATUS.loadFailure;
     })
     resource.afterApplyScript.then(() => {
@@ -359,18 +228,17 @@ export class JModule extends ModuleHook {
 
     set status(status) {
         this._status = status;
-        const self = this;
-        const eventData = { detail: self };
+        const eventData = { detail: this };
         /* eslint-disable no-nested-ternary */
         ModuleDebug.print({
             type: status !== MODULE_STATUS.loadFailure
                 ? status !== MODULE_STATUS.loading ? 'success' : 'log' : 'error',
-            key: self.key,
+            key: this.key,
             message: moduleLog[status],
-            instance: self,
+            instance: this,
         });
-        window.dispatchEvent(new CustomEvent(`module.${self.key}.statusChange`, eventData));
-        window.dispatchEvent(new CustomEvent(`module.${self.key}.${self.status}`, eventData));
+        window.dispatchEvent(new CustomEvent(`module.${this.key}.statusChange`, eventData));
+        window.dispatchEvent(new CustomEvent(`module.${this.key}.${status}`, eventData));
         const { done, loadFailure, bootFailure } = MODULE_STATUS;
         if (status === done) {
             this.completeResolver.resolve(this);
@@ -395,6 +263,7 @@ export class JModule extends ModuleHook {
      * JModule.debug = true;
      */
     static set debug(status: boolean) {
+        // eslint-disable-next-line no-underscore-dangle
         JModule._debug = status;
         if (status) {
             ModuleDebug.enable();
@@ -404,6 +273,7 @@ export class JModule extends ModuleHook {
     }
 
     static get debug(): boolean {
+        // eslint-disable-next-line no-underscore-dangle
         return JModule._debug || false;
     }
 
@@ -581,7 +451,7 @@ export class JModule extends ModuleHook {
      *     exports: {},
      * });
      */
-    static define = define;
+    static define = manager.define;
 
     static applyResource(resourceMetadata: ResourceMetadata, resourceLoaderUrl?: string): Resource {
         const loaderUrl: string|undefined =
@@ -594,7 +464,7 @@ export class JModule extends ModuleHook {
     }
 
     static getMeta() {
-        const { src: url, dataset } = <HTMLScriptElement>currentScript || {};
+        const { src: url, dataset } = <HTMLScriptElement>document.currentScript || {};
         if (!url) {
             return {};
         }
@@ -605,7 +475,6 @@ export class JModule extends ModuleHook {
         };
     }
 
-    // todo
     /**
      * 引用平台暴露的对象
      *
@@ -619,8 +488,7 @@ export class JModule extends ModuleHook {
             return this.getMeta();
         }
         
-        // todo: 如何优化？
-        if (!force) {
+        if (!force && this !== manager.defaultJModule && currentScript) {
             const { dataset } = <HTMLScriptElement>currentScript || {};
             const sourceUrl = dataset?.jmoduleFrom;
             // 从 sourceUrl 找到对应的 module

@@ -1,43 +1,10 @@
 import { ResourceMetadata, Resource } from './resource';
 import { ModuleHook } from './hook';
 import { Matcher } from './utils/matcher';
-import { ResourceLoadStrategy } from './config';
-export interface ModuleOptions {
-    type?: string;
-    key: string;
-    name: string;
-    url: string;
-    server?: string;
-    autoBootstrap?: boolean;
-    resourceType?: string;
-    resourceLoadStrategy: ResourceLoadStrategy;
-    resourcePrefix?: string;
-    resource?: Resource;
-}
-export interface ModuleMetadata {
-    key?: string;
-    init?: (module: JModule) => void;
-    imports?: string[];
-    exports?: {
-        [key: string]: any;
-    };
-}
-declare function define(moduleKey: string, metadata: ModuleMetadata & Record<string, any>): Promise<JModule>;
-declare function define(metadata: ModuleMetadata & Record<string, any>): Promise<JModule>;
+import { ModuleOptions, ModuleMetadata, MODULE_STATUS } from './config';
 declare type HashObject = {
     [key: string]: any;
 };
-export declare enum MODULE_STATUS {
-    bootFailure = -2,
-    loadFailure = -1,
-    inited = 0,
-    loading = 1,
-    loaded = 2,
-    defined = 3,
-    booting = 4,
-    done = 5,
-    resourceInited = 6
-}
 export declare type TypeHandler = (module: JModule, options: ModuleMetadata) => ({
     activate: (parentEl: Element) => Promise<void>;
     deactivate: () => Promise<void>;
@@ -190,7 +157,7 @@ export declare class JModule extends ModuleHook {
      *     exports: {},
      * });
      */
-    static define: typeof define;
+    static define: any;
     static applyResource(resourceMetadata: ResourceMetadata, resourceLoaderUrl?: string): Resource;
     static getMeta(): {
         url?: undefined;

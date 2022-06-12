@@ -1,3 +1,7 @@
+import { JModule } from './module';
+import { Resource } from './resource';
+// import JModuleManager from './globalManager';
+
 export enum ResourceType {
     Style = 'text/css',
     Script = 'application/javascript',
@@ -15,6 +19,18 @@ export enum ResourceStatus {
     ScriptError = 7,
 }
 
+export enum MODULE_STATUS {
+    bootFailure = -2,
+    loadFailure = -1,
+    inited = 0,
+    loading = 1,
+    loaded = 2,
+    defined = 3,
+    booting = 4,
+    done = 5,
+    resourceInited = 6,
+}
+
 export enum ResourceLoadStrategy {
     Fetch = 0,
     Element = 1,
@@ -22,7 +38,27 @@ export enum ResourceLoadStrategy {
 
 declare global {
     interface Window {
-        JModuleManager: any;
-        JModule: any;
+        JModule?: any;
+        JModuleManager?: any;
     }
+}
+
+export interface ModuleOptions {
+    type?: string,
+    key: string,
+    name: string,
+    url: string,
+    server?: string,
+    autoBootstrap?: boolean,
+    resourceType?: string,
+    resourceLoadStrategy: ResourceLoadStrategy,
+    resourcePrefix?: string,
+    resource?: Resource,
+}
+
+export interface ModuleMetadata {
+    key?: string,
+    init?: (module: JModule) => void,
+    imports?: string[],
+    exports?: { [key: string]: any },
 }

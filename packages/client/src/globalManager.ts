@@ -1,18 +1,20 @@
 // 全局环境仅保留一份 JModuleManager，用于多 JModule, Resource 管理
 
+import { MODULE_STATUS } from './config';
 import { ModuleHook } from './hook';
 import { JModule } from './module';
 import { Resource } from './resource';
 import { createDocument } from './utils/fakeDocument';
 import { patchCreateElement } from './utils/patchCreateElement';
+import defineModule from './utils/defineModule';
 
 
-if (!window.JModuleManager) {
+if (!(window as any).JModuleManager) {
     const originDocument = document;
     const originCreateElement = originDocument.createElement.bind(originDocument);
-    const initialConfig = (window.JModule || {}).config || {};
+    const initialConfig = (((window as any).JModule || {}) as any).config || {};
 
-    window.JModuleManager = class JModuleManager extends ModuleHook {
+    (window as any).JModuleManager = class JModuleManager extends ModuleHook {
         private static resourceCache: { [id: string]: Resource } = {};
 
         private static jmoduleCache: { [id: string]: JModule } = {};
@@ -22,6 +24,10 @@ if (!window.JModuleManager) {
         private static fileMapCache: Record<string, [string, string|undefined]> = {};
 
         private static fileListCache: string[] = [];
+
+        private static moduleExportsCache: Record<string, any> = {};
+
+        private static moduleExports: Record<string, any> = {};
 
         static nextJModuleId = 0;
 
@@ -106,9 +112,81 @@ if (!window.JModuleManager) {
             }
             return this.nextJModuleId++;
         }
+
+        /**
+         * 存储模块暴露的组件
+         *
+         * @param  {String} moduleKey
+         * @param  {any} data
+         */
+        static cacheModuleExport(moduleKey: string, data: any): void {
+            Object.assign(this.moduleExports, { [moduleKey]: data });
+        }
+
+        /**
+         * 等待模块加载完成
+         *
+         * @param  {String} moduleKey
+         * @example
+         * await JModuleManager.waitModuleComplete(moduleKey);
+         * @return {Promise<Module>}
+         */
+        static async waitModuleComplete(moduleKey: string): Promise<JModule> {
+            const targetModule = this.jmodule(moduleKey);
+            return new Promise((resolve) => {
+                if (targetModule && targetModule.status === MODULE_STATUS.done) {
+                    resolve(targetModule);
+                } else {
+                    const key = `module.${moduleKey}.${MODULE_STATUS.done}`;
+                    window.addEventListener(key, function resolveModule(e) {
+                        window.removeEventListener(key, resolveModule);
+                        resolve((e as any).detail as JModule);
+                    });
+                }
+            });
+        }
+
+        // JModule 兼容功能
+        /**
+         * 引用其它模块暴露的功能
+         *
+         * @param  {String} namespace
+         * @example
+         * JModule.require('pipeline.models.PipelineApp')
+         *     .then((PipelineApp) => {
+         *         // do something
+         *     });
+         * @return {Promise<var>}
+         */
+        static async require(namespace: string): Promise<any> {
+            const path = namespace.split('.');
+            await this.waitModuleComplete(path[0]);
+            if (!this.moduleExportsCache[namespace]) {
+                const res = path.reduce((obj, key) => (obj || {})[key], this.moduleExports);
+                this.moduleExportsCache[namespace] = res;
+            }
+            return this.moduleExportsCache[namespace];
+        }
+
+        /**
+         * 定义模块
+         * @param  {String} moduleKey 定义模块唯一标识
+         * @param  {Object} metadata  定义模块
+         * @param  {Function} [metadata.init<jModuleInstance>] 初始化函数，自动调用
+         * @param  {Array<moduleKey>} [metadata.imports] 依赖的模块
+         * @param  {Object} [metadata.exports] 对外暴露的功能
+         * @example
+         * JModule.define('pipeline', {
+         *     init(module) {},
+         *     routes,
+         *     imports: [],
+         *     exports: {},
+         * });
+         */
+        static define = defineModule;
     };
 
     patchCreateElement(originCreateElement);
 }
 
-export default window.JModuleManager;
+export default (window as any).JModuleManager;

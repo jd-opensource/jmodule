@@ -3,6 +3,7 @@ import { resolveUrlByFetch } from './utils/fetchCode';
 import JModuleManager from './globalManager';
 import { ModuleHook } from './hook';
 import { wrapperFetchedCodeHook } from './utils/wrapperFetchedCode';
+import manager from './globalManager';
 
 function injectElementModifier (
     element: HTMLElement, 
@@ -87,8 +88,6 @@ export interface ResourceOptions {
 
 const scriptCacheByUrl: { [url: string]: HTMLScriptElement } = {};
 
-const manager = window.JModuleManager;
-
 /**
  * 基于URL的资源管理，与模块无关
  * @class
@@ -146,7 +145,7 @@ export class Resource extends ModuleHook {
             this.resolveScript = resolve;
             this.rejectScript = reject;
         });
-        this.strategy = options?.strategy || ResourceLoadStrategy.Element;
+        this.strategy = options?.strategy || ResourceLoadStrategy.Fetch;
         JModuleManager.resource(url, this);
     }
 
