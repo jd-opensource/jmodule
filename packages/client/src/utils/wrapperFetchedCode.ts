@@ -2,7 +2,7 @@ import { Resource } from '../resource';
 import { ResourceType } from '../config';
 
 const CodePrefix = '((context) => {const document = JModuleManager?.createDocument?.(context) || document;';
-const CodeSuffix = (sourceUrl: string, currentUrl: string) => `})({ sourceUrl: '${ sourceUrl }', currentUrl: '${ currentUrl }' })`;
+const CodeSuffix = (sourceUrl: string, currentUrl: string) => `\n})({ sourceUrl: '${ sourceUrl }', currentUrl: '${ currentUrl }' })`;
 
 interface WrapperOptions {
     currentUrl: string;
@@ -19,7 +19,7 @@ export async function wrapperFetchedCodeHook(options: WrapperOptions) {
     const { buffer, resource, ...others } = options;
     const encoder = new TextEncoder();
     // 扩展钩子，可以定义私有变量以覆盖原全局变量，比如 history, addEventListener 以处理子应用路由
-    const [{ code = '' }] = (resource.constructor as any).runHook(
+    const [{ code = '' }] = await (resource.constructor as any).runHook(
         'resource:insertPrivateVariable',
         { ...options, code: '' },
     );

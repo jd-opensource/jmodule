@@ -62,7 +62,6 @@ export declare type TypeHandler = (module: JModule, options: ModuleMetadata) => 
 export declare class JModule extends ModuleHook {
     private static _debug?;
     private completeResolver;
-    private static typeHandlers;
     static id: number;
     type?: string;
     key: string;
@@ -113,12 +112,6 @@ export declare class JModule extends ModuleHook {
      * @param  {TypeHandler} typeHandler 类型处理函数
      */
     static defineType(type: string, typeHandler: TypeHandler): void;
-    /**
-     * 读取子应用类型的处理函数
-     * @param  {String} type 子应用类型
-     * @return  {TypeHandler} 类型处理函数
-     */
-    static getDefinedType(type: string): TypeHandler;
     /**
      * 获取已注册的模块列表
      * @readOnly

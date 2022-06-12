@@ -50,16 +50,15 @@ function define(moduleKey: any, metadata?: any): Promise<JModule> {
     return getAndCheckModule(localKey).then((module) => {
         module.bootstrap = () => {
             module.status = MODULE_STATUS.booting;
-            let defer = Promise.resolve()
+            const targetConstructor = module.constructor as any;
+            let defer = targetConstructor.runHook('beforeDefine', module, localMetadata)
                 .then(() => initModule(module, localMetadata))
-                .then((res) => {
-                    const { activate, deactivate } = (module.constructor as any).getDefinedType(module.type)(module, metadata);
-                    module.activate = activate;
-                    module.deactivate = deactivate;
+                .then(() => {
+                    targetConstructor.runHook('afterDefine', module, localMetadata)
                     module.status = MODULE_STATUS.done; // 初始化完成
-                    return res;
+                    return module;
                 })
-                .catch((err) => {
+                .catch((err: Error) => {
                     module.status = MODULE_STATUS.bootFailure;
                     throw err;
                 });
@@ -152,7 +151,6 @@ async function initModule(module: JModule, pkg: ModuleMetadata): Promise<JModule
     ModuleDebug.print({ key, message: '开始执行初始化函数', instance: pkg });
     try {
         // module init
-        await runHook('beforeInit', module, pkg);
         if (typeof pkg.init === 'function') {
             ModuleDebug.printContinue('执行 init 函数');
             await pkg.init(module);
@@ -160,7 +158,6 @@ async function initModule(module: JModule, pkg: ModuleMetadata): Promise<JModule
         await runHook('afterInit', module, pkg);
 
         // imports
-        await runHook('beforeImports', module, pkg);
         (pkg.imports || []).forEach((moduleKey: string) => {
             ModuleDebug.printContinue('加载依赖模块');
             getAndCheckModule(moduleKey).then(item => item.load());
@@ -168,7 +165,6 @@ async function initModule(module: JModule, pkg: ModuleMetadata): Promise<JModule
         await runHook('afterImports', module, pkg);
 
         // exports
-        await runHook('beforeExports', module, pkg);
         Object.assign(moduleExports, { [key]: pkg.exports });
         await runHook('afterExports', module, pkg);
 
@@ -242,7 +238,6 @@ export class JModule extends ModuleHook {
         resolve: ModuleResolver,
         reject: () => void,
     };
-    private static typeHandlers: { [key: string]: TypeHandler } = {};
     static id: number;
     type?: string;
     key: string;
@@ -418,19 +413,14 @@ export class JModule extends ModuleHook {
      * @param  {TypeHandler} typeHandler 类型处理函数
      */
     static defineType(type: string, typeHandler: TypeHandler) {
-        JModule.typeHandlers[type] = typeHandler;
-    }
-
-    /**
-     * 读取子应用类型的处理函数
-     * @param  {String} type 子应用类型
-     * @return  {TypeHandler} 类型处理函数
-     */
-    static getDefinedType(type: string) {
-        return JModule.typeHandlers[type] || (() => ({
-            activate: () => {},
-            deactivate: () => {},
-        }));
+        JModule.addHook('afterDefine', (module: JModule, metadata: ModuleMetadata) => {
+            if (module.type === type && typeof typeHandler === 'function') {
+                const { activate, deactivate } = typeHandler(module, metadata) || {};
+                module.activate = activate;
+                module.deactivate = deactivate;
+            }
+            return [module, metadata];
+        });
     }
 
 
