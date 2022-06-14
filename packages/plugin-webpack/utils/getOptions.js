@@ -14,10 +14,11 @@ const defaultOptions = {
 module.exports = function getOptions(options, compiler) {
     const context = compiler.options.context || process.cwd();
     const originOptions = options || require(path.resolve(context, '.jmodule.conf')) || {};
-    const { mode, devConfig, ...others } = originOptions;
+    const { devConfig, ...others } = originOptions;
 
     // 处理基础编译配置
-    const localOptions = Object.assign(defaultOptions, others);
+    const localOptions = Object.assign({}, defaultOptions, others);
+
     // 默认输出文件
     if (others.outputJSON && !others.moduleEntryFile) {
         localOptions.moduleEntryFile = `${defaultOptions.moduleEntryFile}on`;

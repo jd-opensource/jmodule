@@ -8,6 +8,7 @@
   "author": "feirpri <feirpri@gmail.com>",
   "license": "MIT",
   "scripts": {
+    "test": "jest",
     "lint": "eslint src/**/*.js utils/**/*.js"
   },
   "main": "src/index.js",
