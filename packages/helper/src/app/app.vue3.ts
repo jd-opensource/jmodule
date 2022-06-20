@@ -15,7 +15,9 @@ interface CreateRouter {
 export default (
     appKey: string,
     createInstance: CreateInstance,
-    createRouter?: CreateRouter
+    createRouter?: CreateRouter,
+    exports?: Record<string, any>,
+    imports?: string[],
 ) => JModule.define(appKey, {
     mount(module: JModule, el: HTMLDivElement) {
         // 因为可能会重复挂载和卸载，需要创建新的实例后直接挂载
@@ -25,4 +27,6 @@ export default (
     unmount() {
         instance.unmount();
     },
+    exports,
+    imports,
 });

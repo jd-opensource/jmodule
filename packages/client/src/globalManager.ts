@@ -86,6 +86,14 @@ if (!(window as any).JModuleManager) {
             return this.jmoduleCache[moduleKey];
         }
 
+        /**
+         * 获取已注册的应用列表
+         * @readOnly
+         */
+        static get registeredModules(): JModule[] {
+            return Object.values(this.jmoduleCache);
+        }
+
         static mapResourceUrlAndModuleKey(resourceUrl: string, moduleKey: string) {
             this.resourceUrlAndModuleKeyMap[resourceUrl] = [
                 ...(this.resourceUrlAndModuleKeyMap[resourceUrl] || []),

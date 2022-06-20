@@ -20,6 +20,7 @@
     "commitizen": "^4.2.4",
     "cz-conventional-changelog": "^3.3.0",
     "husky": "^7.0.4",
+    "jest": "^28.1.1",
     "webpack": "^5.73.0"
   },
   "config": {

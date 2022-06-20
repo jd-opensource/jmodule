@@ -9,7 +9,7 @@
     },
     "dependencies": {
         "@jmodule/client": "workspace:*",
-        "@jmodule/snippet": "workspace:*",
+        "@jmodule/helper": "workspace:*",
         "chokidar": "^3.5.1",
         "core-js": "^3.6.5",
         "prettier": "^1.19.1",

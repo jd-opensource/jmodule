@@ -16,7 +16,9 @@ interface CreateRouter {
 export default (
     appKey: string,
     createInstance: CreateInstance,
-    createRouter?: CreateRouter
+    createRouter?: CreateRouter,
+    exports?: Record<string, any>,
+    imports?: string[],
 ) => JModule.define(appKey, {
     bootstrap: (module: JModule) => {
         router = createRouter?.(`/${module.key}`);
@@ -29,4 +31,6 @@ export default (
         instance.$el.remove();
         instance.$destroy();
     },
+    exports,
+    imports,
 });

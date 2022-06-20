@@ -2,7 +2,7 @@ import Vue from 'vue'
 import { JModule } from '@jmodule/client';
 import App from './App.vue'
 import { initRouter } from './router'
-import Vue2AppDefine from '@jmodule/snippet/app/app.vue2';
+import Vue2AppDefine from '@jmodule/helper/app/app.vue2';
 
 Vue.config.productionTip = false
 

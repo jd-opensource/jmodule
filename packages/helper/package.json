@@ -1,7 +1,7 @@
 {
-  "name": "@jmodule/snippet",
-  "version": "1.0.3",
-  "description": "JModule Snippet",
+  "name": "@jmodule/helper",
+  "version": "1.0.0",
+  "description": "JModule使用助手",
   "author": "feirpri <feirpri@gmail.com>",
   "license": "MIT",
   "scripts": {
