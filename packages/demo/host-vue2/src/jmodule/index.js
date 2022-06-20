@@ -1,7 +1,7 @@
 import Vue from 'vue';
 import { JModule } from '@jmodule/client';
-import AppTypeDefine from '@jmodule/snippet/host/type.app';
-import Vue2RoutesTypeDefine from '@jmodule/snippet/host/type.routes.vue2';
+import AppTypeDefine from '@jmodule/helper/host/type.app';
+import Vue2RoutesTypeDefine from '@jmodule/helper/host/type.routes.vue2';
 import ModuleRender from '../views/ModuleRender.vue';
 import router from '../router';
 import store from '../store';

@@ -8,7 +8,7 @@
   },
   "dependencies": {
     "@jmodule/client": "workspace:*",
-    "@jmodule/snippet": "workspace:*",
+    "@jmodule/helper": "workspace:*",
     "chokidar": "3",
     "core-js": "^3.6.5",
     "regenerator-runtime": "^0.13.9",

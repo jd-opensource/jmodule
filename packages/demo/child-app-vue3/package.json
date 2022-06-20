@@ -9,7 +9,7 @@
   },
   "dependencies": {
     "@jmodule/client": "workspace:*",
-    "@jmodule/snippet": "workspace:*",
+    "@jmodule/helper": "workspace:*",
     "core-js": "^3.22.8",
     "vue": "^3.2.37"
   },

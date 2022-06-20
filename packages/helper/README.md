@@ -12,7 +12,7 @@ JModule 接入辅助工具
 ## 安装
 
 ```bash
-npm i @jmodule/snippet
+npm i @jmodule/helper
 ```
 
 ## 使用
