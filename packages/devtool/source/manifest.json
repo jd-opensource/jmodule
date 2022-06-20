@@ -1,0 +1,34 @@
+{
+	"name": "JModuleDevtool",
+	"version": "1.0.0",
+	"description": "JModule 调试工具",
+	"homepage_url": "https://github.com/jdtdevops/jmodule",
+	"manifest_version": 2,
+	"minimum_chrome_version": "90",
+	"browser_specific_settings": {
+		"gecko": {
+			"strict_min_version": "90.0"
+		}
+	},
+	"web_accessible_resources": [
+		"page/init.js"
+	],
+	"icons": {
+		"128": "icon.png"
+	},
+	"permissions": [
+		"storage",
+		"activeTab"
+	],
+	"content_scripts": [
+		{
+			"matches": [ "*://*/*" ],
+			"js": [ "content.js" ],
+			"run_at": "document_start"
+		}
+	],
+	"background": {
+		"scripts": ["background.js"]
+	},
+	"devtools_page": "devtools_entry.html"
+}

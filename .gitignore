@@ -132,3 +132,6 @@ jsdoc.
 .env.test.local
 .env.production.local
 *.log
+.parcel-cache
+dist
+.vscode

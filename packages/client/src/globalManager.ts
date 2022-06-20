@@ -91,7 +91,9 @@ if (!(window as any).JModuleManager) {
          * @readOnly
          */
         static get registeredModules(): JModule[] {
-            return Object.values(this.jmoduleCache);
+            return Object.keys(this.jmoduleCache)
+                .map(key => this.jmodule(key))
+                .filter(item => !!item) as JModule[];
         }
 
         static mapResourceUrlAndModuleKey(resourceUrl: string, moduleKey: string) {
