@@ -15,12 +15,19 @@ const sendMessage = (() => {
 		// 由后台接收，发送给 devtools
 		if (firstMessage) {
 			firstMessage = false;
-			browser.runtime.sendMessage({ type: InitMessageType, data: { startTime } });
+			browser.runtime.sendMessage({ type: InitMessageType, data: {
+				startTime,
+				hasGetActions: messageOptions.type === 'jmodule:ready',
+			}});
+		}
+		if (messageOptions.type === 'jmodule:change') {
+			browser.runtime.sendMessage({ type: 'jmodule:change' });
+			return;
 		}
 		messageQueue.push(messageOptions);
 		clearTimeout(timer);
 		timer = setTimeout(async () => {
-			const d = await browser.runtime.sendMessage(messageQueue);
+			await browser.runtime.sendMessage(messageQueue);
 			messageQueue.length = 0;
 		}, 300);
 	}
@@ -29,7 +36,6 @@ const sendMessage = (() => {
 function initPage() {
 	const script = document.createElement('script');
 	script.src = browser.runtime.getURL('page/init.js');
-	console.log(document.head.insertBefore(script, document.head.firstChild));
 }
 
 // 开始
@@ -45,7 +51,5 @@ window.addEventListener("message", (event) => {
 	if (event.source != window || type !== PageMessageType) {
 		return;
 	}
-	console.log('--------------message-------------');
-	console.log(data)
 	sendMessage({ type: action, data: data });
 }, false);

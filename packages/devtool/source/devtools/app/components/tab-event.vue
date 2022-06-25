@@ -2,16 +2,31 @@
     <div>
         <div class="base">
             <div>
+                <label for="">页面初始化:</label>
+                <div class="value">{{ getTime(startTime) }} (时间计算起点)</div>
+            </div>
+            <div>
                 <label for="">注册于:</label>
-                <div class="value">{{ getDiffTime(timeMap.registered) }}</div>
+                <div class="value">
+                    {{ getDiffTime((timeMap.initialized || timeMap.registered) - startTime) }}
+                </div>
             </div>
             <div v-if="timeMap.loading">
-                <label for="">加载始于:</label>
-                <div class="value">{{ getDiffTime(timeMap.loading) }}</div>
+                <label for="">资源初始化:</label>
+                <div class="value">{{ getDiffTime(timeMap.loading - startTime) }}</div>
+            </div>
+            <div v-if="timeMap['Resource:ApplyScript']">
+                <label for="">资源加载:</label>
+                <div class="value">{{ getDiffTime(timeMap['Resource:ApplyScript'] - startTime) }}</div>
             </div>
             <div v-if="timeMap.loaded">
                 <label for="">加载耗时:</label>
-                <div class="value">{{ getDiffTime(timeMap.loaded - timeMap.loading) }}</div>
+                <div class="value" v-if="!timeMap['Resource:ApplyScript']">
+                    {{ getDiffTime(timeMap.loaded - timeMap.loading) }}
+                </div>
+                <div class="value" v-else>
+                    {{ getDiffTime(timeMap.loaded - timeMap['Resource:ApplyScript']) }}
+                </div>
             </div>
         </div>
         <div class="timing" v-if="timeMap.loading">
@@ -23,8 +38,8 @@
             </div>
             <template v-for="(item, i) in actions">
                 <div :key="item" v-if="true" class="timing-item" :type="item[0]">
-                    <div class="event">{{ getStatus(item[0]) }}</div>
-                    <div class="time">{{ getDiffTime(item[1]) }}</div>
+                    <div class="event">{{ getStatus(item[0], item[2]) }}</div>
+                    <div class="time">{{ getDiffTime(item[1] - startTime) }}</div>
                     <div class="duration">{{ i ? getDiffTime(item[1] - actions[i - 1][1]) : '-' }}</div>
                     <div class="time2">{{ getTime(item[1]) }}</div>
                 </div>
@@ -56,13 +71,14 @@ export default {
         getStatus,
         getDiffTime,
         getTime(time) {
-            return new Date(time + this.startTime).toLocaleTimeString();
+            const date = new Date(time);
+            return `${date.toLocaleTimeString()}:${date.getMilliseconds()}`;
         },
     },
     computed: {
         timeMap() {
             return (this.actions || []).reduce(
-                (res, [status, time]) => Object.assign(res, { [getStatus(status)]: time }),
+                (res, [status, time, type]) => Object.assign(res, { [getStatus(status, type)]: time }),
                 {},
             );
         },
@@ -94,7 +110,7 @@ export default {
     color: #999;
 }
 .event{
-    width: 120px;    
+    width: 240px;    
 }
 .time{
     width: 100px;

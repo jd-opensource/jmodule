@@ -1,9 +1,10 @@
-import { ResourceType, ResourceStatus, ResourceLoadStrategy } from './config';
+import { ResourceType, ResourceStatus, ResourceLoadStrategy, ModuleStatus } from './config';
 import { resolveUrlByFetch } from './utils/fetchCode';
 import JModuleManager from './globalManager';
 import { ModuleHook } from './hook';
 import { wrapperFetchedCodeHook } from './utils/wrapperFetchedCode';
 import manager from './globalManager';
+import { JModule } from './module';
 
 function injectElementModifier (
     element: HTMLElement, 
@@ -19,7 +20,6 @@ function loadScript(url: string, from: string, elementModifier?: (script: HTMLSc
     script.setAttribute('src', url); // skip proxy
     script.async = false;
     script.dataset.jmoduleFrom = from;
-    script.dataset.loadedBy = url;
     elementModifier && elementModifier(script);
     document.body.appendChild(script);
     return new Promise((resolve, reject) => {
@@ -28,12 +28,17 @@ function loadScript(url: string, from: string, elementModifier?: (script: HTMLSc
     });
 }
 
-function addStyle(url: string, elementModifier?: (element: HTMLElement) => void): HTMLLinkElement {
+function addStyle(url: string, from: string, elementModifier?: (element: HTMLElement) => void): Promise<HTMLLinkElement> {
     const styleDom = document.createElement('link');
     styleDom.setAttribute('rel', 'stylesheet');
-    styleDom.href = url;
-    document.head.appendChild(injectElementModifier(styleDom, elementModifier));
-    return styleDom;
+    styleDom.setAttribute('href', url);
+    styleDom.dataset.jmoduleFrom = from;
+    elementModifier && elementModifier(styleDom);
+    document.head.appendChild(styleDom);
+    return new Promise((resolve, reject) => {
+        styleDom.onerror = () => reject(new Error(`LoadStyleError: ${url}`));
+        styleDom.onload = () => resolve(styleDom);
+    });
 }
 
 function patchInitUrl(url: string): string {
@@ -116,7 +121,6 @@ export class Resource extends ModuleHook {
     prefix?: string;
     afterApplyScript!: Promise<HTMLScriptElement[]>;
     afterInit!: Promise<void>;
-    preloaded = false;
     strategy!: ResourceLoadStrategy; // 默认，直接用标签方式加载
     cachedUrlMap: {
         [key: string]: string
@@ -175,6 +179,7 @@ export class Resource extends ModuleHook {
         const resource = JModuleManager.resource(sourceUrl);
         if (resource) {
             resource.metadata = metadata;
+            resource.setStatus(ResourceStatus.Initialized);
             resource.resolveInit();
             return resource;
         } else {
@@ -182,14 +187,16 @@ export class Resource extends ModuleHook {
         }
     }
 
+    // 加载资源元数据
     init() {
-        if (this.initScriptElement) {
+        if (this.initScriptElement || this.status === ResourceStatus.Initializing) {
             return Promise.resolve();
         }
+        this.setStatus(ResourceStatus.Initializing);
         const urlDefer: Promise<string> = this.type === 'json' ? fetch(patchInitUrl(this.url))
             .then(res => res.json())
             .then((jsonRes) => {
-                const jsString = `JModule.applyResource(${JSON.stringify(jsonRes)}, "${this.url}")`;
+                const jsString = `(JModuleManager && JModuleManager.defaultJModule || JModule).applyResource(${JSON.stringify(jsonRes)}, "${this.url}")`;
                 const blob = new Blob([jsString], { type: 'text/javascript' });
                 return URL.createObjectURL(blob);
             }) : Promise.resolve(patchInitUrl(this.url));
@@ -199,6 +206,7 @@ export class Resource extends ModuleHook {
             this.initScriptElement = script;
             scriptCacheByUrl[this.url] = script;
         })).catch((e) => {
+            this.setStatus(ResourceStatus.InitializeFailed);
             console.error(`资源加载失败: ${this.url}`);
             this.rejectInit(e);
         });
@@ -210,6 +218,16 @@ export class Resource extends ModuleHook {
 
     setStatus(status: ResourceStatus) {
         this.status = status;
+        const modules = JModuleManager.getModulesByResourceUrl(this.url);
+        modules.forEach((module: JModule) => {
+            // 不同应用共享资源时，被动触发状态改变
+            if (status === ResourceStatus.Initializing && module.status === ModuleStatus.initialized) {
+                module.status = ModuleStatus.loading;
+            }
+            window.dispatchEvent(new CustomEvent(`resource.${module.key}.statusChange`, {
+                detail: this,
+            }));
+        });
     }
 
     async applyScript(elementModifier?: ElementModifier): Promise<HTMLScriptElement[]> {
@@ -222,7 +240,6 @@ export class Resource extends ModuleHook {
         if (this.scriptLoading) {
             return this.scriptLoading;
         }
-        this.appliedScript = true;
         this.setStatus(ResourceStatus.ApplyScript);
         this.scriptElements = [];
         const jsUrls = (this.metadata.js || []).map(url => this.resolveUrl(url));
@@ -236,14 +253,12 @@ export class Resource extends ModuleHook {
         this.scriptLoading = getEntryUrls().then((entryUrls) => Promise.all(entryUrls.map(url => loadScript(
             url,
             this.url,
-            script => {
-                injectElementModifier(script, elementModifier);
-                script.dataset.jmoduleFrom = this.url;
-                this.scriptElements.push(script);
-            },
-        )))).then(() => {
+            elementModifier,
+        )))).then((scripts) => {
             this.setStatus(ResourceStatus.ScriptResolved);
-            this.resolveScript(this.scriptElements);
+            this.resolveScript(scripts);
+            this.scriptElements = scripts;
+            this.appliedScript = true;
             return this.scriptElements;
         }).catch((error) => {
             this.setStatus(ResourceStatus.ScriptError);
@@ -270,6 +285,7 @@ export class Resource extends ModuleHook {
         if (this.styleLoading) {
             return this.styleLoading;
         }
+        this.setStatus(ResourceStatus.ApplyStyle);
         const cssUrls = (this.metadata.css || []).map(url => this.resolveUrl(url));
         const getEntryUrls = async () => this.strategy === ResourceLoadStrategy.Fetch
             ? await Promise.all(cssUrls.map(url => resolveUrlByFetch(
@@ -278,48 +294,61 @@ export class Resource extends ModuleHook {
                 ResourceType.Style,
             )))
             : cssUrls;
-        this.styleLoading = getEntryUrls().then(entryUrls => entryUrls.map(url => {
-            const el = addStyle(url, elementModifier);
-            el.dataset.jmoduleFrom = this.url;
-            return el;
-        })).then((elements) => {
+        this.styleLoading = getEntryUrls().then(entryUrls => Promise.all(entryUrls.map(url => {
+            return addStyle(url, this.url, elementModifier);
+        }))).then((elements) => {
             this.styleElements = elements;
             this.appendedAsyncStyleElements?.forEach(item => document.head.appendChild(item));
             this.styleMounted = true;
+            this.setStatus(ResourceStatus.StyleResolved);
             return this.styleElements;
+        }).catch((error) => {
+            this.setStatus(ResourceStatus.StyleError);
+            throw error;
         });
         return this.styleLoading;
     }
 
     preload(elementModifier?: ElementModifier) {
         if (!this.metadata) {
-            return Promise.reject(new Error('no resource metadata'));
+            throw new Error('no resource metadata');
         }
-        if (this.preloaded) {
+        if (this.status === ResourceStatus.Preloading) {
             return;
         }
+        this.setStatus(ResourceStatus.Preloading);
         const { css = [], js = [] } = this.metadata;
-        [
+        const defers = [
             { type: 'script', urls: js },
             { type: 'style', urls: css },
-        ].forEach(({ type, urls }) => {
-            urls.forEach(url => {
+        ].map(({ type, urls }) => {
+            const defers = urls.map(url => {
                 const targetUrl = this.resolveUrl(url);
                 if (this.strategy === ResourceLoadStrategy.Fetch) {
                     const resourceType = type === 'script' ? ResourceType.Script : ResourceType.Style;
-                    resolveUrlByFetch(targetUrl, this.url, resourceType).then(resUrl => {
+                    return resolveUrlByFetch(targetUrl, this.url, resourceType).then(resUrl => {
                         this.cachedUrlMap[targetUrl] = resUrl;
                     });
                 } else {
-                    const preloadLink = document.createElement("link");
-                    preloadLink.href = targetUrl;
-                    preloadLink.rel = "preload";
-                    preloadLink.as = type;
-                    document.head.appendChild(injectElementModifier(preloadLink, elementModifier));
+                    return new Promise((resolve, reject) => {
+                        const preloadLink = document.createElement("link");
+                        preloadLink.href = targetUrl;
+                        preloadLink.rel = "preload";
+                        preloadLink.as = type;
+                        preloadLink.onload = resolve;
+                        preloadLink.onerror = reject;
+                        document.head.appendChild(injectElementModifier(preloadLink, elementModifier))
+                    });
                 }
             });
+            return Promise.all(defers);
         });
-        this.preloaded = true;
+        Promise.all(defers).then(() => {
+            this.setStatus(ResourceStatus.Preloaded);
+        }).catch(() => {
+            this.setStatus(ResourceStatus.PreloadFailed);
+        });
+        return;
     }
 
     /**

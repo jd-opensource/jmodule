@@ -3,7 +3,7 @@ import { ResourceMetadata, Resource } from './resource';
 import { DepResolver } from './depResolver';
 import { ModuleHook } from './hook';
 import { Matcher } from './utils/matcher';
-import { ModuleOptions, ModuleMetadata, MODULE_STATUS } from './config';
+import { ModuleOptions, ModuleMetadata, ModuleStatus } from './config';
 import manager from './globalManager';
 
 /* 调试模式打印信息：路由变更信息，初始化模块实例、资源实例信息，模块状态变更信息 */
@@ -17,15 +17,14 @@ const defaultExportsMatcher = new Matcher({});
 const moduleCache: { [namespace: string]: any } = {}; // 缓存require的模块
 
 const moduleLog = {
-    [MODULE_STATUS.inited]: '已创建模块实例',
-    [MODULE_STATUS.loading]: '正在加载模块资源',
-    [MODULE_STATUS.loaded]: '模块加载完成', // 代码加载并define解析完成，但 define 过程未执行
-    [MODULE_STATUS.loadFailure]: '模块加载或解析失败', // 加载失败或解析 define 失败
-    [MODULE_STATUS.defined]: '解析模块定义', // 初始化了 bootstrap 方法但未执行
-    [MODULE_STATUS.booting]: '正在挂载模块',
-    [MODULE_STATUS.done]: '模块已挂载', // bootstrap/define 过程已完成
-    [MODULE_STATUS.bootFailure]: '挂载模块过程异常', // bootstrap/define 过程中异常
-    [MODULE_STATUS.resourceInited]: '资源初始化完成',
+    [ModuleStatus.initialized]: '已创建模块实例',
+    [ModuleStatus.loading]: '正在加载模块资源',
+    [ModuleStatus.loaded]: '模块加载完成', // 代码加载并define解析完成，但 define 过程未执行
+    [ModuleStatus.loadFailure]: '模块加载或解析失败', // 加载失败或解析 define 失败
+    [ModuleStatus.defined]: '解析模块定义', // 初始化了 bootstrap 方法但未执行
+    [ModuleStatus.booting]: '正在挂载模块',
+    [ModuleStatus.done]: '模块已挂载', // bootstrap/define 过程已完成
+    [ModuleStatus.bootFailure]: '挂载模块过程异常', // bootstrap/define 过程中异常
 };
 
 const filteredModules: { [moduleKey: string]: string } = {};
@@ -52,15 +51,15 @@ const filterModule = (conf: ModuleOptions) => {
 
 function watchModuleStatus(this: JModule, resource: Resource) {
     resource.afterInit.catch(() => {
-        this.status = MODULE_STATUS.loadFailure;
+        this.status = ModuleStatus.loadFailure;
     });
     resource.afterApplyScript.catch(() => {
-        this.status = MODULE_STATUS.loadFailure;
+        this.status = ModuleStatus.loadFailure;
     })
     resource.afterApplyScript.then(() => {
         // 对于 auto apply script 的情况，loaded 发生在脚本解析之后，loaded 不会被触发
-        if (this.status === MODULE_STATUS.loading) {
-            this.status = MODULE_STATUS.loaded;
+        if (this.status === ModuleStatus.loading) {
+            this.status = ModuleStatus.loaded;
         }
     });
 }
@@ -124,7 +123,7 @@ export class JModule extends ModuleHook {
     hooks: {
         complete: Promise<JModule>;
     };
-    _status!: MODULE_STATUS;
+    _status!: ModuleStatus;
 
     /**
      * @constructor
@@ -171,7 +170,7 @@ export class JModule extends ModuleHook {
          * @type {String<url>}
          */
         this.url = url;
-        this.status = MODULE_STATUS.inited;
+        this.status = ModuleStatus.initialized;
         /**
          * 远程资源服务器
          * @type {String}
@@ -231,15 +230,15 @@ export class JModule extends ModuleHook {
         const eventData = { detail: this };
         /* eslint-disable no-nested-ternary */
         ModuleDebug.print({
-            type: status !== MODULE_STATUS.loadFailure
-                ? status !== MODULE_STATUS.loading ? 'success' : 'log' : 'error',
+            type: status !== ModuleStatus.loadFailure
+                ? status !== ModuleStatus.loading ? 'success' : 'log' : 'error',
             key: this.key,
             message: moduleLog[status],
             instance: this,
         });
         window.dispatchEvent(new CustomEvent(`module.${this.key}.statusChange`, eventData));
         window.dispatchEvent(new CustomEvent(`module.${this.key}.${status}`, eventData));
-        const { done, loadFailure, bootFailure } = MODULE_STATUS;
+        const { done, loadFailure, bootFailure } = ModuleStatus;
         if (status === done) {
             this.completeResolver.resolve(this);
         }
@@ -365,10 +364,10 @@ export class JModule extends ModuleHook {
             return Promise.resolve(moduleCache[namespace]);
         }
         return new Promise((resolve) => {
-            if (targetModule && targetModule.status === MODULE_STATUS.done) {
+            if (targetModule && targetModule.status === ModuleStatus.done) {
                 resolve(null);
             } else {
-                window.addEventListener(`module.${moduleKey}.${MODULE_STATUS.done}`, resolve);
+                window.addEventListener(`module.${moduleKey}.${ModuleStatus.done}`, resolve);
             }
         }).then(() => {
             const res = path.reduce((obj, key) => (obj || {})[key], moduleExports);
@@ -526,8 +525,8 @@ export class JModule extends ModuleHook {
     ): Promise<Resource|void> {
         const fn = async () => {
             const { resource } = this;
-            if (this.status < MODULE_STATUS.loading) {
-                this.status = MODULE_STATUS.loading;
+            if (this.status === ModuleStatus.initialized) {
+                this.status = ModuleStatus.loading;
                 resource.init();
             }
             await resource.afterInit;

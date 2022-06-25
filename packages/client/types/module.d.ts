@@ -1,7 +1,7 @@
 import { ResourceMetadata, Resource } from './resource';
 import { ModuleHook } from './hook';
 import { Matcher } from './utils/matcher';
-import { ModuleOptions, ModuleMetadata, MODULE_STATUS } from './config';
+import { ModuleOptions, ModuleMetadata, ModuleStatus } from './config';
 declare type HashObject = {
     [key: string]: any;
 };
@@ -54,18 +54,18 @@ export declare class JModule extends ModuleHook {
     hooks: {
         complete: Promise<JModule>;
     };
-    _status: MODULE_STATUS;
+    _status: ModuleStatus;
     /**
      * @constructor
      */
     constructor({ key, url, server, name, autoBootstrap, resourceType, resourcePrefix, resource, type, resourceLoadStrategy, ...others }: ModuleOptions);
-    set status(status: MODULE_STATUS);
+    set status(status: ModuleStatus);
     /**
      * 获取模块状态
      * @member
      * @enum {String}
      */
-    get status(): MODULE_STATUS;
+    get status(): ModuleStatus;
     /**
      * 设置debug模式，开启后将打印模块注册、加载、解析的全过程信息
      * @example

@@ -12,21 +12,26 @@ export const tabs = [{
     component: 'events',
 }];
 
+// 兼容旧版
 const moduleActionMap = [
     'bootFailure',
     'loadFailure',
-    'registered', // inited
+    'initialized',
     'loading',
     'loaded',
     'defined',
     'booting',
     'done',
-    'resourceInited',
+    'resourceInitialized',
 ];
-export function getStatus(status) {
+export function getStatus(status, type = 'module') {
+    if (typeof status === 'string') {
+        return type === 'module' ? status : `Resource:${status}`;
+    }
     return moduleActionMap[status + 2];
 }
 
+// 兼容旧版
 export function getResourceStatus(status) {
     return [
         'Init',
@@ -41,6 +46,7 @@ export function getResourceStatus(status) {
     ][status];
 }
 
+// 兼容旧版
 export function getResourceLoadStrategy(strategy) {
     return ['Fetch', 'Element'][strategy];
 }

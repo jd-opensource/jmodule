@@ -37,7 +37,6 @@ export declare class Resource extends ModuleHook {
     prefix?: string;
     afterApplyScript: Promise<HTMLScriptElement[]>;
     afterInit: Promise<void>;
-    preloaded: boolean;
     strategy: ResourceLoadStrategy;
     cachedUrlMap: {
         [key: string]: string;
@@ -58,7 +57,7 @@ export declare class Resource extends ModuleHook {
     setStatus(status: ResourceStatus): void;
     applyScript(elementModifier?: ElementModifier): Promise<HTMLScriptElement[]>;
     applyStyle(elementModifier?: ElementModifier): Promise<HTMLLinkElement[]>;
-    preload(elementModifier?: ElementModifier): Promise<never> | undefined;
+    preload(elementModifier?: ElementModifier): void;
     /**
      * 移除样式
      */

@@ -28,6 +28,7 @@
             <div class="tab-content">
                 <component
                     :is="currentComponent"
+                    :definition="definition"
                     :module="currentModule"
                     :resource="currentResource"
                     :startTime="startTime"
@@ -57,6 +58,8 @@ import ModulesDashboard from './components/dashboard.vue';
 
 const pageEval = browser.devtools.inspectedWindow.eval;
 const registeredModules = '(window.JModuleManager && window.JModuleManager.registeredModules) || (window.JModule && window.JModule.registeredModules) || []';
+const getActionsFromIndex = (i) => `window.__jmodule_devtool__.getActionsFromIndex(${i})`;
+const getDefinition = () => pageEval('window.__jmodule_devtool__ ? window.__jmodule_devtool__.getDefinition() : undefined');
 
 export default {
     components: {
@@ -79,6 +82,9 @@ export default {
                 Module: TabModule,
                 Event: TabEvent,
             }),
+            lastActionsIndex: 0,
+            timer: undefined,
+            definition: undefined,
         };
     },
     computed: {
@@ -106,19 +112,44 @@ export default {
         connect(this.onMessage, this.onInit, this.onDestroy);
     },
     methods: {
+        async onInit({ data } = {}) {
+            this.sessionData.startTime = data.startTime;
+            this.sessionData.actions = {};
+            this.lastActionsIndex = 0;
+            [this.definition] = await getDefinition();
+        },
         onDestroy() {
             this.sessionData = {};
             this.modules = [];
             this.currentModule = null;
         },
-        onMessage(options = {}) {
-            console.log(options.data);
+        async onMessage(options = {}) {
+            // 新版
+            if (options.type === 'jmodule:change') {
+                this.getActionsFromPage();
+            } else {
+                this.getActionsFromMessage(options);
+            }
+        },
+        async getActionsFromMessage(options) {
             // 与上次的对比
             const changedKeys = Object.keys(options.data).filter(key => {
                 return key && (this.sessionData.actions[key]?.length !== options.data[key].length);
             })
             this.refreshModules(changedKeys);
             this.sessionData.actions = options.data;
+        },
+        async getActionsFromPage() {
+            const [currentActions] = await pageEval(getActionsFromIndex(this.lastActionsIndex));
+            this.lastActionsIndex += currentActions.length || 0;
+            const changedKeys = [];
+            currentActions.forEach((action = []) => {
+                const [ time, key, type, status ] = action;
+                this.sessionData.actions[key] = this.sessionData.actions[key] || [];
+                this.sessionData.actions[key].push([status, time, type]);
+                changedKeys.push(key);
+            });
+            this.refreshModules(changedKeys);
         },
         async refreshModules(moduleKeys) {
             const [modules = []] = await pageEval(`JSON.parse(JSON.stringify(${registeredModules}.filter(module => ${JSON.stringify(moduleKeys)}.includes(module.key))))`);            
@@ -133,9 +164,6 @@ export default {
                 }
             });
             this.modules = (this.modules || []).sort((a, b) => a._status > b._status ? -1 : 1);
-        },
-        onInit({ data } = {}) {
-            this.sessionData.startTime = data.startTime;
         },
         async getModules() {
             const [modules = []] = await pageEval(`JSON.parse(JSON.stringify(${registeredModules}))`);

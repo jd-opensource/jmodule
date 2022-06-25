@@ -34,10 +34,11 @@ chrome.runtime.onConnect.addListener(function (port) {
     });
 });
 
-function createSessionData(startTime) {
+function createSessionData(startTime, hasGetActions) {
     return {
         timer: undefined,
         startTime,
+        hasGetActions: hasGetActions,
         actions: {},
     };
 }
@@ -57,6 +58,10 @@ function sendActionData(tabId) {
     if (!devtoolPort || !tab) {
         return;
     }
+    if (sessionData[tabId]?.hasGetActions) {
+        devtoolPort.postMessage({ type: 'jmodule:change' });
+        return;
+    }
     clearTimeout(tab.timer);
     tab.timer = setTimeout(async () => {
         devtoolPort.postMessage({
@@ -70,12 +75,18 @@ const handleMessage = (message, sender) => {
     const devtoolPort = connections[tabId] || undefined;
     switch(message.type) {
         case InitMessageType:
-            sessionData[tabId] = createSessionData(message.data?.startTime);
+            sessionData[tabId] = createSessionData(
+                message.data?.startTime,
+                message.data?.hasGetActions,
+            );
             sendInitData(tabId); // 先连接后注册
             break;
         case DestroyMessageType:
             sessionData[tabId] = undefined;
             devtoolPort && devtoolPort.postMessage({ type: DestroyMessageType });
+            break;
+        case 'jmodule:change':
+            sendActionData(tabId);
             break;
         default:
             if (!sessionData[tabId] || !sessionData[tabId].startTime) {
@@ -83,7 +94,7 @@ const handleMessage = (message, sender) => {
             }
             const { key, status, time } = message.data;
             sessionData[tabId].actions[key] = sessionData[tabId].actions[key] || [];
-            sessionData[tabId].actions[key].push([status, time]);
+            sessionData[tabId].actions[key].push([status, time, 'module']);
             sendActionData(tabId);
             break;
     }

@@ -1,12 +1,13 @@
 // 全局环境仅保留一份 JModuleManager，用于多 JModule, Resource 管理
 
-import { MODULE_STATUS } from './config';
+import { ModuleStatus } from './config';
 import { ModuleHook } from './hook';
 import { JModule } from './module';
 import { Resource } from './resource';
 import { createDocument } from './utils/fakeDocument';
 import { patchCreateElement } from './utils/patchCreateElement';
 import defineModule from './utils/defineModule';
+import { enableDevtool } from './utils/enableDevtool'
 
 
 if (!(window as any).JModuleManager) {
@@ -103,8 +104,10 @@ if (!(window as any).JModuleManager) {
             ];
         }
 
-        static getModulesByResourceUrl(resourceUrl: string): (JModule|undefined)[] {
-            return (this.resourceUrlAndModuleKeyMap[resourceUrl] || []).map(key => this.jmodule(key));
+        static getModulesByResourceUrl(resourceUrl: string): JModule[] {
+            return (this.resourceUrlAndModuleKeyMap[resourceUrl] || [])
+                .map(key => this.jmodule(key))
+                .filter(item => !!item) as JModule[];
         }
 
         static getJModuleConstructor(moduleKey: string) {
@@ -144,10 +147,10 @@ if (!(window as any).JModuleManager) {
         static async waitModuleComplete(moduleKey: string): Promise<JModule> {
             const targetModule = this.jmodule(moduleKey);
             return new Promise((resolve) => {
-                if (targetModule && targetModule.status === MODULE_STATUS.done) {
+                if (targetModule && targetModule.status === ModuleStatus.done) {
                     resolve(targetModule);
                 } else {
-                    const key = `module.${moduleKey}.${MODULE_STATUS.done}`;
+                    const key = `module.${moduleKey}.${ModuleStatus.done}`;
                     window.addEventListener(key, function resolveModule(e) {
                         window.removeEventListener(key, resolveModule);
                         resolve((e as any).detail as JModule);
@@ -196,6 +199,7 @@ if (!(window as any).JModuleManager) {
         static define = defineModule;
     };
 
+    enableDevtool();
     patchCreateElement(originCreateElement);
 }
 

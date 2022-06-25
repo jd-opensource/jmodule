@@ -25,13 +25,17 @@ const config = [
     ['metadata', '资源元数据', 'getObject'],
 ];
 export default {
-    props: ['module', 'resource'],
+    props: ['module', 'resource', 'definition'],
     data() {
         return { config };
     },
     methods: {
-        getResourceStatus,
-        getResourceLoadStrategy,
+        getResourceStatus(val) {
+            return this.definition?.ResourceStatus?.[val] || getResourceStatus(val);
+        },
+        getResourceLoadStrategy(val) {
+            return this.definition?.ResourceLoadStrategy?.[val] || getResourceLoadStrategy(val);
+        },
         getObject(val = {}) {
             return JSON.stringify(val, null, '\t');
         },

@@ -13,19 +13,26 @@ export declare enum ResourceStatus {
     ScriptResolved = 4,
     StyleResolved = 5,
     StyleRemoved = 6,
-    ScriptError = 7
+    ScriptError = 7,
+    Initializing = 9,
+    Initialized = 10,
+    Preloading = 11,
+    Preloaded = 12,
+    InitializeFailed = 13,
+    PreloadFailed = 14,
+    StyleError = 15
 }
-export declare enum MODULE_STATUS {
+export declare enum ModuleStatus {
     bootFailure = -2,
     loadFailure = -1,
-    inited = 0,
+    initialized = 0,
     loading = 1,
     loaded = 2,
     defined = 3,
     booting = 4,
-    done = 5,
-    resourceInited = 6
+    done = 5
 }
+export declare const MODULE_STATUS: typeof ModuleStatus;
 export declare enum ResourceLoadStrategy {
     Fetch = 0,
     Element = 1
@@ -34,6 +41,7 @@ declare global {
     interface Window {
         JModule?: any;
         JModuleManager?: any;
+        __jmodule_devtool__: any;
     }
 }
 export interface ModuleOptions {

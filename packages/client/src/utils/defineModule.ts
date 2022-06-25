@@ -1,6 +1,6 @@
 import { ModuleDebug } from '../debug';
 import { JModule } from '../module';
-import { ModuleMetadata, MODULE_STATUS } from '../config';
+import { ModuleMetadata, ModuleStatus } from '../config';
 import manager from '../globalManager';
 
 async function initModule(module: JModule, pkg: ModuleMetadata): Promise<JModule> {
@@ -54,24 +54,24 @@ function define(moduleKey: any, metadata?: any): Promise<JModule> {
     }
     return Promise.resolve(manager.jmodule(localKey)).then((module: JModule) => {
         module.bootstrap = () => {
-            module.status = MODULE_STATUS.booting;
+            module.status = ModuleStatus.booting;
             const targetConstructor = module.constructor as any;
             let defer = targetConstructor.runHook('beforeDefine', module, localMetadata)
                 .then(() => initModule(module, localMetadata))
                 .then(() => {
                     targetConstructor.runHook('afterDefine', module, localMetadata)
-                    module.status = MODULE_STATUS.done; // 初始化完成
+                    module.status = ModuleStatus.done; // 初始化完成
                     return module;
                 })
                 .catch((err: Error) => {
-                    module.status = MODULE_STATUS.bootFailure;
+                    module.status = ModuleStatus.bootFailure;
                     throw err;
                 });
             module.bootstrap = () => defer; // 重写bootstrap, 避免重复执行
             return defer;
         }
         // 模块状态：已定义
-        module.status = MODULE_STATUS.defined;
+        module.status = ModuleStatus.defined;
         if (module.autoBootstrap) {
             return module.bootstrap();
         }

@@ -16,19 +16,21 @@ const config = [
     ['key', '标识符'],
     ['name', '应用名称'],
     ['type', '应用类型'],
-    ['_status', '应用状态'],
+    ['_status', '应用状态', 'getStatus'],
     ['url', '资源地址'],
     ['server', '资源域名'],
     ['isRemoteModule', '是否远程应用'],
     ['metadata', '应用元数据', 'getObject'],
 ];
 export default {
-    props: ['module'],
+    props: ['module', 'definition'],
     data() {
         return { config };
     },
     methods: {
-        getStatus,
+        getStatus(val) {
+            return getStatus(this.definition?.ModuleStatus?.[val] || val);
+        },
         getObject(val = {}) {
             return JSON.stringify(val, null, '\t');
         },
