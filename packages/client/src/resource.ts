@@ -149,7 +149,8 @@ export class Resource extends ModuleHook {
             this.resolveScript = resolve;
             this.rejectScript = reject;
         });
-        this.strategy = options?.strategy || ResourceLoadStrategy.Fetch;
+        this.strategy = options?.strategy ?? ResourceLoadStrategy.Element;
+        console.log(this.strategy);
         JModuleManager.resource(url, this);
     }
 

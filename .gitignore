@@ -135,3 +135,5 @@ jsdoc.
 .parcel-cache
 dist
 .vscode
+
+web-ext-artifacts

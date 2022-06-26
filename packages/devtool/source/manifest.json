@@ -1,6 +1,6 @@
 {
-	"name": "JModuleDevtool",
-	"version": "1.0.0",
+	"name": "jmodule-devtool",
+	"version": "0.1.0",
 	"description": "JModule 调试工具",
 	"homepage_url": "https://github.com/jdtdevops/jmodule",
 	"manifest_version": 2,
@@ -14,7 +14,10 @@
 		"page/init.js"
 	],
 	"icons": {
-		"128": "icon.png"
+		"16": "../media/icon16.png",
+		"32": "../media/icon32.png",
+		"48": "../media/icon48.png",
+		"128": "../media/icon128.png"
 	},
 	"permissions": [
 		"storage",

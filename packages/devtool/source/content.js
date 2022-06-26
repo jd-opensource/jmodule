@@ -1,4 +1,3 @@
-// import optionsStorage from './options-storage.js';
 import browser from 'webextension-polyfill';
 import {
 	PageMessageType,

@@ -1,5 +1,9 @@
 # JModule devtool
 
+## 环境要求
+1. nodejs: v16+
+2. pnpm: v6.32.1
+
 ## 开发
 
 ```bash

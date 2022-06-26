@@ -1,14 +1,14 @@
 {
 	"name": "@jmodule/devtool",
-	"version": "1.0.0",
+	"version": "0.1.0",
 	"description": "JModule 调试工具",
 	"author": "feirpri <feirpri@gmail.com>",
 	"license": "MIT",
 	"scripts": {
-		"build": "parcel build --no-content-hash --no-source-maps --dist-dir dist --no-cache --detailed-report 0",
+		"build": "rm -rf dist && parcel build --no-optimize --no-content-hash --no-source-maps --no-cache --detailed-report 0",
 		"lint:css": "stylelint source/**/*.css",
 		"lint:js": "xo",
-		"watch": "parcel watch --no-cache --no-hmr"
+		"watch": "rm -rf dist && parcel watch --no-cache --no-hmr"
 	},
 	"xo": {
 		"envs": [
@@ -44,7 +44,7 @@
 		"sourceDir": "dist",
 		"run": {
 			"startUrl": [
-				"http://localhost:8080"
+				"http://localhost:8093"
 			]
 		}
 	},
