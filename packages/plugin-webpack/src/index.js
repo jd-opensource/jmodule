@@ -71,13 +71,13 @@ class JModulePlugin {
                             name: "JModulePlugin",
                             stage: webpack.Compilation.PROCESS_ASSETS_STAGE_ANALYSE,
                         },
-                        () => outputAssets(compilation, this.outputJSON, this.moduleEntryFile),
+                        () => outputAssets(compilation, this.outputJSON, this.moduleEntryFile, false, this.assetsModifier),
                     );
                 });
             } else {
                 compiler.hooks.emit.tap(
                     'JModulePlugin',
-                    (compilation) => outputAssets(compilation, this.outputJSON, this.moduleEntryFile, true),
+                    (compilation) => outputAssets(compilation, this.outputJSON, this.moduleEntryFile, true, this.assetsModifier),
                 );
             }
         }

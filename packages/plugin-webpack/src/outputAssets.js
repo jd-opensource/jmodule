@@ -19,9 +19,13 @@ function getAssets(compilation) {
         publicPath,
     };
 }
-module.exports = function outputAssets(compilation, outputJson = false, filename, V4) {
-    const jsonString = JSON.stringify(getAssets(compilation), null, 4);
-    const data = outputJson ? jsonString : `(JModuleManager && JModuleManager.defaultJModule || JModule).applyResource(${jsonString})`;
+module.exports = function outputAssets(compilation, outputJson = false, filename, V4, assetsModifier) {
+    let assetsData = getAssets(compilation); 
+    if (assetsModifier && typeof assetsModifier === 'function') {
+        assetsData = assetsModifier(assetsData) || assetsData;
+    }
+    const jsonString = JSON.stringify(assetsData, null, 4);
+    let data = outputJson ? jsonString : `(JModuleManager && JModuleManager.defaultJModule || JModule).applyResource(${jsonString})`;
     if (V4) {
         compilation.assets[filename] = {
             source: () => data,

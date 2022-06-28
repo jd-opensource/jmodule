@@ -6,5 +6,5 @@ interface CreateInstance {
 interface CreateRouter {
     (base: string): Router;
 }
-declare const _default: (appKey: string, createInstance: CreateInstance, createRouter?: CreateRouter | undefined, exports?: Record<string, any> | undefined, imports?: string[] | undefined) => any;
+declare const _default: (appKey: string, createInstance: CreateInstance, createRouter?: CreateRouter, exports?: Record<string, any>, imports?: string[]) => any;
 export default _default;

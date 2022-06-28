@@ -5,6 +5,7 @@ const defaultOptions = {
     supportedNamespaces: ['$platform', '$node_modules'],
     outputJSON: false,
     experimental: false,
+    assetsModifier: (res) => res,
     externalAlias: {},
     features: ['magic-modules', '$module', 'argvToRuntime'],
     moduleEntryFile: 'index.js',
