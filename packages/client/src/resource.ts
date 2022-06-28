@@ -150,7 +150,6 @@ export class Resource extends ModuleHook {
             this.rejectScript = reject;
         });
         this.strategy = options?.strategy ?? ResourceLoadStrategy.Element;
-        console.log(this.strategy);
         JModuleManager.resource(url, this);
     }
 
