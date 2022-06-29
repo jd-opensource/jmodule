@@ -7,7 +7,8 @@ const platformLocalPort = process.env.platformLocalPort || 8092;
 module.exports = {
     mode: 'modules',
     assetsModifier(json) {
-        // 正常在JModule插件中能看到这个新增的字段
+        // 没有实际作用，用于测试 plugin-webpack 的 assetsModifier 功能
+        // 期望在JModule插件中能看到这个新增的字段
         return Object.assign(json, { testAssetsModifier: true });
     },
     devConfig: process.env.NODE_ENV === 'development' ? {
