@@ -3,6 +3,7 @@ import { resolveUrlByFetch } from './utils/fetchCode';
 import JModuleManager from './globalManager';
 import { ModuleHook } from './hook';
 import { wrapperFetchedCodeHook } from './utils/wrapperFetchedCode';
+import { resourceTypes } from './utils/resourceResolver';
 import manager from './globalManager';
 import { JModule } from './module';
 
@@ -42,7 +43,7 @@ function addStyle(url: string, from: string, elementModifier?: (element: HTMLEle
 }
 
 function patchInitUrl(url: string): string {
-    return `${url}${url.indexOf('?') > 0 ? '&' : '?' }__v__=${Date.now()}`;
+    return `${new URL(url, window.location.href)}${url.indexOf('?') > 0 ? '&' : '?' }__v__=${Date.now()}`;
 }
 
 const queryReg = /\?.+$/;
@@ -138,7 +139,7 @@ export class Resource extends ModuleHook {
             return <Resource>JModuleManager.resource(url);
         }
         this.url = url;
-        this.server = new URL(url).origin;
+        this.server = new URL(url, window.location.href).origin;
         this.type = options?.type || url.split('.').pop() || 'js';
         this.prefix = options?.prefix?.replace('[resourceOrigin]', this.server);
         this.afterInit = new Promise((resolve, reject) => {
@@ -187,29 +188,34 @@ export class Resource extends ModuleHook {
         }
     }
 
+    static defineType(type: string, typeHandler: (resource: Resource, defaultUrl: string) => Promise<string>) {
+        Resource.addHook('resource:resolveEntry', async (resource: Resource, defaultUrl: string) => {
+            if (resource.type === type && typeof typeHandler === 'function') {
+                return [resource, await typeHandler(resource, defaultUrl)]
+            }
+            return [resource, defaultUrl];
+        });
+    }
+
     // 加载资源元数据
-    init() {
+    async init() {
         if (this.initScriptElement || this.status === ResourceStatus.Initializing) {
             return Promise.resolve();
         }
         this.setStatus(ResourceStatus.Initializing);
-        const urlDefer: Promise<string> = this.type === 'json' ? fetch(patchInitUrl(this.url))
-            .then(res => res.json())
-            .then((jsonRes) => {
-                const jsString = `(JModuleManager && JModuleManager.defaultJModule || JModule).applyResource(${JSON.stringify(jsonRes)}, "${this.url}")`;
-                const blob = new Blob([jsString], { type: 'text/javascript' });
-                return URL.createObjectURL(blob);
-            }) : Promise.resolve(patchInitUrl(this.url));
-        // 加载初始化脚本 index.js/index.json
-        return urlDefer.then((url) => loadScript(url, this.url, (script) => {
-            script.async = true;
-            this.initScriptElement = script;
-            scriptCacheByUrl[this.url] = script;
-        })).catch((e) => {
+        try {
+            const [, url] = await Resource.runHook('resource:resolveEntry', this, patchInitUrl(this.url));
+            const res = await loadScript(url, this.url, (script) => {
+                script.async = true;
+                this.initScriptElement = script;
+                scriptCacheByUrl[this.url] = script;
+            });
+            return res;
+        } catch (e) {
             this.setStatus(ResourceStatus.InitializeFailed);
             console.error(`资源加载失败: ${this.url}`);
-            this.rejectInit(e);
-        });
+            this.rejectInit(e as Error);
+        }
     }
 
     resolveUrl(url: string) {
@@ -377,3 +383,6 @@ export class Resource extends ModuleHook {
 }
 
 Resource.addHook('resource:transformFetchResult', wrapperFetchedCodeHook);
+resourceTypes.forEach(([type, typeHandler]) => {
+    Resource.defineType(type, typeHandler);
+});
