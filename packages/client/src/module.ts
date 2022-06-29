@@ -109,7 +109,7 @@ export class JModule extends ModuleHook {
     static id: number;
     type?: string;
     key: string;
-    name: string;
+    name?: string;
     url: string;
     server?: string;
     autoBootstrap?: boolean;

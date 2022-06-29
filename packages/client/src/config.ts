@@ -56,8 +56,8 @@ declare global {
 export interface ModuleOptions {
     type?: string,
     key: string,
-    name: string,
     url: string,
+    name?: string,
     server?: string,
     autoBootstrap?: boolean,
     resourceType?: string,

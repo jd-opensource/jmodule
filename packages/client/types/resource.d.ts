@@ -52,6 +52,7 @@ export declare class Resource extends ModuleHook {
         filepath: string;
     } | void;
     static setResourceData(metadata: ResourceMetadata, sourceUrl: string): Resource;
+    static defineType(type: string, typeHandler: (resource: Resource, defaultUrl: string) => Promise<string>): void;
     init(): Promise<void | HTMLScriptElement>;
     resolveUrl(url: string): string;
     setStatus(status: ResourceStatus): void;

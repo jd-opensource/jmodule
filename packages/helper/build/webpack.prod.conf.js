@@ -8,6 +8,7 @@ const configs = {
     entry: {
         'host/type.app': path.resolve('src/host/type.app.ts'),
         'host/type.routes.vue2': path.resolve('src/host/type.routes.vue2.ts'),
+        'host/resource.html': path.resolve('src/host/resource.html.ts'),
         'app/app.vue2': path.resolve('src/app/app.vue2.ts'),
         'app/app.vue3': path.resolve('src/app/app.vue3.ts'),
     },

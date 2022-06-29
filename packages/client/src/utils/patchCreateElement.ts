@@ -20,11 +20,14 @@ export function patchCreateElement(originalCreateElement: typeof document.create
     (document.createElement as any).__original__ = originalCreateElement;
     document.createElement = new Proxy(document.createElement, {
         apply(target, context, args) {
-            const originRes = originalCreateElement(args[0], args[1]);
+            const originRes: HTMLElement = originalCreateElement(args[0], args[1]);
             if (!['script', 'link'].includes(args[0])) {
                 return originRes;
             }
             const prop = args[0] === 'script' ? 'src' : 'href';
+            if (!Object.getOwnPropertyDescriptor(originRes, prop)?.configurable) {
+                return originRes;
+            }
             Object.defineProperty(originRes, prop, {
                 get() {
                     return originRes.getAttribute(prop);
