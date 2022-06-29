@@ -24,7 +24,7 @@ function defineModule(moduleKey, modulesConfig = {}) {
 function getModulesDefineString(modulesList) {
     const modulesJsonStr = JSON.stringify(modulesList);
     // dev 模式默认情况下不分离 style，appendStyle 将不会生效
-    return `(JModuleManager && JModuleManager.defaultJModule || JModule).registerModules(${modulesJsonStr}).then((modules) => {
+    return `(window.JModuleManager && window.JModuleManager.defaultJModule || window.JModule).registerModules(${modulesJsonStr}).then((modules) => {
         modules.forEach(module => module.load());
     });`;
 }
