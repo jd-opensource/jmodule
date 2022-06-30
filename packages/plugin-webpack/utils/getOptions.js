@@ -7,7 +7,7 @@ const defaultOptions = {
     experimental: false,
     assetsModifier: (res) => res,
     externalAlias: {},
-    features: ['magic-modules', '$module', 'argvToRuntime'],
+    features: ['magicModules', '$module', 'argvToRuntime', 'hackJsonpFunction', 'hackChunkNameFunction'],
     moduleEntryFile: 'index.js',
     mode: 'modules',
 };

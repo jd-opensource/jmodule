@@ -58,13 +58,18 @@ class JModulePlugin {
         }
 
         if (this.isModulesMode) {
-            const jsonpFunction = `webpackJsonp_${this.pluginRandomId}_${projectName.replace(/\W/g, '')}`;
-            compiler.options.output.jsonpFunction = jsonpFunction;
             // compiler.options.output.filename = 'js/[name].[hash].js';
-            compiler.options.output.chunkFilename = 'js/[id].[chunkhash].js';
+            if (this.features.includes('hackJsonpFunction')) {
+                const jsonpFunction = `webpackJsonp_${this.pluginRandomId}_${projectName.replace(/\W/g, '')}`;
+                compiler.options.output.jsonpFunction = jsonpFunction;
+            }
 
             // output assets
             if (webpack.Compilation) {
+                // v5
+                if (this.features.includes('hackChunkNameFunction')) {
+                    compiler.options.output.chunkFilename = 'js/[id].[contenthash].js';
+                }
                 compiler.hooks.compilation.tap("JModulePlugin", compilation => {
                     compilation.hooks.processAssets.tap(
                         {
@@ -75,6 +80,10 @@ class JModulePlugin {
                     );
                 });
             } else {
+                // v4
+                if (this.features.includes('hackChunkNameFunction')) {
+                    compiler.options.output.chunkFilename = 'js/[id].[chunkhash].js';
+                }
                 compiler.hooks.emit.tap(
                     'JModulePlugin',
                     (compilation) => outputAssets(compilation, this.outputJSON, this.moduleEntryFile, true, this.assetsModifier),
@@ -86,7 +95,7 @@ class JModulePlugin {
         this.startPlatform();
 
         // support $platform|$node_modules|$module.meta
-        if (this.features.includes('magic-modules')) {
+        if (this.features.includes('magicModules')) {
             new PlatformResolverPlugin({
                 externalAlias: this.externalAlias,
                 importFunction: 'JModule.import',
