@@ -11,7 +11,7 @@ const defaultOptions = {
     outputJSON: false,
     experimental: false,
     externalAlias: {},
-    features: ['magicModules', '$module', 'argvToRuntime', 'hackJsonpFunction', 'hackChunkNameFunction'],
+    features: ['magicModules', '$module', 'argvToRuntime', 'hackJsonpFunction', 'hackChunkName'],
     moduleEntryFile: 'index.js',
     isModulesMode: true
 };

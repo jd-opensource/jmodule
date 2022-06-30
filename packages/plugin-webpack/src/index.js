@@ -8,6 +8,7 @@ const outputAssets = require('./outputAssets');
 const startPlatformProxy = require('./startPlatformProxy');
 const { waitServer } = require('../utils/netTools');
 const getOptions = require('../utils/getOptions');
+const hackChunkName = require('./hackChunkName');
 const projectName = require(path.resolve(process.cwd(), './package')).name;
 
 class JModulePlugin {
@@ -57,6 +58,8 @@ class JModulePlugin {
             // console.warn(chalk.yellow('正在使用 experimental 模式，存在非兼容的不特定功能的更新'));
         }
 
+        const v4 = webpack.Compilation ? false : true;
+
         if (this.isModulesMode) {
             // compiler.options.output.filename = 'js/[name].[hash].js';
             if (this.features.includes('hackJsonpFunction')) {
@@ -64,12 +67,13 @@ class JModulePlugin {
                 compiler.options.output.jsonpFunction = jsonpFunction;
             }
 
+            if (this.features.includes('hackChunkName')) {
+                hackChunkName(compiler, v4);
+            }
+
             // output assets
             if (webpack.Compilation) {
                 // v5
-                if (this.features.includes('hackChunkNameFunction')) {
-                    compiler.options.output.chunkFilename = 'js/[id].[contenthash].js';
-                }
                 compiler.hooks.compilation.tap("JModulePlugin", compilation => {
                     compilation.hooks.processAssets.tap(
                         {
@@ -81,9 +85,6 @@ class JModulePlugin {
                 });
             } else {
                 // v4
-                if (this.features.includes('hackChunkNameFunction')) {
-                    compiler.options.output.chunkFilename = 'js/[id].[chunkhash].js';
-                }
                 compiler.hooks.emit.tap(
                     'JModulePlugin',
                     (compilation) => outputAssets(compilation, this.outputJSON, this.moduleEntryFile, true, this.assetsModifier),

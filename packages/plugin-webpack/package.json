@@ -1,6 +1,6 @@
 {
   "name": "@jmodule/plugin-webpack",
-  "version": "0.4.3-0",
+  "version": "0.4.3",
   "description": "模块化工程构建 Webpack 插件",
   "keywords": [
     "jmodule"
