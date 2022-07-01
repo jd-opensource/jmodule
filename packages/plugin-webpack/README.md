@@ -13,9 +13,7 @@ const JModulePlugin = require('@jmodule/plugin-webpack');
 module.exports = {
     ...others,
     plugins: [
-        new WebpackJmodulePlugin({
-            mode: 'modules',
-        }),
+        new WebpackJmodulePlugin({}),
     ],
 }
 ```

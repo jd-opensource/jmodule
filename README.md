@@ -6,7 +6,7 @@
 提供webpack插件，满足子应用在开发过程中与宿主应用集成调试的需求。
 
 ### 多种接入模式
-可以定义不同的接入模式，比如可以用于插件系统实现、动态路由集成，或者是一个完整的前端应用。
+可以扩展应用接入模式，比如可以用于插件系统实现、动态路由集成，或者是一个完整的前端应用。常用的接入模式支持已通过 @jmodule/helper 提供支持。
 
 ### 多级应用结构
 支持子应用嵌套，子应用本身也可以是宿主应用，但仍以自应用的方式接入其它宿主应用。
@@ -92,6 +92,22 @@ pnpm run serve --filter "@jmodule-demo/child-app-react"
 ## 文档  
 [文档](https://jmodule.jd.com)
 
+
+## 浏览器插件
+
+查看应用基本信息、资源信息，以及从注册到加载过程的事件触发时间信息。
+### 预览
+Dashboard
+![Dashboard](./packages/devtool/media/preview1%402x.png)
+资源信息
+![资源信息](./packages/devtool/media/preview2%402x.png)
+事件
+![事件](./packages/devtool/media/preview3%402x.png)
+
+### 安装地址
+[chrome 应用商店](https://chrome.google.com/webstore/detail/jmodule-devtool/egoehonhiiogmmcdjaaakbpmnahcjgpd?hl=zh-CN)
+
+[firefox 应用商店](https://addons.mozilla.org/zh-CN/firefox/addon/jmodule-devtool/?utm_source=addons.mozilla.org&utm_medium=referral&utm_content=search)
 
 ## License
 [License](LICENSE)
