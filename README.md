@@ -96,18 +96,20 @@ pnpm run serve --filter "@jmodule-demo/child-app-react"
 ## 浏览器插件
 
 查看应用基本信息、资源信息，以及从注册到加载过程的事件触发时间信息。
-### 预览
-Dashboard
-![Dashboard](./packages/devtool/media/preview1%402x.png)
-资源信息
-![资源信息](./packages/devtool/media/preview2%402x.png)
-事件
-![事件](./packages/devtool/media/preview3%402x.png)
 
 ### 安装地址
 [chrome 应用商店](https://chrome.google.com/webstore/detail/jmodule-devtool/egoehonhiiogmmcdjaaakbpmnahcjgpd?hl=zh-CN)
 
 [firefox 应用商店](https://addons.mozilla.org/zh-CN/firefox/addon/jmodule-devtool/?utm_source=addons.mozilla.org&utm_medium=referral&utm_content=search)
+
+### 预览
+Dashboard
+![Dashboard](./packages/devtool/media/preview1@2x.png)
+资源信息
+![资源信息](./packages/devtool/media/preview2@2x.png)
+事件
+![事件](./packages/devtool/media/preview3@2x.png)
+
 
 ## License
 [License](LICENSE)
