@@ -6,6 +6,7 @@ import { wrapperFetchedCodeHook } from './utils/wrapperFetchedCode';
 import { resourceTypes } from './utils/resourceResolver';
 import manager from './globalManager';
 import { JModule } from './module';
+import { elementsToPromise } from './utils/elementsToPromise';
 
 function injectElementModifier (
     element: HTMLElement, 
@@ -29,17 +30,13 @@ function loadScript(url: string, from: string, elementModifier?: (script: HTMLSc
     });
 }
 
-function addStyle(url: string, from: string, elementModifier?: (element: HTMLElement) => void): Promise<HTMLLinkElement> {
+function createLink(url: string, from: string, elementModifier?: (element: HTMLElement) => void): HTMLLinkElement {
     const styleDom = document.createElement('link');
-    styleDom.setAttribute('rel', 'stylesheet');
+    styleDom.setAttribute('rel', 'preload');
     styleDom.setAttribute('href', url);
     styleDom.dataset.jmoduleFrom = from;
     elementModifier && elementModifier(styleDom);
-    document.head.appendChild(styleDom);
-    return new Promise((resolve, reject) => {
-        styleDom.onerror = () => reject(new Error(`LoadStyleError: ${url}`));
-        styleDom.onload = () => resolve(styleDom);
-    });
+    return styleDom;
 }
 
 function patchInitUrl(url: string): string {
@@ -280,38 +277,35 @@ export class Resource extends ModuleHook {
         }
         const { css = [] } = this.metadata;
         const { length } = this.styleElements;
-        if (css.length === length) {
-            if (!this.styleMounted) {
-                this.styleElements.forEach(item => document.head.appendChild(item));
-                this.appendedAsyncStyleElements?.forEach(item => document.head.appendChild(item));
-                this.styleMounted = true;
+        if (!this.styleLoading) {
+            this.setStatus(ResourceStatus.ApplyStyle);
+            if (css.length !== length) {
+                const cssUrls = (this.metadata.css || []).map(url => this.resolveUrl(url));
+                const entryUrls = await (async () => this.strategy === ResourceLoadStrategy.Fetch
+                    ? await Promise.all(cssUrls.map(url => resolveUrlByFetch(
+                        url,
+                        this.url,
+                        ResourceType.Style,
+                    )))
+                    : cssUrls)();
+                this.styleElements = entryUrls.map(url => createLink(url, this.url, elementModifier));
             }
-            return Promise.resolve(this.styleElements);
-        }
-        if (this.styleLoading) {
-            return this.styleLoading;
-        }
-        this.setStatus(ResourceStatus.ApplyStyle);
-        const cssUrls = (this.metadata.css || []).map(url => this.resolveUrl(url));
-        const getEntryUrls = async () => this.strategy === ResourceLoadStrategy.Fetch
-            ? await Promise.all(cssUrls.map(url => resolveUrlByFetch(
-                url,
-                this.url,
-                ResourceType.Style,
-            )))
-            : cssUrls;
-        this.styleLoading = getEntryUrls().then(entryUrls => Promise.all(entryUrls.map(url => {
-            return addStyle(url, this.url, elementModifier);
-        }))).then((elements) => {
-            this.styleElements = elements;
+            const styleDefer = elementsToPromise(
+                this.styleElements,
+                el => document.head.appendChild(el),
+                el => el.setAttribute('rel', 'stylesheet'),
+            );
             this.appendedAsyncStyleElements?.forEach(item => document.head.appendChild(item));
-            this.styleMounted = true;
-            this.setStatus(ResourceStatus.StyleResolved);
-            return this.styleElements;
-        }).catch((error) => {
-            this.setStatus(ResourceStatus.StyleError);
-            throw error;
-        });
+            this.styleLoading = styleDefer.then((res) => {
+                this.styleMounted = true;
+                this.setStatus(ResourceStatus.StyleResolved);
+                if (res.errors) {
+                    this.setStatus(ResourceStatus.StyleError);
+                    console.error(res.errors);
+                }
+                return res.results;
+            });
+        }
         return this.styleLoading;
     }
 
@@ -368,6 +362,7 @@ export class Resource extends ModuleHook {
         asyncLinks.forEach(item => item.remove());
         this.appendedAsyncStyleElements = asyncLinks;
         this.styleMounted = false;
+        this.styleLoading = undefined;
     }
 
     /**
@@ -386,3 +381,4 @@ Resource.addHook('resource:transformFetchResult', wrapperFetchedCodeHook);
 resourceTypes.forEach(([type, typeHandler]) => {
     Resource.defineType(type, typeHandler);
 });
+
