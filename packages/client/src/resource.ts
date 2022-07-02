@@ -33,6 +33,7 @@ function loadScript(url: string, from: string, elementModifier?: (script: HTMLSc
 function createLink(url: string, from: string, elementModifier?: (element: HTMLElement) => void): HTMLLinkElement {
     const styleDom = document.createElement('link');
     styleDom.setAttribute('rel', 'preload');
+    styleDom.setAttribute('as', 'style');
     styleDom.setAttribute('href', url);
     styleDom.dataset.jmoduleFrom = from;
     elementModifier && elementModifier(styleDom);
@@ -299,7 +300,7 @@ export class Resource extends ModuleHook {
             this.styleLoading = styleDefer.then((res) => {
                 this.styleMounted = true;
                 this.setStatus(ResourceStatus.StyleResolved);
-                if (res.errors) {
+                if (res.errors.length) {
                     this.setStatus(ResourceStatus.StyleError);
                     console.error(res.errors);
                 }
