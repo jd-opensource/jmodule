@@ -25,7 +25,8 @@ export function patchCreateElement(originalCreateElement: typeof document.create
                 return originRes;
             }
             const prop = args[0] === 'script' ? 'src' : 'href';
-            if (!Object.getOwnPropertyDescriptor(originRes, prop)?.configurable) {
+            const descriptor = Object.getOwnPropertyDescriptor(originRes, prop);
+            if (descriptor && !descriptor.configurable) {
                 return originRes;
             }
             Object.defineProperty(originRes, prop, {
