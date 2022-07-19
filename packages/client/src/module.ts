@@ -12,9 +12,7 @@ const currentScript = document.currentScript || {};
 
 type HashObject = { [key: string]: any };
 const moduleMap: { [key: string]: JModule } = {};
-const moduleExports: HashObject = {};
 const defaultExportsMatcher = new Matcher({});
-const moduleCache: { [namespace: string]: any } = {}; // 缓存require的模块
 
 const moduleLog = {
     [ModuleStatus.initialized]: '已创建模块实例',
@@ -350,30 +348,7 @@ export class JModule extends ModuleHook {
      * @return {Promise<var>}
      */
     static async require(namespace: string): Promise<any> {
-        const path = namespace.split('.');
-        const moduleKey = path[0];
-        const targetModule = await JModule.getModuleAsync(moduleKey);
-        if (!targetModule) {
-            return Promise.reject(`module ${moduleKey} not found`);
-        }
-        if (targetModule.constructor !== JModule && !moduleMap[moduleKey]) {
-            return (targetModule.constructor as any).require(namespace);
-        }
-        // 找到注册另一个应用的构造函数
-        if (moduleCache[namespace]) {
-            return Promise.resolve(moduleCache[namespace]);
-        }
-        return new Promise((resolve) => {
-            if (targetModule && targetModule.status === ModuleStatus.done) {
-                resolve(null);
-            } else {
-                window.addEventListener(`module.${moduleKey}.${ModuleStatus.done}`, resolve);
-            }
-        }).then(() => {
-            const res = path.reduce((obj, key) => (obj || {})[key], moduleExports);
-            moduleCache[namespace] = res;
-            return res;
-        });
+        return manager.require(namespace);
     }
 
     /**
