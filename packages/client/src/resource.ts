@@ -46,11 +46,11 @@ function patchInitUrl(url: string): string {
 
 const queryReg = /\?.+$/;
 
-function cacheUrlMap(metadata: ResourceMetadata, sourceUrl: string) {
+function cacheUrlMap(metadata: ResourceMetadata, sourceUrl: string, prefix?: string) {
     const { asyncFiles = [] } = metadata;
     asyncFiles.forEach(file => {
         const key = file.replace(queryReg, '');
-        const targetUrl = resolveUrl(file, sourceUrl, metadata);
+        const targetUrl = resolveUrl(file, sourceUrl, metadata, prefix);
         manager.setFileMapCache(key, [targetUrl, sourceUrl]);
         manager.appendFileList(key);
     });
@@ -133,11 +133,12 @@ export class Resource extends ModuleHook {
         if (!url && typeof url !== 'string') {
             throw new Error('创建 Resource 实例异常, 缺少sourceUrl');
         }
-        if (JModuleManager.resource(url)) {
-            return <Resource>JModuleManager.resource(url);
+        const { href: wholeUrl, origin: server } = new URL(url, window.location.href);
+        if (JModuleManager.resource(wholeUrl)) {
+            return <Resource>JModuleManager.resource(wholeUrl);
         }
-        this.url = url;
-        this.server = new URL(url, window.location.href).origin;
+        this.url = wholeUrl;
+        this.server = server;
         this.type = options?.type || url.split('.').pop() || 'js';
         this.prefix = options?.prefix?.replace('[resourceOrigin]', this.server);
         this.afterInit = new Promise((resolve, reject) => {
@@ -149,7 +150,7 @@ export class Resource extends ModuleHook {
             this.rejectScript = reject;
         });
         this.strategy = options?.strategy ?? ResourceLoadStrategy.Element;
-        JModuleManager.resource(url, this);
+        JModuleManager.resource(this.url, this);
     }
 
     static enableAsyncChunk() {
@@ -253,7 +254,7 @@ export class Resource extends ModuleHook {
                 this.url,
                 ResourceType.Script,
             )))
-            : (cacheUrlMap(this.metadata as ResourceMetadata, this.url), jsUrls);
+            : (cacheUrlMap(this.metadata as ResourceMetadata, this.url, this.prefix), jsUrls);
         this.scriptLoading = getEntryUrls().then((entryUrls) => Promise.all(entryUrls.map(url => loadScript(
             url,
             this.url,
