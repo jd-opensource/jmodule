@@ -8,6 +8,7 @@ import { createDocument } from './utils/fakeDocument';
 import { patchCreateElement } from './utils/patchCreateElement';
 import defineModule from './utils/defineModule';
 import { enableDevtool } from './utils/enableDevtool'
+import { eventToPromise } from './utils/eventToPromise';
 
 
 if (!(window as any).JModuleManager) {
@@ -150,11 +151,7 @@ if (!(window as any).JModuleManager) {
                 if (targetModule && targetModule.status === ModuleStatus.done) {
                     resolve(targetModule);
                 } else {
-                    const key = `module.${moduleKey}.${ModuleStatus.done}`;
-                    window.addEventListener(key, function resolveModule(e) {
-                        window.removeEventListener(key, resolveModule);
-                        resolve((e as any).detail as JModule);
-                    });
+                    return eventToPromise<JModule>(`module.${moduleKey}.${ModuleStatus.done}`);
                 }
             });
         }

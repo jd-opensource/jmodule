@@ -168,6 +168,10 @@ export class JModule extends ModuleHook {
          * @type {String<url>}
          */
         this.url = url;
+        /**
+         * 模块状态
+         * @type {ModuleStatus}
+         */
         this.status = ModuleStatus.initialized;
         /**
          * 远程资源服务器

@@ -2,6 +2,7 @@ import { ModuleDebug } from '../debug';
 import { JModule } from '../module';
 import { ModuleMetadata, ModuleStatus } from '../config';
 import manager from '../globalManager';
+import { eventToPromise } from './eventToPromise';
 
 async function initModule(module: JModule, pkg: ModuleMetadata): Promise<JModule> {
     const { key } = module;
@@ -52,7 +53,11 @@ function define(moduleKey: any, metadata?: any): Promise<JModule> {
         localKey = moduleKey;
         localMetadata = metadata;
     }
-    return Promise.resolve(manager.jmodule(localKey)).then((module: JModule) => {
+    const moduleDefer = manager.jmodule(localKey)
+        ? Promise.resolve(manager.jmodule(localKey))
+        : eventToPromise(`module.${moduleKey}.${ModuleStatus.initialized}`);
+    // 在定义之前执行将出现异常
+    return moduleDefer.then((module: JModule) => {
         module.bootstrap = () => {
             module.status = ModuleStatus.booting;
             const targetConstructor = module.constructor as any;
