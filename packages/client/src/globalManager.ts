@@ -147,13 +147,9 @@ if (!(window as any).JModuleManager) {
          */
         static async waitModuleComplete(moduleKey: string): Promise<JModule> {
             const targetModule = this.jmodule(moduleKey);
-            return new Promise((resolve) => {
-                if (targetModule && targetModule.status === ModuleStatus.done) {
-                    resolve(targetModule);
-                } else {
-                    return eventToPromise<JModule>(`module.${moduleKey}.${ModuleStatus.done}`);
-                }
-            });
+            return targetModule && targetModule.status === ModuleStatus.done
+                ? Promise.resolve(targetModule)
+                : eventToPromise<JModule>(`module.${moduleKey}.${ModuleStatus.done}`);
         }
 
         // JModule 兼容功能
