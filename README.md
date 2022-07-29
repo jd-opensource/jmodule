@@ -68,12 +68,20 @@ JModule.registerHook('afterInit', (module, options) => {
 ## Example
 ```bash
 # 源码项目采用 pnpm 进行管理，需要先安装 pnpm
-npm i -g pnpm
+npm i -g pnpm@6
 
 # Demo 代码位于 packages/demo
 
 # 安装项目依赖
 pnpm i
+
+# 构建 client\helper包
+pnpm run build --filter "*client"
+pnpm run build --filter "*helper"
+
+# 修正多版本 vue 冲突问题
+pnpm add vue-template-compiler@2 -D --filter "*vue2"
+pnpm add vue-loader@15 -D --filter "*vue2"
 
 #### 完整示例
 # 启动所有子项目
