@@ -8,10 +8,10 @@ import manager from './globalManager';
 import { JModule } from './module';
 import { elementsToPromise } from './utils/elementsToPromise';
 
-function injectElementModifier (
-    element: HTMLElement, 
+function injectElementModifier(
+    element: HTMLElement,
     elementModifier?: (element: HTMLElement) => void
-) :HTMLElement{
+): HTMLElement {
     if (elementModifier && typeof elementModifier === 'function') {
         elementModifier(element);
     }
@@ -41,7 +41,7 @@ function createLink(url: string, from: string, elementModifier?: (element: HTMLE
 }
 
 function patchInitUrl(url: string): string {
-    return `${new URL(url, window.location.href)}${url.indexOf('?') > 0 ? '&' : '?' }__v__=${Date.now()}`;
+    return `${new URL(url, window.location.href)}${url.indexOf('?') > 0 ? '&' : '?'}__v__=${Date.now()}`;
 }
 
 const queryReg = /\?.+$/;
@@ -104,7 +104,7 @@ export class Resource extends ModuleHook {
     private scriptLoading?: Promise<HTMLScriptElement[]>;
     private appliedScript = false;
     private static asyncFilesMap: { [key: string]: Resource | undefined } = {};
-    
+
     resolveInit!: () => void;
     rejectInit!: (error: Error) => void;
     metadata?: ResourceMetadata;
@@ -298,8 +298,8 @@ export class Resource extends ModuleHook {
                 el => el.setAttribute('rel', 'stylesheet'),
             );
             this.appendedAsyncStyleElements?.forEach(item => document.head.appendChild(item));
+            this.styleMounted = true;
             this.styleLoading = styleDefer.then((res) => {
-                this.styleMounted = true;
                 this.setStatus(ResourceStatus.StyleResolved);
                 if (res.errors.length) {
                     this.setStatus(ResourceStatus.StyleError);
