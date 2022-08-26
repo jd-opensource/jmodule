@@ -1,5 +1,5 @@
 {
-  "name": "@jmodule/host-vue2",
+  "name": "@jmodule-demo/host-vue2",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -24,8 +24,8 @@
     "@vue/cli-service": "5",
     "eslint": "8",
     "eslint-plugin-vue": "9",
-    "vue-loader": "^15.10.0-beta.5",
-    "vue-template-compiler": "^2.6.11"
+    "vue-loader": "15",
+    "vue-template-compiler": "2"
   },
   "eslintConfig": {
     "root": true,

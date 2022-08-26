@@ -1,8 +1,8 @@
-interface ElementModifier {
+export interface ElementModifier {
     (element: HTMLElement): void;
 }
 
-interface LoadOptions {
+export interface LoadOptions {
     elementModifier?: ElementModifier,
     autoApplyStyle?: boolean,
 }

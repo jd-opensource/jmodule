@@ -7,6 +7,7 @@ import { resourceTypes } from './utils/resourceResolver';
 import manager from './globalManager';
 import { JModule } from './module';
 import { elementsToPromise } from './utils/elementsToPromise';
+import { ElementModifier } from './types';
 
 function injectElementModifier(
     element: HTMLElement,

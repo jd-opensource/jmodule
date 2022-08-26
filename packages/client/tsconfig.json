@@ -17,12 +17,7 @@
         "strictFunctionTypes": false
     },
     "include": [
-        "src/type.d.ts",
-        "src/global.d.ts",
-        "src/utils/*.ts",
         "src/**/*.ts",
-        "src/**/*.tsx",
-        "types/*.d.ts"
     ],
     "exclude": [
         "**/*.spec.ts"

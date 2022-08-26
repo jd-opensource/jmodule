@@ -2,6 +2,7 @@ import { ResourceMetadata, Resource } from './resource';
 import { ModuleHook } from './hook';
 import { Matcher } from './utils/matcher';
 import { ModuleOptions, ModuleMetadata, ModuleStatus } from './config';
+import { LoadOptions } from './types';
 declare type HashObject = {
     [key: string]: any;
 };

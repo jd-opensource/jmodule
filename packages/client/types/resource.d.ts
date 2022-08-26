@@ -1,5 +1,6 @@
 import { ResourceStatus, ResourceLoadStrategy } from './config';
 import { ModuleHook } from './hook';
+import { ElementModifier } from './types';
 export interface ResourceMetadata {
     js: string[];
     css: string[];

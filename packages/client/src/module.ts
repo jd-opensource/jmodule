@@ -5,6 +5,7 @@ import { ModuleHook } from './hook';
 import { Matcher } from './utils/matcher';
 import { ModuleOptions, ModuleMetadata, ModuleStatus } from './config';
 import manager from './globalManager';
+import { LoadOptions } from './types';
 
 /* 调试模式打印信息：路由变更信息，初始化模块实例、资源实例信息，模块状态变更信息 */
 

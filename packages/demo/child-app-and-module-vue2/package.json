@@ -25,7 +25,8 @@
         "@vue/cli-service": "5",
         "eslint": "8",
         "eslint-plugin-vue": "9",
-        "vue-template-compiler": "^2.6.11"
+        "vue-loader": "15",
+        "vue-template-compiler": "2"
     },
     "eslintConfig": {
         "root": true,
