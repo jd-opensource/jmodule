@@ -12,7 +12,6 @@
     "./host/": "./dist/host/",
     "./app/": "./dist/app/"
   },
-  "main": "./dist/index.js",
   "browserslist": [
     "> 1%",
     "last 2 versions",
@@ -49,7 +48,15 @@
     "dist",
     "types"
   ],
-  "types": "types/index.d.ts",
+  "typesVersions": {
+    "*": {
+      "app/app.vue3": ["types/app/app.vue3"],
+      "app/app.vue2": ["types/app/app.vue2"],
+      "host/resource.html": ["types/host/resource.html"],
+      "host/type.app": ["types/host/type.app"],
+      "host/type.routes.vue2": ["types/host/type.routes.vue2"]
+    }
+  },
   "repository": {
     "type": "git",
     "url": "git+ssh://git@github.com/jdtdevops/jmodule.git"
@@ -61,5 +68,6 @@
   "bugs": {
     "url": "https://github.com/jdtdevops/jmodule/issues"
   },
-  "homepage": "https://github.com/jdtdevops/jmodule#readme"
+  "homepage": "https://github.com/jdtdevops/jmodule#readme",
+  "sideEffects": false
 }
