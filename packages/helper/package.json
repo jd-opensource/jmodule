@@ -1,6 +1,6 @@
 {
   "name": "@jmodule/helper",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "JModule使用助手",
   "author": "feirpri <feirpri@gmail.com>",
   "license": "MIT",
@@ -50,11 +50,21 @@
   ],
   "typesVersions": {
     "*": {
-      "app/app.vue3": ["types/app/app.vue3"],
-      "app/app.vue2": ["types/app/app.vue2"],
-      "host/resource.html": ["types/host/resource.html"],
-      "host/type.app": ["types/host/type.app"],
-      "host/type.routes.vue2": ["types/host/type.routes.vue2"]
+      "app/app.vue3": [
+        "types/app/app.vue3"
+      ],
+      "app/app.vue2": [
+        "types/app/app.vue2"
+      ],
+      "host/resource.html": [
+        "types/host/resource.html"
+      ],
+      "host/type.app": [
+        "types/host/type.app"
+      ],
+      "host/type.routes.vue2": [
+        "types/host/type.routes.vue2"
+      ]
     }
   },
   "repository": {
