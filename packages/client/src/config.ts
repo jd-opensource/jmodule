@@ -24,6 +24,7 @@ export enum ResourceStatus {
     InitializeFailed = 13,
     PreloadFailed = 14,
     StyleError = 15,
+    StyleRemoveBefore = 16,
 }
 
 export enum ModuleStatus {

@@ -358,6 +358,12 @@ export class Resource extends ModuleHook {
      * 移除样式
      */
     removeStyle() {
+        // 幂等函数
+        // 如果没有执行 applyStyle, 或已经执行过 removeStyle 则不执行.
+        if (!this.styleLoading) {
+            return;
+        }
+        this.setStatus(ResourceStatus.StyleRemoveBefore);
         // 同步的 link
         (this.styleElements || []).forEach(item => item.remove());
         // 异步组件创建的 link
@@ -366,6 +372,7 @@ export class Resource extends ModuleHook {
         this.appendedAsyncStyleElements = asyncLinks;
         this.styleMounted = false;
         this.styleLoading = undefined;
+        this.setStatus(ResourceStatus.StyleRemoved);
     }
 
     /**

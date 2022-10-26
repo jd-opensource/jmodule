@@ -20,7 +20,8 @@ export declare enum ResourceStatus {
     Preloaded = 12,
     InitializeFailed = 13,
     PreloadFailed = 14,
-    StyleError = 15
+    StyleError = 15,
+    StyleRemoveBefore = 16
 }
 export declare enum ModuleStatus {
     bootFailure = -2,
