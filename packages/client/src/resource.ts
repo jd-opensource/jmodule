@@ -140,7 +140,7 @@ export class Resource extends ModuleHook {
         }
         this.url = wholeUrl;
         this.server = server;
-        this.type = options?.type || url.split('.').pop() || 'js';
+        this.type = (options?.type || url.split('.').pop() || 'js').replace(/\?.*$/, '');
         this.prefix = options?.prefix?.replace('[resourceOrigin]', this.server);
         this.afterInit = new Promise((resolve, reject) => {
             this.resolveInit = resolve;
