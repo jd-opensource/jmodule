@@ -220,7 +220,7 @@ export class JModule extends ModuleHook {
         this.metadata = others;
 
         // 建立资源与 module 之间的状态更新
-        watchModuleStatus.bind(this, this.resource);
+        watchModuleStatus.bind(this)(this.resource);
 
         // 登记资源地址 与 moduleKey 之间的映射关系
         manager.mapResourceUrlAndModuleKey(this.resource.url, this.key);
