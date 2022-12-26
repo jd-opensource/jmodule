@@ -7,6 +7,7 @@ import { resourceTypes } from './utils/resourceResolver';
 import manager from './globalManager';
 import { JModule } from './module';
 import { elementsToPromise } from './utils/elementsToPromise';
+import { timeoutToPromise } from './utils/timeoutToPromise';
 import { ElementModifier } from './types';
 
 function injectElementModifier(
@@ -88,6 +89,7 @@ export interface ResourceOptions {
     type?: string,
     prefix?: string,
     strategy?: ResourceLoadStrategy,
+    initTimeout?: number,
 }
 
 
@@ -106,8 +108,9 @@ export class Resource extends ModuleHook {
     private appliedScript = false;
     private static asyncFilesMap: { [key: string]: Resource | undefined } = {};
 
-    resolveInit!: () => void;
-    rejectInit!: (error: Error) => void;
+    static initTimeout = 10000;
+    resolveInit?: (metadata: ResourceMetadata) => void;
+    rejectInit?: (error: Error) => void;
     metadata?: ResourceMetadata;
     url = '';
     initScriptElement?: HTMLScriptElement;
@@ -120,11 +123,12 @@ export class Resource extends ModuleHook {
     type!: string; // 入口资源类型
     prefix?: string;
     afterApplyScript!: Promise<HTMLScriptElement[]>;
-    afterInit!: Promise<void>;
+    afterInit?: Promise<void>;
     strategy!: ResourceLoadStrategy; // 默认，直接用标签方式加载
     cachedUrlMap: {
         [key: string]: string
     } = {};
+    initTimeout!: number;
 
     /**
      * @constructor
@@ -142,15 +146,12 @@ export class Resource extends ModuleHook {
         this.server = server;
         this.type = (options?.type || url.split('.').pop() || 'js').replace(/\?.*$/, '');
         this.prefix = options?.prefix?.replace('[resourceOrigin]', this.server);
-        this.afterInit = new Promise((resolve, reject) => {
-            this.resolveInit = resolve;
-            this.rejectInit = reject;
-        });
         this.afterApplyScript = new Promise((resolve, reject) => {
             this.resolveScript = resolve;
             this.rejectScript = reject;
         });
         this.strategy = options?.strategy ?? ResourceLoadStrategy.Element;
+        this.initTimeout = options?.initTimeout || Resource.initTimeout;
         JModuleManager.resource(this.url, this);
     }
 
@@ -177,15 +178,16 @@ export class Resource extends ModuleHook {
     }
 
     static setResourceData(metadata: ResourceMetadata, sourceUrl: string): Resource {
-        const resource = JModuleManager.resource(sourceUrl);
-        if (resource) {
-            resource.metadata = metadata;
-            resource.setStatus(ResourceStatus.Initialized);
-            resource.resolveInit();
-            return resource;
-        } else {
+        const resource: Resource|undefined = JModuleManager.resource(sourceUrl);
+        if (!resource) {
             throw new Error(`未找到${sourceUrl}对应的 resource 实例`);
         }
+        // TODO
+        if (diff(resource.metadata, metadata)) {
+            Resource.runHookSync('resource:upgrade', resource);
+        }
+        resource.resolveInit?.(metadata);
+        return resource;
     }
 
     static defineType(type: string, typeHandler: (resource: Resource, defaultUrl: string) => Promise<string>) {
@@ -197,24 +199,50 @@ export class Resource extends ModuleHook {
         });
     }
 
-    // 加载资源元数据
-    async init() {
-        if (this.initScriptElement || this.status === ResourceStatus.Initializing) {
-            return Promise.resolve();
+    private prepareInit() {
+        if (this.status === ResourceStatus.Initializing && this.rejectInit) {
+            this.rejectInit(new Error('ResourceInit:Aborted'));
         }
         this.setStatus(ResourceStatus.Initializing);
+        this.afterInit = new Promise((resolve, reject) => {
+            this.resolveInit = (metadata: ResourceMetadata) => {
+                if (this.status !== ResourceStatus.Initializing) {
+                    return;
+                }
+                this.metadata = metadata;
+                this.setStatus(ResourceStatus.Initialized);
+                resolve();
+            };
+            this.rejectInit = (error: Error) => {
+                this.setStatus(ResourceStatus.InitializeFailed);
+                console.error(`${this.url}加载失败: ${error.message}`);
+                reject(error);
+            };
+        });
+    }
+
+    // 加载资源元数据, 默认不重复执行
+    async init(forceInit = false) {
+        if (this.status === ResourceStatus.Initializing) {
+            return this.afterInit;
+        }
+        if (this.afterInit && !forceInit) {
+            return this.afterInit;
+        }
+        this.prepareInit();
         try {
             const [, url] = await Resource.runHook('resource:resolveEntry', this, patchInitUrl(this.url));
-            const res = await loadScript(url, this.url, (script) => {
+            await loadScript(url, this.url, (script) => {
                 script.async = true;
                 this.initScriptElement = script;
                 scriptCacheByUrl[this.url] = script;
             });
-            return res;
+            await Promise.race([
+                timeoutToPromise(this.initTimeout, new Error('ResourceInit:Timeout')),
+                this.afterInit, // 那这里可能已经被 reject 了
+            ]);
         } catch (e) {
-            this.setStatus(ResourceStatus.InitializeFailed);
-            console.error(`资源加载失败: ${this.url}`);
-            this.rejectInit(e as Error);
+            this.rejectInit?.(e as Error);
         }
     }
 
@@ -223,6 +251,9 @@ export class Resource extends ModuleHook {
     }
 
     setStatus(status: ResourceStatus) {
+        if (this.status === status) {
+            return;
+        }
         this.status = status;
         const modules = JModuleManager.getModulesByResourceUrl(this.url);
         modules.forEach((module: JModule) => {
