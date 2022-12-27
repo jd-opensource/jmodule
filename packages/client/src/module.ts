@@ -49,9 +49,6 @@ const filterModule = (conf: ModuleOptions) => {
 };
 
 function watchModuleStatus(this: JModule, resource: Resource) {
-    resource.afterInit.catch(() => {
-        this.status = ModuleStatus.loadFailure;
-    });
     resource.afterApplyScript.catch(() => {
         this.status = ModuleStatus.loadFailure;
     })
@@ -59,6 +56,16 @@ function watchModuleStatus(this: JModule, resource: Resource) {
         // 对于 auto apply script 的情况，loaded 发生在脚本解析之后，loaded 不会被触发
         if (this.status === ModuleStatus.loading) {
             this.status = ModuleStatus.loaded;
+            setTimeout(() => {
+                if (this.status === ModuleStatus.loaded) {
+                    ModuleDebug.print({
+                        type: 'warning',
+                        key: this.key,
+                        message: 'JModule.define 可能无法正常执行, 请检查资源响应是否符合预期以及子应用里的 JModule.define',
+                        instance: this,
+                    });
+                }
+            }, 5000);
         }
     });
 }
@@ -505,14 +512,34 @@ export class JModule extends ModuleHook {
     ): Promise<Resource|void> {
         const fn = async () => {
             const { resource } = this;
-            if (this.status === ModuleStatus.initialized) {
+            // 正在加载、加载成功则不支持重新 load, 但可以通过 resource.init(true) 检查资源更新
+            // 不重新load是因为子应用的代码可能已经运行, 
+            if ([
+                ModuleStatus.loading,
+                ModuleStatus.defined,
+                ModuleStatus.booting,
+            ].includes(this.status)) {
+                return;
+            }
+            this.completeResolver.reject?.(); // 结束上次的任务并开始新的任务
+            this.hooks.complete = new Promise((resolve: ModuleResolver, reject) => {
+                this.completeResolver = {
+                    resolve,
+                    reject,
+                };
+            });
+            if (this.status === ModuleStatus.initialized || this.status === ModuleStatus.loadFailure) {
+                const forceInit = this.status === ModuleStatus.loadFailure;
                 this.status = ModuleStatus.loading;
-                resource.init();
+                await resource.init(forceInit).catch((e) => {
+                    this.status = ModuleStatus.loadFailure;
+                    throw e;
+                });
             }
             await resource.afterInit;
             if (targetStatus === 'preload') {
                 resource.preload(options.elementModifier);
-            } 
+            }
             if (targetStatus === 'load') {
                 resource.applyScript(options.elementModifier);
                 if (options.autoApplyStyle) {

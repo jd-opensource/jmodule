@@ -8,6 +8,7 @@ import manager from './globalManager';
 import { JModule } from './module';
 import { elementsToPromise } from './utils/elementsToPromise';
 import { timeoutToPromise } from './utils/timeoutToPromise';
+import { diffMetadata } from './utils/diffMetadata';
 import { ElementModifier } from './types';
 
 function injectElementModifier(
@@ -182,8 +183,7 @@ export class Resource extends ModuleHook {
         if (!resource) {
             throw new Error(`未找到${sourceUrl}对应的 resource 实例`);
         }
-        // TODO
-        if (diff(resource.metadata, metadata)) {
+        if (resource.metadata && diffMetadata(resource.metadata, metadata)) {
             Resource.runHookSync('resource:upgrade', resource);
         }
         resource.resolveInit?.(metadata);
