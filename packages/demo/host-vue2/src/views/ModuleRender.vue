@@ -1,6 +1,6 @@
 <template>
   <div :data-module-key="currentModule && currentModule.moduleKey">
-      <template  v-if="currentModule">
+      <template v-if="currentModule">
         <router-view v-if="currentModule.type==='module'" :data-module-key="currentModule.moduleKey" />
         <div v-else app-container :data-module-key="currentModule.moduleKey"></div>
       </template>
