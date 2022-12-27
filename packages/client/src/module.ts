@@ -61,7 +61,7 @@ function watchModuleStatus(this: JModule, resource: Resource) {
                     ModuleDebug.print({
                         type: 'warning',
                         key: this.key,
-                        message: 'JModule.define 可能无法正常执行, 请检查资源响应是否符合预期以及子应用里的 JModule.define',
+                        message: 'JModule.define 可能无法正常执行, 请检查子应用资源响应是否正常、是否执行异常、是否能执行JModule.define',
                         instance: this,
                     });
                 }
@@ -518,6 +518,7 @@ export class JModule extends ModuleHook {
                 ModuleStatus.loading,
                 ModuleStatus.defined,
                 ModuleStatus.booting,
+                ModuleStatus.done,
             ].includes(this.status)) {
                 return;
             }
@@ -536,7 +537,6 @@ export class JModule extends ModuleHook {
                     throw e;
                 });
             }
-            await resource.afterInit;
             if (targetStatus === 'preload') {
                 resource.preload(options.elementModifier);
             }

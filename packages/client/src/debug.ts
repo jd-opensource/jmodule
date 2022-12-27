@@ -11,7 +11,7 @@ const style = {
         success: tagStyle('green'),
         error: tagStyle('red'),
         log: tagStyle('#999'),
-        warning: tagStyle('yellow'),
+        warning: tagStyle('#b39500'),
     },
     space: 'background: initial',
 };

@@ -80,7 +80,7 @@ pnpm run build --filter "*client"
 pnpm run build --filter "*helper"
 
 # 修正多版本 vue 冲突问题
-pnpm add vue-template-compiler@2 -D --filter "*vue2"
+pnpm add vue-template-compiler@2.6.14 -D --filter "*vue2"
 pnpm add vue-loader@15 -D --filter "*vue2"
 
 #### 完整示例
