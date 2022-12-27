@@ -243,6 +243,7 @@ export class Resource extends ModuleHook {
             ]);
         } catch (e) {
             this.rejectInit?.(e as Error);
+            throw e;
         }
     }
 

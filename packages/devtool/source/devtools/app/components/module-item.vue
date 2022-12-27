@@ -38,6 +38,11 @@ span[type="key"][data-status="5"] {
     background-color: green;
     color: #fff;
 }
+span[type="key"][data-status="-1"],
+span[type="key"][data-status="-2"] {
+    background-color: #b30000;
+    color: #fff;
+}
 .module-item-header{
     display: flex;
     justify-content: space-between;
