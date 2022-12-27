@@ -10,6 +10,7 @@ export interface ResourceOptions {
     type?: string;
     prefix?: string;
     strategy?: ResourceLoadStrategy;
+    initTimeout?: number;
 }
 /**
  * 基于URL的资源管理，与模块无关
@@ -23,8 +24,9 @@ export declare class Resource extends ModuleHook {
     private scriptLoading?;
     private appliedScript;
     private static asyncFilesMap;
-    resolveInit: () => void;
-    rejectInit: (error: Error) => void;
+    static initTimeout: number;
+    resolveInit?: (metadata: ResourceMetadata) => void;
+    rejectInit?: (error: Error) => void;
     metadata?: ResourceMetadata;
     url: string;
     initScriptElement?: HTMLScriptElement;
@@ -37,11 +39,12 @@ export declare class Resource extends ModuleHook {
     type: string;
     prefix?: string;
     afterApplyScript: Promise<HTMLScriptElement[]>;
-    afterInit: Promise<void>;
+    afterInit?: Promise<void>;
     strategy: ResourceLoadStrategy;
     cachedUrlMap: {
         [key: string]: string;
     };
+    initTimeout: number;
     /**
      * @constructor
      */
@@ -54,7 +57,8 @@ export declare class Resource extends ModuleHook {
     } | void;
     static setResourceData(metadata: ResourceMetadata, sourceUrl: string): Resource;
     static defineType(type: string, typeHandler: (resource: Resource, defaultUrl: string) => Promise<string>): void;
-    init(): Promise<void | HTMLScriptElement>;
+    private prepareInit;
+    init(forceInit?: boolean): Promise<void>;
     resolveUrl(url: string): string;
     setStatus(status: ResourceStatus): void;
     applyScript(elementModifier?: ElementModifier): Promise<HTMLScriptElement[]>;

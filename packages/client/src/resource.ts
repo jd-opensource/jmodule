@@ -239,7 +239,7 @@ export class Resource extends ModuleHook {
             });
             await Promise.race([
                 timeoutToPromise(this.initTimeout, new Error('ResourceInit:Timeout')),
-                this.afterInit, // 那这里可能已经被 reject 了
+                this.afterInit,
             ]);
         } catch (e) {
             this.rejectInit?.(e as Error);
