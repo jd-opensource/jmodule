@@ -529,6 +529,7 @@ export class JModule extends ModuleHook {
         }
         // init: 从初始化到初始化有结果, 任何失败状态重新执行都强制 forceInit
         await resource.init([loadFailure, bootFailure, initializeFailed].includes(this.status));
+
         // preload: 只要 init 是成功的就可以
         if (targetStatus === 'preload') {
             if (window.requestIdleCallback) {
@@ -545,7 +546,14 @@ export class JModule extends ModuleHook {
             if (options.autoApplyStyle) {
                 resource.applyStyle(options.elementModifier);
             }
-            await this.hooks.complete;
+            try {
+                await this.hooks.complete;
+            } catch(e) {
+                // js 执行失败时, 应用的样式也没有意义, 移除为后续加载做准备
+                resource.removeStyle();
+                resource.resetStyleStatus();
+                throw e;
+            }
         }
         return resource;
     }

@@ -69,6 +69,10 @@ export declare class Resource extends ModuleHook {
      */
     removeStyle(): void;
     /**
+     * 重置样式状态
+     */
+    resetStyleStatus(): void;
+    /**
      * 销毁资源实例
      */
     destroy(): void;

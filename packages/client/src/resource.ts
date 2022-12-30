@@ -185,6 +185,8 @@ export class Resource extends ModuleHook {
         }
         if (resource.metadata && diffMetadata(resource.metadata, metadata)) {
             Resource.runHookSync('resource:upgrade', resource);
+            // reset style
+            resource.resetStyleStatus();
         }
         resource.resolveInit?.(metadata);
         return resource;
@@ -300,6 +302,7 @@ export class Resource extends ModuleHook {
             return this.scriptElements;
         }).catch((error) => {
             this.setStatus(ResourceStatus.ScriptError);
+            this.scriptLoading = undefined;
             this.rejectScript(error);
             throw error;
         });
@@ -405,6 +408,16 @@ export class Resource extends ModuleHook {
         this.styleMounted = false;
         this.styleLoading = undefined;
         this.setStatus(ResourceStatus.StyleRemoved);
+    }
+
+    /**
+     * 重置样式状态
+     */
+    resetStyleStatus() {
+        this.styleLoading = undefined;
+        this.styleMounted = false;
+        this.styleElements = [];
+        this.appendedAsyncStyleElements = undefined;
     }
 
     /**
