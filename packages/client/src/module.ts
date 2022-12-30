@@ -519,8 +519,11 @@ export class JModule extends ModuleHook {
             loadFailure,
             bootFailure,
         } = ModuleStatus;
-        // 已经进入正式 load 状态且未失败, 则等待执行结果
+        // 已经进入正式 load 状态且未失败, 则等待执行结果, 即已经 load 过了, 下次再执行
         if ([loading, defined, booting, done, loaded].includes(this.status)) {
+            if (targetStatus === 'load' && options.autoApplyStyle) {
+                resource.applyStyle();
+            }
             await (targetStatus !== 'load' ? Promise.resolve() : this.hooks.complete);
             return resource;
         }
