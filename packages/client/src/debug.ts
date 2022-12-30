@@ -1,25 +1,8 @@
 /* eslint-disable no-console */
+import { printDebugInfo, DebugInfoOptions } from './utils/printDebugInfo';
 
-function tagStyle(color: string) {
-    return `background: ${color};color:#fff;padding: 0 3px; border-radius: 2px;`;
-}
-const style = {
-    timestamp: 'color: #999',
-    key: tagStyle('rgb(42,154,243)'),
-    message: '#333',
-    type: {
-        success: tagStyle('green'),
-        error: tagStyle('red'),
-        log: tagStyle('#999'),
-        warning: tagStyle('#b39500'),
-    },
-    space: 'background: initial',
-};
 let enableDebugStatus = false;
 
-function getTimestamp() {
-    return `[${new Date().toISOString().slice(11, -1)}]`;
-}
 function clone<T extends { __proto__: any }>(obj?: T): T | '' {
     if (!obj) {
         return '';
@@ -34,24 +17,13 @@ function clone<T extends { __proto__: any }>(obj?: T): T | '' {
 /**
  * @class
  */
-type Type = 'success' | 'error' | 'log' | 'warning';
-interface PrintOptions {
-   key: string, message: string, instance: any, type?: Type,
-}
 export class ModuleDebug {
-    static print({
-        key, message, instance, type = 'log',
-    }: PrintOptions) {
-        if (!enableDebugStatus) {
+    static print(options: DebugInfoOptions) {
+        if (!enableDebugStatus || !options) {
             return;
         }
-        console.debug(`%c${getTimestamp()} %c${type}%c %c${key}%c ${message} %O`,
-            style.timestamp,
-            style.type[type],
-            style.space,
-            style.key,
-            style.message,
-            clone(instance));
+        const { instance, ...others } = options;
+        printDebugInfo({ ...others, instance: clone(instance) });
     }
 
     static printContinue(message: string) {
