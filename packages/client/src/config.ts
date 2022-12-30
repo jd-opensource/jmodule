@@ -28,15 +28,24 @@ export enum ResourceStatus {
 }
 
 export enum ModuleStatus {
-    bootFailure = -2,
-    loadFailure = -1,
-    initialized = 0,
-    loading = 1,
-    loaded = 2,
-    defined = 3,
-    booting = 4,
-    done = 5,
+    bootFailure = 'bootFailure',
+    loadFailure = 'loadFailure',
+    init = 'init',
+    initializing = 'initializing',
+    initialized = 'initialized',
+    initializeFailed = 'initializeFailed',
+    loading = 'loading',
+    loaded = 'loaded',
+    defined = 'defined',
+    booting = 'booting',
+    done = 'done',
 }
+
+export const statusFromResourceToModule = {
+    [ResourceStatus.Initializing]: ModuleStatus.initializing,
+    [ResourceStatus.Initialized]: ModuleStatus.initialized,
+    [ResourceStatus.InitializeFailed]: ModuleStatus.initializeFailed,
+};
 
 // 向下兼容
 export const MODULE_STATUS = ModuleStatus;

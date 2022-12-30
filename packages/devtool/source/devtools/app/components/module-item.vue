@@ -34,12 +34,16 @@ span[type="key"] {
     line-height: 24px;
     margin-left: 8px;
 }
-span[type="key"][data-status="5"] {
+span[type="key"][data-status="5"],
+span[type="key"][data-status="done"] {
     background-color: green;
     color: #fff;
 }
 span[type="key"][data-status="-1"],
-span[type="key"][data-status="-2"] {
+span[type="key"][data-status="-2"],
+span[type="key"][data-status="loadFailure"],
+span[type="key"][data-status="initializeFailed"],
+span[type="key"][data-status="bootFailure"] {
     background-color: #b30000;
     color: #fff;
 }

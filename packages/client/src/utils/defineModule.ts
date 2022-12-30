@@ -55,7 +55,7 @@ function define(moduleKey: any, metadata?: any): Promise<JModule> {
     }
     const moduleDefer = manager.jmodule(localKey)
         ? Promise.resolve(manager.jmodule(localKey))
-        : eventToPromise(`module.${moduleKey}.${ModuleStatus.initialized}`);
+        : eventToPromise(`module.${moduleKey}.${ModuleStatus.init}`);
     // 在定义之前执行将出现异常
     return moduleDefer.then((module: JModule) => {
         module.bootstrap = () => {

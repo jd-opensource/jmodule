@@ -22,10 +22,13 @@ export default {
     props: ['modules', 'actions'],
     computed: {
         loadedModules() {
-            return this.modules.filter(module => module._status === 5);
+            return this.modules.filter(module => module._status === 5 || module._status === 'done');
         },
         failedModules() {
-            return this.modules.filter(module => module._status < 0);
+            return this.modules.filter(module => module._status < 0
+                || module._status === 'loadFailure'
+                || module._status === 'bootFailure'
+                || module._status === 'initializeFailed');
         },
     },
 }

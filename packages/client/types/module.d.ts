@@ -29,7 +29,6 @@ export declare type TypeHandler = (module: JModule, options: ModuleMetadata) => 
  */
 export declare class JModule extends ModuleHook {
     private static _debug?;
-    private completeResolver;
     static id: number;
     type?: string;
     key: string;
@@ -53,7 +52,7 @@ export declare class JModule extends ModuleHook {
         [key: string]: any;
     };
     hooks: {
-        complete: Promise<JModule>;
+        complete: undefined | Promise<JModule>;
     };
     _status: ModuleStatus;
     /**
@@ -179,6 +178,7 @@ export declare class JModule extends ModuleHook {
      */
     static import(namespace?: string, config?: HashObject | Matcher, force?: boolean): any;
     static _import(namespace?: string, config?: {}): any;
+    private setCompleteHook;
     /**
      * 加载模块
      * @method

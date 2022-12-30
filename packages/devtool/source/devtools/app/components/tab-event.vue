@@ -8,7 +8,7 @@
             <div>
                 <label for="">注册于:</label>
                 <div class="value">
-                    {{ getDiffTime((timeMap.initialized || timeMap.registered) - startTime) }}
+                    {{ getDiffTime((timeMap.init || timeMap.registered) - startTime) }}
                 </div>
             </div>
             <div v-if="timeMap.loading">

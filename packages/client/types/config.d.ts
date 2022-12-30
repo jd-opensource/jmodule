@@ -24,15 +24,23 @@ export declare enum ResourceStatus {
     StyleRemoveBefore = 16
 }
 export declare enum ModuleStatus {
-    bootFailure = -2,
-    loadFailure = -1,
-    initialized = 0,
-    loading = 1,
-    loaded = 2,
-    defined = 3,
-    booting = 4,
-    done = 5
+    bootFailure = "bootFailure",
+    loadFailure = "loadFailure",
+    init = "init",
+    initializing = "initializing",
+    initialized = "initialized",
+    initializeFailed = "initializeFailed",
+    loading = "loading",
+    loaded = "loaded",
+    defined = "defined",
+    booting = "booting",
+    done = "done"
 }
+export declare const statusFromResourceToModule: {
+    9: ModuleStatus;
+    10: ModuleStatus;
+    13: ModuleStatus;
+};
 export declare const MODULE_STATUS: typeof ModuleStatus;
 export declare enum ResourceLoadStrategy {
     Fetch = 0,

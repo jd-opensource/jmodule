@@ -6,6 +6,7 @@ import { Matcher } from './utils/matcher';
 import { ModuleOptions, ModuleMetadata, ModuleStatus } from './config';
 import manager from './globalManager';
 import { LoadOptions } from './types';
+import { eventToPromise } from './utils/eventToPromise';
 
 /* 调试模式打印信息：路由变更信息，初始化模块实例、资源实例信息，模块状态变更信息 */
 
@@ -16,7 +17,10 @@ const moduleMap: { [key: string]: JModule } = {};
 const defaultExportsMatcher = new Matcher({});
 
 const moduleLog = {
-    [ModuleStatus.initialized]: '已创建模块实例',
+    [ModuleStatus.init]: '已创建模块实例',
+    [ModuleStatus.initializing]: '正在获取资源列表',
+    [ModuleStatus.initialized]: '资源初始化完成',
+    [ModuleStatus.initializeFailed]: '资源初始化失败',
     [ModuleStatus.loading]: '正在加载模块资源',
     [ModuleStatus.loaded]: '模块加载完成', // 代码加载并define解析完成，但 define 过程未执行
     [ModuleStatus.loadFailure]: '模块加载或解析失败', // 加载失败或解析 define 失败
@@ -82,8 +86,6 @@ function extractOrigin(url = '') {
         : '';
 }
 
-type ModuleResolver = (value: JModule) => void;
-
 export type TypeHandler = (module: JModule, options: ModuleMetadata) => ({
     activate: (parentEl: Element) => Promise <void>,
     deactivate: () => Promise <void>,
@@ -108,10 +110,6 @@ export type TypeHandler = (module: JModule, options: ModuleMetadata) => ({
  */
 export class JModule extends ModuleHook {
     private static _debug?: boolean;
-    private completeResolver!: {
-        resolve: ModuleResolver,
-        reject: () => void,
-    };
     static id: number;
     type?: string;
     key: string;
@@ -127,7 +125,7 @@ export class JModule extends ModuleHook {
     resource: Resource;
     metadata:{[key: string]: any};
     hooks: {
-        complete: Promise<JModule>;
+        complete: undefined|Promise<JModule>;
     };
     _status!: ModuleStatus;
 
@@ -144,17 +142,11 @@ export class JModule extends ModuleHook {
         const isRemoteModule = domain !== '/';
         super();
 
-        const complete = new Promise((resolve: ModuleResolver, reject) => {
-            this.completeResolver = {
-                resolve,
-                reject,
-            };
-        });
         /**
          * 代码加载完成后执行
          * @type {Promise<JModule>}
          */
-        this.hooks = { complete };
+        this.hooks = { complete: undefined };
 
         /**
          * 模块类型
@@ -180,7 +172,7 @@ export class JModule extends ModuleHook {
          * 模块状态
          * @type {ModuleStatus}
          */
-        this.status = ModuleStatus.initialized;
+        this.status = ModuleStatus.init;
         /**
          * 远程资源服务器
          * @type {String}
@@ -248,13 +240,6 @@ export class JModule extends ModuleHook {
         });
         window.dispatchEvent(new CustomEvent(`module.${this.key}.statusChange`, eventData));
         window.dispatchEvent(new CustomEvent(`module.${this.key}.${status}`, eventData));
-        const { done, loadFailure, bootFailure } = ModuleStatus;
-        if (status === done) {
-            this.completeResolver.resolve(this);
-        }
-        if ([loadFailure, bootFailure].indexOf(status) > -1) {
-            this.completeResolver.reject();
-        }
     }
 
     /**
@@ -497,6 +482,19 @@ export class JModule extends ModuleHook {
         return this.import(namespace, config);
     }
 
+    private setCompleteHook() {
+        this.hooks.complete = Promise.race([
+            eventToPromise(`module.${this.key}.${ModuleStatus.done}`),
+            eventToPromise(`module.${this.key}.${ModuleStatus.loadFailure}`),
+            eventToPromise(`module.${this.key}.${ModuleStatus.bootFailure}`),
+        ]).then(() => {
+            if (this._status !== ModuleStatus.done) {
+                throw new Error(moduleLog[this._status]);
+            }
+            return this;
+        });
+    }
+
     /**
      * 加载模块
      * @method
@@ -510,52 +508,43 @@ export class JModule extends ModuleHook {
         targetStatus: 'init'|'preload'|'load' = 'load',
         options: LoadOptions = { autoApplyStyle: true },
     ): Promise<Resource|void> {
-        const fn = async () => {
-            const { resource } = this;
-            // 正在加载、加载成功则不支持重新 load, 但可以通过 resource.init(true) 检查资源更新
-            // 不重新load是因为子应用的代码可能已经运行, 
-            if ([
-                ModuleStatus.loading,
-                ModuleStatus.defined,
-                ModuleStatus.booting,
-                ModuleStatus.done,
-            ].includes(this.status)) {
-                return;
-            }
-            this.completeResolver.reject?.(); // 结束上次的任务并开始新的任务
-            this.hooks.complete = new Promise((resolve: ModuleResolver, reject) => {
-                this.completeResolver = {
-                    resolve,
-                    reject,
-                };
-            });
-            if (this.status === ModuleStatus.initialized || this.status === ModuleStatus.loadFailure) {
-                const forceInit = this.status === ModuleStatus.loadFailure;
-                this.status = ModuleStatus.loading;
-                await resource.init(forceInit).catch((e) => {
-                    this.status = ModuleStatus.loadFailure;
-                    throw e;
-                });
-            }
-            if (targetStatus === 'preload') {
-                resource.preload(options.elementModifier);
-            }
-            if (targetStatus === 'load') {
-                resource.applyScript(options.elementModifier);
-                if (options.autoApplyStyle) {
-                    resource.applyStyle(options.elementModifier);
-                }
-            }
+        const { resource } = this;
+        const {
+            loading,
+            defined,
+            booting,
+            done,
+            loaded,
+            initializeFailed,
+            loadFailure,
+            bootFailure,
+        } = ModuleStatus;
+        // 已经进入正式 load 状态且未失败, 则等待执行结果
+        if ([loading, defined, booting, done, loaded].includes(this.status)) {
+            await (targetStatus !== 'load' ? Promise.resolve() : this.hooks.complete);
             return resource;
         }
+        // init: 从初始化到初始化有结果, 任何失败状态重新执行都强制 forceInit
+        await resource.init([loadFailure, bootFailure, initializeFailed].includes(this.status));
+        // preload: 只要 init 是成功的就可以
+        if (targetStatus === 'preload') {
+            if (window.requestIdleCallback) {
+                window.requestIdleCallback(() => resource.preload(options.elementModifier));
+            } else {
+                window.setTimeout(() => resource.preload(options.elementModifier), 500);
+            }
+        }
+        // load
         if (targetStatus === 'load') {
-            return fn();
+            this.status = ModuleStatus.loading;
+            this.setCompleteHook();
+            resource.applyScript(options.elementModifier);
+            if (options.autoApplyStyle) {
+                resource.applyStyle(options.elementModifier);
+            }
+            await this.hooks.complete;
         }
-        if (window.requestIdleCallback) {
-            window.requestIdleCallback(fn);
-        } else {
-            window.setTimeout(fn, 500);
-        }
+        return resource;
     }
 }
 

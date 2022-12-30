@@ -1,4 +1,4 @@
-import { ResourceType, ResourceStatus, ResourceLoadStrategy, ModuleStatus } from './config';
+import { ResourceType, ResourceStatus, ResourceLoadStrategy, ModuleStatus, statusFromResourceToModule } from './config';
 import { resolveUrlByFetch } from './utils/fetchCode';
 import JModuleManager from './globalManager';
 import { ModuleHook } from './hook';
@@ -258,9 +258,9 @@ export class Resource extends ModuleHook {
         this.status = status;
         const modules = JModuleManager.getModulesByResourceUrl(this.url);
         modules.forEach((module: JModule) => {
-            // 不同应用共享资源时，被动触发状态改变
-            if (status === ResourceStatus.Initializing && module.status === ModuleStatus.initialized) {
-                module.status = ModuleStatus.loading;
+            // 映射状态到模块
+            if (status in statusFromResourceToModule) {
+                module.status = statusFromResourceToModule[status as keyof typeof statusFromResourceToModule] as ModuleStatus;
             }
             window.dispatchEvent(new CustomEvent(`resource.${module.key}.statusChange`, {
                 detail: this,
