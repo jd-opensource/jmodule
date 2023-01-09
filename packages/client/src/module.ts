@@ -52,28 +52,6 @@ const filterModule = (conf: ModuleOptions) => {
     return true;
 };
 
-function watchModuleStatus(this: JModule, resource: Resource) {
-    resource.afterApplyScript.catch(() => {
-        this.status = ModuleStatus.loadFailure;
-    })
-    resource.afterApplyScript.then(() => {
-        // 对于 auto apply script 的情况，loaded 发生在脚本解析之后，loaded 不会被触发
-        if (this.status === ModuleStatus.loading) {
-            this.status = ModuleStatus.loaded;
-            setTimeout(() => {
-                if (this.status === ModuleStatus.loaded) {
-                    ModuleDebug.print({
-                        type: 'warning',
-                        key: this.key,
-                        message: 'JModule.define 可能无法正常执行, 请检查子应用资源响应是否正常、是否执行异常、是否能执行JModule.define',
-                        instance: this,
-                    });
-                }
-            }, 5000);
-        }
-    });
-}
-
 const urlOriginReg = /^((?:http|https):\/\/[^/]+)(\/.*)?$/g;
 /**
  * 从url中解析origin
@@ -218,9 +196,6 @@ export class JModule extends ModuleHook {
          */
         this.metadata = others;
 
-        // 建立资源与 module 之间的状态更新
-        watchModuleStatus.bind(this)(this.resource);
-
         // 登记资源地址 与 moduleKey 之间的映射关系
         manager.mapResourceUrlAndModuleKey(this.resource.url, this.key);
 
@@ -228,7 +203,22 @@ export class JModule extends ModuleHook {
     }
 
     set status(status) {
+        if (status === ModuleStatus.loaded && this._status !== ModuleStatus.loading) {
+            return; // 异常状态事件
+        }
         this._status = status;
+        if (status === ModuleStatus.loaded) {
+            setTimeout(() => {
+                if (this.status === ModuleStatus.loaded) {
+                    ModuleDebug.print({
+                        type: 'warning',
+                        key: this.key,
+                        message: 'JModule.define 可能无法正常执行, 请检查子应用资源响应是否正常、是否执行异常、是否能执行JModule.define',
+                        instance: this,
+                    });
+                }
+            }, 5000);
+        }
         const eventData = { detail: this };
         /* eslint-disable no-nested-ternary */
         ModuleDebug.print({

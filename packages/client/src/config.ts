@@ -8,23 +8,23 @@ export enum ResourceType {
 }
 
 export enum ResourceStatus {
-    Init = 0,
-    InitScriptLoaded = 1,
-    InitScriptError = 2,
-    ApplyScript = 3,
-    ApplyStyle = 8,
-    ScriptResolved = 4,
-    StyleResolved = 5,
-    StyleRemoved = 6,
-    ScriptError = 7,
-    Initializing = 9,
-    Initialized = 10,
-    Preloading = 11,
-    Preloaded = 12,
-    InitializeFailed = 13,
-    PreloadFailed = 14,
-    StyleError = 15,
-    StyleRemoveBefore = 16,
+    Init = 'Init',
+    InitScriptLoaded = 'InitScriptLoaded',
+    InitScriptError = 'InitScriptError',
+    ApplyScript = 'ApplyScript',
+    ApplyStyle = 'ApplyStyle',
+    ScriptResolved = 'ScriptResolved',
+    StyleResolved = 'StyleResolved',
+    StyleRemoved = 'StyleRemoved',
+    ScriptError = 'ScriptError',
+    Initializing = 'Initializing',
+    Initialized = 'Initialized',
+    Preloading = 'Preloading',
+    Preloaded = 'Preloaded',
+    InitializeFailed = 'InitializeFailed',
+    PreloadFailed = 'PreloadFailed',
+    StyleError = 'StyleError',
+    StyleRemoveBefore = 'StyleRemoveBefore',
 }
 
 export enum ModuleStatus {
@@ -45,6 +45,8 @@ export const statusFromResourceToModule = {
     [ResourceStatus.Initializing]: ModuleStatus.initializing,
     [ResourceStatus.Initialized]: ModuleStatus.initialized,
     [ResourceStatus.InitializeFailed]: ModuleStatus.initializeFailed,
+    [ResourceStatus.ScriptError]: ModuleStatus.loadFailure,
+    [ResourceStatus.ScriptResolved]: ModuleStatus.loaded,
 };
 
 // 向下兼容
