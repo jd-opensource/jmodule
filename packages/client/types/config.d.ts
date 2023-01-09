@@ -5,23 +5,23 @@ export declare enum ResourceType {
     Script = "application/javascript"
 }
 export declare enum ResourceStatus {
-    Init = 0,
-    InitScriptLoaded = 1,
-    InitScriptError = 2,
-    ApplyScript = 3,
-    ApplyStyle = 8,
-    ScriptResolved = 4,
-    StyleResolved = 5,
-    StyleRemoved = 6,
-    ScriptError = 7,
-    Initializing = 9,
-    Initialized = 10,
-    Preloading = 11,
-    Preloaded = 12,
-    InitializeFailed = 13,
-    PreloadFailed = 14,
-    StyleError = 15,
-    StyleRemoveBefore = 16
+    Init = "Init",
+    InitScriptLoaded = "InitScriptLoaded",
+    InitScriptError = "InitScriptError",
+    ApplyScript = "ApplyScript",
+    ApplyStyle = "ApplyStyle",
+    ScriptResolved = "ScriptResolved",
+    StyleResolved = "StyleResolved",
+    StyleRemoved = "StyleRemoved",
+    ScriptError = "ScriptError",
+    Initializing = "Initializing",
+    Initialized = "Initialized",
+    Preloading = "Preloading",
+    Preloaded = "Preloaded",
+    InitializeFailed = "InitializeFailed",
+    PreloadFailed = "PreloadFailed",
+    StyleError = "StyleError",
+    StyleRemoveBefore = "StyleRemoveBefore"
 }
 export declare enum ModuleStatus {
     bootFailure = "bootFailure",
@@ -37,9 +37,11 @@ export declare enum ModuleStatus {
     done = "done"
 }
 export declare const statusFromResourceToModule: {
-    9: ModuleStatus;
-    10: ModuleStatus;
-    13: ModuleStatus;
+    Initializing: ModuleStatus;
+    Initialized: ModuleStatus;
+    InitializeFailed: ModuleStatus;
+    ScriptError: ModuleStatus;
+    ScriptResolved: ModuleStatus;
 };
 export declare const MODULE_STATUS: typeof ModuleStatus;
 export declare enum ResourceLoadStrategy {
