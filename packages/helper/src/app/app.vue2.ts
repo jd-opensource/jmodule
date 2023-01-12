@@ -28,8 +28,8 @@ export default (
         instance = instance.$mount(el);
     },
     unmount() {
-        instance.$el.remove();
-        instance.$destroy();
+        instance?.$destroy();
+        instance?.$el?.remove();
     },
     exports,
     imports,
