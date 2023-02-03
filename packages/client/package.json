@@ -1,6 +1,6 @@
 {
   "name": "@jmodule/client",
-  "version": "4.4.4-0",
+  "version": "4.4.4",
   "description": "JModule运行时",
   "author": "feirpri <feirpri@gmail.com>",
   "license": "MIT",
