@@ -25,25 +25,5 @@ module.exports = function outputAssets(compilation, outputJson = false, filename
         assetsData = assetsModifier(assetsData) || assetsData;
     }
     const jsonString = JSON.stringify(assetsData, null, 4);
-    let data = outputJson ? jsonString : `(window.JModuleManager && window.JModuleManager.defaultJModule || window.JModule).applyResource(${jsonString})`;
-    if (V4) {
-        compilation.assets[filename] = {
-            source: () => data,
-            size: () => data.length,
-        };
-        return;
-    }
-    const last = compilation.getAsset(filename);
-    if (last) {
-        if (!(last.info && last.info.createdByJModule)) {
-            // 该资源文件已经存在，但是不是由 JModule 创建的，则抛出异常
-            throw new Error(`${filename} 已存在. 请设置 moduleEntryFile 为其它值`);
-        }
-        compilation.updateAsset(filename, new webpack.sources.RawSource(data, false));
-    } else {
-        compilation.emitAsset(filename, new webpack.sources.RawSource(data, false), {
-            createdByJModule: true,
-            minimized: true,
-        });
-    }
+    return outputJson ? jsonString : `(window.JModuleManager && window.JModuleManager.defaultJModule || window.JModule).applyResource(${jsonString})`;
 };

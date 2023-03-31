@@ -72,24 +72,21 @@ class JModulePlugin {
             }
 
             // output assets
-            if (webpack.Compilation) {
-                // v5
-                compiler.hooks.compilation.tap("JModulePlugin", compilation => {
-                    compilation.hooks.processAssets.tap(
-                        {
-                            name: "JModulePlugin",
-                            stage: webpack.Compilation.PROCESS_ASSETS_STAGE_ANALYSE,
-                        },
-                        () => outputAssets(compilation, this.outputJSON, this.moduleEntryFile, false, this.assetsModifier),
-                    );
-                });
-            } else {
-                // v4
-                compiler.hooks.emit.tap(
-                    'JModulePlugin',
-                    (compilation) => outputAssets(compilation, this.outputJSON, this.moduleEntryFile, true, this.assetsModifier),
+            compiler.hooks.afterEmit.tap("JModulePlugin", compilation => {
+                if (compilation.getAsset(this.moduleEntryFile)) {
+                    throw new Error(`${this.moduleEntryFile} 已存在. 请设置 moduleEntryFile 为其它值`);
+                }
+                return compiler.outputFileSystem.writeFile(
+                    path.join(compiler.options.output.path, this.moduleEntryFile),
+                    outputAssets(compilation, this.outputJSON, this.assetsModifier),
+                    (error) => {
+                        if (error) {
+                            console.error('@jmodule/plugin-webpack: 写入' + this.moduleEntryFile + '文件失败');
+                            console.error(error.message);
+                        }
+                    },
                 );
-            }
+            });
         }
 
         // 启动调试服务
