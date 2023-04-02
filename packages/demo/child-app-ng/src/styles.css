@@ -1,0 +1,76 @@
+/* Global Styles */
+app-root h1 {
+  color: #264D73;
+  font-size: 2.5rem;
+}
+app-root h2, app-root h3 {
+  color: #444;
+  font-weight: lighter;
+}
+app-root h3 {
+  font-size: 1.3rem;
+}
+app-root input[text] {
+  color: #333;
+  font-family: Cambria, Georgia, serif;
+}
+app-root a {
+  cursor: pointer;
+}
+app-root button {
+  background-color: #eee;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  color: black;
+  font-size: 1.2rem;
+  padding: 1rem;
+  margin-right: 1rem;
+  margin-bottom: 1rem;
+  margin-top: 1rem;
+}
+app-root button:hover {
+  background-color: black;
+  color: white;
+}
+app-root button:disabled {
+  background-color: #eee;
+  color: #aaa;
+  cursor: auto;
+}
+
+/* Navigation link styles */
+app-root nav a {
+  padding: 5px 10px;
+  text-decoration: none;
+  margin-right: 10px;
+  margin-top: 10px;
+  display: inline-block;
+  background-color: #e8e8e8;
+  color: #3d3d3d;
+  border-radius: 4px;
+}
+
+app-root nav a:hover {
+  color: white;
+  background-color:  #42545C;
+}
+app-root nav a.active {
+  background-color: black;
+  color: white;
+}
+app-root hr {
+  margin: 1.5rem 0;
+}
+app-root input[type="text"] {
+  box-sizing: border-box;
+  width: 100%;
+  padding: .5rem;
+}
+
+
+/*
+Copyright Google LLC. All Rights Reserved.
+Use of this source code is governed by an MIT-style license that
+can be found in the LICENSE file at https://angular.io/license
+*/
