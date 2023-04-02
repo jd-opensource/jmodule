@@ -7,10 +7,17 @@ function clone<T extends { __proto__: any }>(obj?: T): T | '' {
     if (!obj) {
         return '';
     }
-    const cloned = JSON.parse(JSON.stringify(obj));
-    cloned._ = obj;
-    /* eslint-disable no-proto */
-    cloned.__proto__ = obj.__proto__;
+    let cloned;
+    try {
+        cloned = JSON.parse(JSON.stringify(obj));
+        cloned._ = obj;
+        /* eslint-disable no-proto */
+        cloned.__proto__ = obj.__proto__;
+    } catch (e) {
+        cloned = {
+            ...obj,
+        }
+    }
     return cloned;
 }
 

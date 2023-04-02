@@ -138,3 +138,4 @@ dist
 
 web-ext-artifacts
 *.zip
+.angular

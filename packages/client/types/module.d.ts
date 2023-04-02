@@ -157,7 +157,7 @@ export declare class JModule extends ModuleHook {
      *     exports: {},
      * });
      */
-    static define: any;
+    static define: typeof import("./utils/defineModule").default;
     static applyResource(resourceMetadata: ResourceMetadata, resourceLoaderUrl?: string): Resource;
     static getMeta(): {
         url?: undefined;
@@ -176,8 +176,12 @@ export declare class JModule extends ModuleHook {
      * @param  {Object} config      通过编译工具注入的相关环境参数
      * @return {var}
      */
-    static import(namespace?: string, config?: HashObject | Matcher, force?: boolean): any;
-    static _import(namespace?: string, config?: {}): any;
+    static import<T>(namespace?: string, config?: HashObject | Matcher, force?: boolean): T | {
+        url?: string;
+        server?: string;
+        resourceUrl?: string;
+    };
+    static _import(namespace?: string, config?: {}): unknown;
     private setCompleteHook;
     /**
      * 加载模块

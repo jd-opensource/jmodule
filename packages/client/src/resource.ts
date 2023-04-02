@@ -162,7 +162,7 @@ export class Resource extends ModuleHook {
 
     static getResource(sourceUrl?: string): Resource | void {
         console.warn('Resource.getResource() is deprecated, use JModuleManager.getInstance() instead');
-        return JModuleManager.resource(sourceUrl);
+        return sourceUrl ? JModuleManager.resource(sourceUrl) : undefined;
     }
 
     static getTrueResourceUrl(url: string): { resource: Resource, filepath: string } | void {

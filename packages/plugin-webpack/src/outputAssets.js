@@ -19,7 +19,7 @@ function getAssets(compilation) {
         publicPath,
     };
 }
-module.exports = function outputAssets(compilation, outputJson = false, filename, V4, assetsModifier) {
+module.exports = function outputAssets(compilation, outputJson = false, assetsModifier) {
     let assetsData = getAssets(compilation); 
     if (assetsModifier && typeof assetsModifier === 'function') {
         assetsData = assetsModifier(assetsData) || assetsData;

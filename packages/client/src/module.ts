@@ -316,7 +316,7 @@ export class JModule extends ModuleHook {
             function resolverListener() {
                 if (manager.jmodule(key)) {
                     window.removeEventListener('module.afterRegister', resolverListener);
-                    resolve(manager.jmodule(key));
+                    resolve(manager.jmodule(key) as JModule);
                 }
             }
             window.addEventListener('module.afterRegister', resolverListener);
@@ -444,18 +444,22 @@ export class JModule extends ModuleHook {
      * @param  {Object} config      通过编译工具注入的相关环境参数
      * @return {var}
      */
-    static import(namespace = '', config: HashObject|Matcher = defaultExportsMatcher, force = false) { // 用于导入平台接口
+    static import<T>(namespace = '', config: HashObject|Matcher = defaultExportsMatcher, force = false): T|{
+        url?: string,
+        server?: string,
+        resourceUrl?: string,
+    } { // 用于导入平台接口
         if (namespace === '$module.meta') {
             return this.getMeta();
         }
         
         if (!force && this !== manager.defaultJModule && currentScript) {
             const { dataset } = <HTMLScriptElement>currentScript || {};
-            const sourceUrl = dataset?.jmoduleFrom;
+            const sourceUrl = dataset?.jmoduleFrom || '';
             // 从 sourceUrl 找到对应的 module
             const [targetModule] = manager.getModulesByResourceUrl(sourceUrl) || [];
             if (targetModule && targetModule.constructor !== JModule) {
-                return targetModule.constructor.import(namespace, config, true);
+                return (targetModule.constructor as typeof JModule).import(namespace, config, true);
             }
         }
         const matchedExports = new Matcher(config).getCache();
