@@ -309,7 +309,7 @@ export class JModule extends ModuleHook {
                 const timer = setTimeout(() => {
                     clearTimeout(timer);
                     if (!manager.jmodule(key)) {
-                        reject(new Error(`find moudle ${key} timeout`));
+                        reject(new Error(`Timeout:getModuleAsync('${key}', ${timeout})`));
                     }
                 }, timeout);
             }
