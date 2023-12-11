@@ -76,25 +76,25 @@ npm i -g pnpm@6
 pnpm i
 
 # 构建 client\helper包
-pnpm run build --filter "*client"
-pnpm run build --filter "*helper"
+pnpm --filter "*client" run build
+pnpm --filter "*helper" run build
 
 # 修正多版本 vue 冲突问题
-pnpm add vue-template-compiler@2.6.14 -D --filter "*vue2"
-pnpm add vue-loader@15 -D --filter "*vue2"
+pnpm --filter "*vue2" add vue-template-compiler@2.6.14 -D
+pnpm --filter "*vue2" add vue-loader@15 -D
 
 #### 完整示例
 # 启动所有子项目
-pnpm run serve --filter "*child*"
+pnpm --filter "*child*" run serve
 
 # 启动宿主应用并自动加载以上子应用
-pnpm run serve:modules --filter "*host*"
+pnpm --filter "*host*" run serve:modules
 
 #### 单应用调试
 # 以纯净模式启动宿主应用（与前面含子应用的启动的示例相区别）
-pnpm run serve --filter "@jmodule-demo/host-vue2"
+pnpm --filter "@jmodule-demo/host-vue2" run serve
 # 启动指定的子应用，并在宿主应用中进行集成调试
-pnpm run serve --filter "@jmodule-demo/child-app-react"
+pnpm --filter "@jmodule-demo/child-app-react" run serve
 ```
 
 ## 文档  
