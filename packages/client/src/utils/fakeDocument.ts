@@ -39,7 +39,8 @@ function fakeCurrentScript(sourceUrl: string, currentUrl: string, originalCurren
             if (prop === 'src') {
                 return currentUrl;
             }
-            return Reflect.get(originalCurrentScript, prop);
+            const val = Reflect.get(originalCurrentScript, prop);
+            return val instanceof Function ? val.bind(originalCurrentScript) : val;
         },
     });
 }
@@ -68,8 +69,8 @@ export function createDocument(
             }
             return val instanceof Function ? val.bind(target) : val;
         },
-        set(target, prop, value, receiver) {
-            Reflect.set(target, prop, value, receiver);
+        set(target, prop, value) {
+            Reflect.set(target, prop, value);
             return true;
         },
     });
