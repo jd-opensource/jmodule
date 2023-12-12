@@ -14,7 +14,7 @@ program
 
 program
     .option('-H, --host <host>', '宿主应用服务')
-    .option('-T, --target-port <target>', '集成调试服务端口, eg: 9000')
+    .option('-T, --target-port <targetPort>', '集成调试服务端口, eg: 9000')
     .option('-P, --project-dir <projectDir>', '项目目录, 自动从 package.json, .jmodule.conf.js 下读取配置', './')
     .option('-M, --module <module>', '子应用配置, eg: http://localhost:3000?key=mychild', resolveModuleArg);
 
