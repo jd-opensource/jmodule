@@ -30,7 +30,7 @@
     }
     ```
 
-## 安装
+## 安装 (或通过下面的 npx 方式执行)
 ```bash
 npm i @jmodule/cli-bridge -D
 ```
@@ -38,10 +38,10 @@ npm i @jmodule/cli-bridge -D
 ## 使用
 ```bash
 # 检查配置
-npx jmodule-bridge start
+npx -p @jmodule/cli-bridge jmodule-bridge start
 
 # 启动集成环境服务 
-npx jmodule-bridge start \
+npx -p @jmodule/cli-bridge jmodule-bridge start \
     --host 'http://jagile.jd.com' \
     --module "http://localhost:3000?key=a" \
     --module "http://localhost:3000?key=b&type=route&resourceLoadStrategy=1" \
