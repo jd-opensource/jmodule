@@ -1,6 +1,7 @@
 const net = require('net');
+const { hostname } = require('os');
 
-exports.resolveOrigin = (origin) => {
+const resolveOrigin = (origin) => {
     try {
         const { protocol, hostname, port: originPort } = new URL(origin);
         const port = originPort || { 'https:': 443, 'http:': 80 }[protocol];
@@ -10,16 +11,11 @@ exports.resolveOrigin = (origin) => {
     }
 };
 
-exports.joinUrl = (origin = '', path) => {
-    const connectStr = origin.endsWith('/') ? '' : '/';
-    return `${origin}${connectStr}${path}`;
-};
-
 const timeout = 2000;
-exports.testServer = (origin) => {
+function testServer(origin) {
     let timer;
     try {
-        const { hostname: host, port } = exports.resolveOrigin(origin);
+        const { hostname: host, port } = resolveOrigin(origin);
         return new Promise((resolve, reject) => {
             const server = net.connect({ host, port }, (err) => {
                 clearTimeout(timer);
@@ -31,6 +27,7 @@ exports.testServer = (origin) => {
             });
             server.on('error', () => {
                 clearTimeout(timer);
+                server.destroy();
                 reject();
             });
             timer = setTimeout(() => {
@@ -43,13 +40,17 @@ exports.testServer = (origin) => {
     }
 };
 
-exports.waitServer = (origin, checkInterval = 3000) => new Promise((resolve) => {
-    function loopCheck() {
-        exports.testServer(origin).then(() => {
-            resolve();
-        }).catch(() => {
-            setTimeout(loopCheck, checkInterval);
-        });
-    }
-    loopCheck();
-});
+function waitServer(origin, checkInterval = 3000){
+    return new Promise((resolve) => {
+        function loopCheck() {
+            testServer(origin).then(() => {
+                resolve();
+            }).catch(() => {
+                setTimeout(loopCheck, checkInterval);
+            });
+        }
+        loopCheck();
+    });
+}
+
+module.exports = { waitServer };

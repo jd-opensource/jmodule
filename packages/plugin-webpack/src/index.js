@@ -5,8 +5,7 @@ const { PlatformResolverPlugin } = require('./dollarPlatform');
 const dollarModule = require('./dollarModule');
 const argvToRuntime = require('./argvToRuntime');
 const outputAssets = require('./outputAssets');
-const startPlatformProxy = require('./startPlatformProxy');
-const { waitServer } = require('../utils/netTools');
+const startPlatformProxy = require('@jmodule/cli-bridge/utils/startPlatformProxy');
 const getOptions = require('../utils/getOptions');
 const hackChunkName = require('./hackChunkName');
 const projectName = require(path.resolve(process.cwd(), './package')).name;
@@ -21,37 +20,28 @@ class JModulePlugin {
     startPlatform() {
         const {
             platformServer,
-            currentServer,
             platformLocalPort,
             onAllServerReady,
             isModulesMode,
             modulesConfig,
             platformProxyTable = {},
         } = this;
-        if (!isModulesMode || !platformServer || !currentServer || !platformLocalPort) {
+        if (!isModulesMode) {
             return;
-        }
-        if (typeof onAllServerReady === 'function') {
-            const localServer = `http://localhost:${platformLocalPort}`;
-            Promise.all([
-                waitServer(this.currentServer),
-                waitServer(this.platformServer),
-                waitServer(localServer),
-            ]).then(() => {
-                onAllServerReady(localServer);
-            });
         }
         startPlatformProxy({
             modulesConfig,
             platformLocalPort,
             platformServer,
             platformProxyTable,
+        }).then(() => {
+            onAllServerReady?.(`http://localhost:${platformLocalPort}`);
         });
     }
 
     apply(compiler) {
         // 初始化配置
-        Object.assign(this, getOptions(this._init_options, compiler));
+        Object.assign(this, getOptions(this._init_options, compiler.options.context || process.cwd()));
 
         if (this.experimental) {
             // 仅当 experimental 确实产生影响时进行提示

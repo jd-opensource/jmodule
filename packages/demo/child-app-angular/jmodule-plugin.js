@@ -1,7 +1,9 @@
 const JModulePlugin = require('@jmodule/plugin-webpack');
 const platformServer = process.env.platformServer || 'http://localhost:8080';
-const currentServer = process.env.currentServer || 'http://localhost:3003';
-const platformLocalPort = process.env.platformLocalPort || 8093;
+const currentServer = process.env.currentServer || 'http://localhost:3002';
+const platformLocalPort = process.env.platformLocalPort || 8092;
+const chalk = require('chalk');
+const open = require('opn');
 
 module.exports = (config) => {
     config.plugins.push(new JModulePlugin({
@@ -13,7 +15,7 @@ module.exports = (config) => {
             json.js = [...js, 'main.js'];
             return json;
         },
-        devConfig: process.env.NODE_ENV === 'development' ? {
+        devConfig: {
             modulesConfig: {
                 'childAppAngular': {
                     name: 'Angular-hero-list',
@@ -33,7 +35,7 @@ module.exports = (config) => {
                 );
                 open(`http://localhost:${platformLocalPort}/childAppVue3/`);
             },
-        } : undefined,
+        },
     }));
 
     return config;

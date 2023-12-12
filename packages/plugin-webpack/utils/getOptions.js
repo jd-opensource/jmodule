@@ -1,5 +1,9 @@
-const { joinUrl } = require('../utils/netTools');
 const path = require('path');
+
+const joinUrl = (origin = '', path) => {
+    const connectStr = origin.endsWith('/') ? '' : '/';
+    return `${origin}${connectStr}${path}`;
+};
 
 const defaultOptions = {
     supportedNamespaces: ['$platform', '$node_modules'],
@@ -12,8 +16,7 @@ const defaultOptions = {
     mode: 'modules',
 };
 
-module.exports = function getOptions(options, compiler) {
-    const context = compiler.options.context || process.cwd();
+module.exports = function getOptions(options, context) {
     const originOptions = options || require(path.resolve(context, '.jmodule.conf')) || {};
     const { devConfig, ...others } = originOptions;
 

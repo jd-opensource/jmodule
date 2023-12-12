@@ -31,16 +31,11 @@ module.exports = {
                 name: 'Vue2 子模块',
                 url: 'http://localhost:3001/index.js',
             },
-            childAppVue3: {
-                type: 'app',
-                name: 'Vue3 子应用',
-                url: 'http://localhost:3002/index.js',
-            },
             childAppAngular: {
                 name: 'Angular 子应用',
                 resourceLoadStrategy: 0, // fetch 的方式加载
                 type: 'app',
-                url: 'http://localhost:3003/index.js',
+                url: 'http://localhost:3002/index.js',
             },
             ...othersModules
         },

@@ -2,6 +2,7 @@ const express = require('express');
 const HttpProxy = require('http-proxy');
 const { createProxyMiddleware } = require('http-proxy-middleware');
 const zlib = require('zlib');
+const { waitServer } = require('./netTools');
 
 const app = express();
 
@@ -49,12 +50,26 @@ function getPreConfiguration(modulesList) {
     </script>`;
 }
 
+function usePromise() {
+    let resolve, reject;
+    const defer = new Promise((resolveFn, rejectFn) => {
+        resolve = resolveFn;
+        reject = rejectFn;
+    });
+    return { resolve, reject, defer };
+}
+
 module.exports = function startPlatformProxy({
     modulesConfig,
     platformLocalPort,
     platformServer,
     platformProxyTable = {},
 }) {
+    const { reject, resolve, defer } = usePromise();
+    if (!platformServer || !platformLocalPort) {
+        reject(new Error('startPlatformProxy 异常: platformServer、platformLocalPort 参数不能为空'));
+        return defer;
+    }
     const originProxy = new HttpProxy();
     const proxy = new HttpProxy();
     const proxyOptions = {
@@ -99,7 +114,14 @@ module.exports = function startPlatformProxy({
         }
     });
 
-    app.listen(platformLocalPort);
+    app.listen(platformLocalPort, (err) => {
+        if (err) {
+            console.error(err);
+            reject(err);
+            return;
+        }
+        waitServer(platformServer).then(() => resolve(platformLocalPort));
+    });
     proxy.on('proxyRes', (proxyRes, req, res) => {
         const { statusCode, headers } = proxyRes;
         if (statusCode !== 200) {
@@ -139,4 +161,5 @@ module.exports = function startPlatformProxy({
     });
     proxy.on('error', proxyErrorHandle);
     originProxy.on('error', proxyErrorHandle);
+    return defer;
 };

@@ -79,10 +79,6 @@ pnpm i
 pnpm --filter "*client" run build
 pnpm --filter "*helper" run build
 
-# 修正多版本 vue 冲突问题
-pnpm --filter "*vue2" add vue-template-compiler@2.6.14 -D
-pnpm --filter "*vue2" add vue-loader@15 -D
-
 #### 完整示例
 # 启动所有子项目
 pnpm --filter "*child*" run serve
