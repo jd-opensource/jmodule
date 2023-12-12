@@ -20,5 +20,13 @@
   },
   "bin": {
     "jmodule-bridge": "bin/jmodule-bridge"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/jdtdevops/jmodule.git"
+  },
+  "bugs": {
+    "url": "https://github.com/jdtdevops/jmodule/issues"
+  },
+  "homepage": "https://jmodule.jd.com"
 }
