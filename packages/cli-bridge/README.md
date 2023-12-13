@@ -9,6 +9,47 @@
 
 集成服务: 通过 --target-port 进行配置, 参数为端口数字.
 
+## 安装 (或通过下面的 npx 方式执行)
+```bash
+npm i @jmodule/cli-bridge -D
+```
+
+## 使用
+```bash
+# 检查配置
+npx -p @jmodule/cli-bridge jmodule-bridge start
+
+# 启动集成环境服务 
+npx -p @jmodule/cli-bridge jmodule-bridge start \
+    --host 'http://jagile.jd.com' \
+    --module "http://localhost:3000?key=a" \
+    --module "http://localhost:3000?key=b&type=route&resourceLoadStrategy=1" \
+    --target-port 4000
+```
+
+## 获得帮助
+```bash
+npx -p @jmodule/cli-bridge jmodule-bridge --help
+```
+结果如下:
+
+    Usage: jmodule-bridge [options] [command]
+
+    JModule 集成调试工具
+
+    Options:
+      -V, --version                   output the version number
+      -H, --host <host>               宿主应用服务
+      -T, --target-port <targetPort>  集成调试服务端口, eg: 9000
+      -P, --project-dir <projectDir>  项目目录, 自动从 package.json, .jmodule.conf.js 下读取配置 (default: "./")
+      -M, --module <module>           子应用配置, eg: http://localhost:3000?key=mychild
+      -h, --help                      display help for command
+
+    Commands:
+      config                          输出配置信息
+      start                           启动集成调试服务
+      help [command]                  display help for command
+
 ## 配置读取
 1. 从命令行参数读取, 优先级最高
 2. 从当前项目 .jmodule.conf.js 文件读取, 优先级次之
@@ -29,21 +70,3 @@
         }
     }
     ```
-
-## 安装 (或通过下面的 npx 方式执行)
-```bash
-npm i @jmodule/cli-bridge -D
-```
-
-## 使用
-```bash
-# 检查配置
-npx -p @jmodule/cli-bridge jmodule-bridge start
-
-# 启动集成环境服务 
-npx -p @jmodule/cli-bridge jmodule-bridge start \
-    --host 'http://jagile.jd.com' \
-    --module "http://localhost:3000?key=a" \
-    --module "http://localhost:3000?key=b&type=route&resourceLoadStrategy=1" \
-    --target-port 4000
-```
