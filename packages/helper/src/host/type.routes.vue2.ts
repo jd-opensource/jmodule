@@ -31,7 +31,11 @@ export default (
             module.resource.applyStyle();
         },
         async deactivate() {
-            module.resource.removeStyle();
+            if (module.resource.setStyleStatus) {
+                module.resource.setStyleStatus('disabled');
+            } else {
+                module.resource.removeStyle();
+            }
         },
     };
 }

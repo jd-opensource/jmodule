@@ -54,7 +54,11 @@ export default function appTypeHandler(module: JModule, options: AppTypeMetadata
             await module.metadata?.unmount?.(module, container);
             // vue2 的元素会被替换，需要子应用自己删除
             container?.remove();
-            module.resource.removeStyle();
+            if (module.resource.setStyleStatus) {
+                module.resource.setStyleStatus('disabled');
+            } else {
+                module.resource.removeStyle();
+            }
             lastActivatedModuleKey = null;
         },
     };
