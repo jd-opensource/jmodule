@@ -4,20 +4,25 @@ const htmlParser = (htmlString: string) => {
     const parser = new DOMParser();
     const doc = parser.parseFromString(htmlString, 'text/html');
     const js = [...doc.scripts].map((script) => {
-        const { type } = script;
         if (script.attributes.getNamedItem('src')) {
             return script.attributes.getNamedItem('src')?.value;
         }
-        if (type === 'text/javascript' && script.textContent) {
-            return URL.createObjectURL(new Blob([script.textContent], { type: 'text/javascript' }));
+        if (script.textContent) {
+            return URL.createObjectURL(new Blob(
+                [script.textContent],
+                { type: script.type || 'application/javascript' },
+            ));
         }
     }).filter(item => !!item);
-    const css = [...doc.querySelectorAll('style[type="text/css"], link[rel="stylesheet"]')].map(item => {
+    const css = [...doc.querySelectorAll('style, link[rel="stylesheet"]')].map(item => {
         if (item.tagName === 'LINK') {
             return item.attributes.getNamedItem('href')?.value;
         }
-        if (item.tagName === 'STYLE') {
-            return URL.createObjectURL(new Blob([item.textContent || ''], { type: 'text/css' }));
+        if (item.tagName === 'STYLE' && item.textContent) {
+            return URL.createObjectURL(new Blob(
+                [item.textContent],
+                { type: 'text/css' },
+            ));
         }
     });
     return { js, css };
