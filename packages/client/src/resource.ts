@@ -344,6 +344,9 @@ export class Resource extends ModuleHook {
                 return res.results;
             });
         }
+        if (this.status === ResourceStatus.StyleDisabled) {
+            this.setStyleStatus('enabled');
+        }
         return this.styleLoading;
     }
 
@@ -408,6 +411,23 @@ export class Resource extends ModuleHook {
         this.styleMounted = false;
         this.styleLoading = undefined;
         this.setStatus(ResourceStatus.StyleRemoved);
+    }
+
+    /**
+     * 禁用/启用样式
+     */
+    setStyleStatus(status: 'enabled'|'disabled') {
+        const disabled = status === 'disabled';
+        const allStyles = [
+            ...(this.styleElements || []),
+            ...(this.appendedAsyncStyleElements || [])
+        ];
+        [...document.styleSheets].forEach((styleSheet) => {
+            if (allStyles.includes(styleSheet.ownerNode as Element)) {
+                styleSheet.disabled = disabled;
+            }
+        });
+        this.setStatus(disabled ? ResourceStatus.StyleDisabled : ResourceStatus.StyleEnabled);
     }
 
     /**

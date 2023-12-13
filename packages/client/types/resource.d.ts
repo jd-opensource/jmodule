@@ -69,6 +69,10 @@ export declare class Resource extends ModuleHook {
      */
     removeStyle(): void;
     /**
+     * 禁用/启用样式
+     */
+    setStyleStatus(status: 'enabled' | 'disabled'): void;
+    /**
      * 重置样式状态
      */
     resetStyleStatus(): void;

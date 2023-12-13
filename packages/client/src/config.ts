@@ -25,6 +25,8 @@ export enum ResourceStatus {
     PreloadFailed = 'PreloadFailed',
     StyleError = 'StyleError',
     StyleRemoveBefore = 'StyleRemoveBefore',
+    StyleDisabled = 'StyleDisabled',
+    StyleEnabled = 'StyleEnabled',
 }
 
 export enum ModuleStatus {

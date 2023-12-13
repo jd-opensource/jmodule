@@ -21,7 +21,9 @@ export declare enum ResourceStatus {
     InitializeFailed = "InitializeFailed",
     PreloadFailed = "PreloadFailed",
     StyleError = "StyleError",
-    StyleRemoveBefore = "StyleRemoveBefore"
+    StyleRemoveBefore = "StyleRemoveBefore",
+    StyleDisabled = "StyleDisabled",
+    StyleEnabled = "StyleEnabled"
 }
 export declare enum ModuleStatus {
     bootFailure = "bootFailure",
