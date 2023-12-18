@@ -20,11 +20,22 @@ function injectElementModifier(
     }
     return element;
 }
-function loadScript(url: string, from: string, elementModifier?: (script: HTMLScriptElement) => void): Promise<HTMLScriptElement> {
+function loadScript(
+    url: string,
+    from: string,
+    attributes: Record<string, string>,
+    elementModifier?: (script: HTMLScriptElement) => void,
+): Promise<HTMLScriptElement> {
     const script = document.createElement('script');
     script.setAttribute('src', url); // skip proxy
     script.async = false;
     script.dataset.jmoduleFrom = from;
+    Object.keys(attributes).forEach(attr => {
+        if (['src', 'async'].includes(attr)) {
+            return;
+        }
+        script.setAttribute(attr, attributes[attr]);
+    });
     elementModifier && elementModifier(script);
     document.body.appendChild(script);
     return new Promise((resolve, reject) => {
@@ -84,6 +95,7 @@ export interface ResourceMetadata {
     js: string[],
     css: string[],
     asyncFiles: string[],
+    jsAttributes?: Record<string, any>,
 }
 
 export interface ResourceOptions {
@@ -234,7 +246,7 @@ export class Resource extends ModuleHook {
         this.prepareInit();
         try {
             const [, url] = await Resource.runHook('resource:resolveEntry', this, patchInitUrl(this.url));
-            await loadScript(url, this.url, (script) => {
+            await loadScript(url, this.url, {}, (script) => {
                 script.async = true;
                 this.initScriptElement = script;
                 scriptCacheByUrl[this.url] = script;
@@ -282,6 +294,7 @@ export class Resource extends ModuleHook {
         }
         this.setStatus(ResourceStatus.ApplyScript);
         this.scriptElements = [];
+        const jsAttributes = (this.metadata.js || []).map(url => this.metadata?.jsAttributes?.[url]);
         const jsUrls = (this.metadata.js || []).map(url => this.resolveUrl(url));
         const getEntryUrls = async () => this.strategy === ResourceLoadStrategy.Fetch
             ? await Promise.all(jsUrls.map(url => resolveUrlByFetch(
@@ -290,9 +303,10 @@ export class Resource extends ModuleHook {
                 ResourceType.Script,
             )))
             : (cacheUrlMap(this.metadata as ResourceMetadata, this.url, this.prefix), jsUrls);
-        this.scriptLoading = getEntryUrls().then((entryUrls) => Promise.all(entryUrls.map(url => loadScript(
+        this.scriptLoading = getEntryUrls().then((entryUrls) => Promise.all(entryUrls.map((url, index) => loadScript(
             url,
             this.url,
+            jsAttributes[index],
             elementModifier,
         )))).then((scripts) => {
             this.setStatus(ResourceStatus.ScriptResolved);

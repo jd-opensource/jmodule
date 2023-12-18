@@ -5,6 +5,7 @@ export interface ResourceMetadata {
     js: string[];
     css: string[];
     asyncFiles: string[];
+    jsAttributes?: Record<string, any>;
 }
 export interface ResourceOptions {
     type?: string;
