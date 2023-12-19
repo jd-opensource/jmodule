@@ -1,5 +1,6 @@
 import './globalManager';
-import { JModule, TypeHandler } from './module';
+import { JModule } from './module';
+import type { TypeHandler } from './module';
 
 export * from './config';
 export { DepResolver } from './depResolver';

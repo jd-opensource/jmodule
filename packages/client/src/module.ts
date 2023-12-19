@@ -10,7 +10,13 @@ import { eventToPromise } from './utils/eventToPromise';
 
 /* 调试模式打印信息：路由变更信息，初始化模块实例、资源实例信息，模块状态变更信息 */
 
-const currentScript = document.currentScript || {};
+const getCurrentUrl = () => {
+    // 指向执行时脚本
+    return (document.currentScript as HTMLScriptElement)?.src || import.meta?.url || '';
+}
+
+// 指向解析时脚本
+const currentScript = document.currentScript;
 
 type HashObject = { [key: string]: any };
 const moduleMap: { [key: string]: JModule } = {};
@@ -414,30 +420,37 @@ export class JModule extends ModuleHook {
      */
     static define = manager.define;
 
+    /**
+     * 根据 resourceLoaderUrl 设置资源
+     * 当 resourceLoaderUrl 为空时, 该函数只能在 resource.url 文件对应的脚本中执行
+     * 
+     * @param { ResourceMetadata } resourceMetadata 资源元数据
+     * @param { string|undefined } resourceLoaderUrl 加载资源的初始脚本地址, 默认为执行当前函数的脚本文件
+     * @returns { Resource }
+     */
     static applyResource(resourceMetadata: ResourceMetadata, resourceLoaderUrl?: string): Resource {
-        const loaderUrl: string|undefined =
-            resourceLoaderUrl || (document.currentScript as HTMLScriptElement)?.src;
+        const loaderUrl: string | undefined = resourceLoaderUrl || getCurrentUrl();
         if (!loaderUrl) {
-            throw new Error('浏览器不支持 document.currentScript');
+            throw new Error('JModule.applyResource 执行异常: 无法找到脚本加载源并关联到对应的资源实例');
         }
         // 任意 Resource 执行该函数均等价
         return Resource.setResourceData(resourceMetadata, loaderUrl.replace(/(\?|&)__v__=\d+$/, ''));
     }
 
     static getMeta() {
-        const { src: url, dataset } = <HTMLScriptElement>document.currentScript || {};
+        const url = getCurrentUrl();
         if (!url) {
             return {};
         }
         return {
             url,
             server: new URL(url).origin,
-            resourceUrl: dataset.jmoduleFrom,
         };
     }
 
     /**
      * 引用平台暴露的对象
+     * 如果查找失败, 最终将回退到 JModuleManager.import 进行查找
      *
      * @ignore
      * @param  {String} namespace
@@ -447,23 +460,28 @@ export class JModule extends ModuleHook {
     static import<T>(namespace = '', config: HashObject|Matcher = defaultExportsMatcher, force = false): T|{
         url?: string,
         server?: string,
-        resourceUrl?: string,
     } { // 用于导入平台接口
         if (namespace === '$module.meta') {
             return this.getMeta();
         }
-        
         if (!force && this !== manager.defaultJModule && currentScript) {
-            const { dataset } = <HTMLScriptElement>currentScript || {};
+            const { dataset } = <HTMLScriptElement>currentScript;
             const sourceUrl = dataset?.jmoduleFrom || '';
             // 从 sourceUrl 找到对应的 module
             const [targetModule] = manager.getModulesByResourceUrl(sourceUrl) || [];
             if (targetModule && targetModule.constructor !== JModule) {
                 return (targetModule.constructor as typeof JModule).import(namespace, config, true);
             }
+            // 回退到默认JModule执行
+            // esm 模块目前无法读取 scriptElement, 也会回退到这里
+            return this.import(namespace, config, true);
         }
         const matchedExports = new Matcher(config).getCache();
         const res = namespace.split('.').reduce((res, key) => (res || {})[key], matchedExports);
+        if (!res && this !== manager.defaultJModule) {
+            // 如果无法正确找到共享数据, 回退到默认JModule执行
+            return manager.import(namespace, config);
+        }
         if (res && res instanceof DepResolver) {
             return res.resolve(config);
         }

@@ -9,10 +9,13 @@ import { patchCreateElement } from './utils/patchCreateElement';
 import defineModule from './utils/defineModule';
 import { enableDevtool } from './utils/enableDevtool'
 import { eventToPromise } from './utils/eventToPromise';
+import { Matcher } from './utils/matcher';
+import { DepResolver } from './depResolver';
 
 const originDocument = document;
 const originCreateElement = originDocument.createElement.bind(originDocument);
 const initialConfig = (((window as any).JModule || {}) as any).config || {};
+const defaultExportsMatcher = new Matcher({});
 
 export class JModuleManager extends ModuleHook {
     private static resourceCache: { [id: string]: Resource } = {};
@@ -188,6 +191,41 @@ export class JModuleManager extends ModuleHook {
      * });
      */
     static define = defineModule;
+
+    /**
+     * 暴露平台功能给模块使用
+     * 与 JModuleManager.defaultJModule 数据一致
+     * @param  {object} obj 需要暴露的对象
+     * @example
+     * JModuleManager.export({
+     *     $platform: {
+     *         utils, event, router,
+     *     },
+     *     $node_modules: {
+     *         vue: Vue,
+     *     },
+     * }, { scope: 'default' });
+     */
+    static export(obj = {}, matcher = defaultExportsMatcher) {
+        new Matcher(matcher).cache(obj);
+    }
+
+    /**
+     * 引用平台暴露的对象
+     *
+     * @ignore
+     * @param  {String} namespace
+     * @param  {Object} config      通过编译工具注入的相关环境参数
+     * @return {var}
+     */
+    static import<T>(namespace = '', config: Record<string, string | number> | Matcher = defaultExportsMatcher): T { // 用于导入平台接口
+        const matchedExports = new Matcher(config).getCache();
+        const res = namespace.split('.').reduce((res, key) => (res || {})[key], matchedExports);
+        if (res && res instanceof DepResolver) {
+            return res.resolve(config);
+        }
+        return res;
+    }
 }
 
 if (!(window as any).JModuleManager) {
