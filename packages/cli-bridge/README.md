@@ -152,22 +152,3 @@ npx -p @jmodule/cli-bridge jmodule-bridge --help
 3. 从当前项目 package.json 文件中读取 jmodule 配置, 内容相当于 --module 参数, 优先级最低
 
 当读取到多个重名的 moduleKey 时, 按以上优先级执行
-
-## package.json 配置示例
-
-```json
-{
-    "name": "myPackage",
-    "jmodule": {
-        "modulesConfig": {
-            "key": "b",
-            "url": "http://localhost:3000",
-            "type": "app",
-            "resourceType": "html",
-            "resourceLoadStrategy": 0
-        },
-        "host": "http://host:1234",
-        "target": "http://target:4567"
-    }
-}
-```
