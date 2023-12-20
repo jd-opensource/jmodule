@@ -34,8 +34,8 @@ class JModulePlugin {
             platformLocalPort,
             platformServer,
             platformProxyTable,
-        }).then(() => {
-            onAllServerReady?.(`http://localhost:${platformLocalPort}`);
+        }).then((targetPort) => {
+            onAllServerReady?.(`http://localhost:${targetPort}`);
         });
     }
 

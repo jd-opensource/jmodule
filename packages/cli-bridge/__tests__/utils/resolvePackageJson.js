@@ -9,20 +9,27 @@ const packageString = `
 {
     "name": "a",
     "jmodule": {
-        "url": "http://localhost:3000",
-        "resourceType": "html",
-        "resourceLoadStrategy": 0
+        "modulesConfig": {
+            "key": "b",
+            "url": "http://localhost:3000",
+            "resourceType": "html",
+            "resourceLoadStrategy": 0
+        },
+        "host": "http://host",
+        "target": "http://target"
     }
 }
 `;
 
 const targetOptions = {
-    a: {
-        type: 'app',
-        url: 'http://localhost:3000',
-        resourceType: 'html',
-        resourceLoadStrategy: 0,
+    "modulesConfig": {
+        "key": "b",
+        "url": "http://localhost:3000",
+        "resourceType": "html",
+        "resourceLoadStrategy": 0
     },
+    "host": "http://host",
+    "target": "http://target"
 };
 
 describe('解析 package.json 文件', () => {

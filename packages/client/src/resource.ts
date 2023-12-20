@@ -120,6 +120,7 @@ export class Resource extends ModuleHook {
     private scriptLoading?: Promise<HTMLScriptElement[]>;
     private appliedScript = false;
     private static asyncFilesMap: { [key: string]: Resource | undefined } = {};
+    private resolvedUrlMap: Record<string, string> = {};
 
     static initTimeout = 10000;
     resolveInit?: (metadata: ResourceMetadata) => void;
@@ -262,7 +263,9 @@ export class Resource extends ModuleHook {
     }
 
     resolveUrl(url: string) {
-        return resolveUrl(url, this.url, this.metadata, this.prefix);
+        const resolvedUrl = resolveUrl(url, this.url, this.metadata, this.prefix);
+        this.resolvedUrlMap[resolvedUrl] = url;
+        return resolvedUrl;
     }
 
     setStatus(status: ResourceStatus) {
@@ -363,6 +366,16 @@ export class Resource extends ModuleHook {
         }
         return this.styleLoading;
     }
+
+    isESM(url: string) {
+        const originUrl = this.resolvedUrlMap[url] || url;
+        const attrs = this.metadata?.jsAttributes?.[originUrl];
+        if (attrs) {
+            return attrs.type === 'module';
+        }
+        // 用于由 wrapperFetchedCodeHook 处理过的脚本动态创建的 esm script 判断
+        return !!document.querySelector(`script[type="module"][data-src-raw="${url}"]`);
+    } 
 
     preload(elementModifier?: ElementModifier) {
         if (!this.metadata) {

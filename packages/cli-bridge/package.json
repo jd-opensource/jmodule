@@ -1,6 +1,6 @@
 {
   "name": "@jmodule/cli-bridge",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "JModule 应用集成调试工具",
   "main": "index.js",
   "scripts": {
@@ -28,5 +28,8 @@
   "bugs": {
     "url": "https://github.com/jdtdevops/jmodule/issues"
   },
-  "homepage": "https://jmodule.jd.com"
+  "homepage": "https://jmodule.jd.com",
+  "devDependencies": {
+    "open": "^10.0.0"
+  }
 }

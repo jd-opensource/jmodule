@@ -18,8 +18,11 @@ export default {
             exclude: /node_modules/,
             sourceMap: true,
             minify: true,
-            target: 'ES2020',
+            target: 'ES2015',
             tsconfig: 'tsconfig.json',
+            supported: {
+                'import-meta': true,
+            },
         }),
     ],
 }
