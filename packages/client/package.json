@@ -5,7 +5,7 @@
   "author": "feirpri <feirpri@gmail.com>",
   "license": "MIT",
   "scripts": {
-    "build": "pnpm run lint && rollup --config ./build/rollup.mjs",
+    "build": "pnpm run lint && tsc --emitDeclarationOnly & rollup --config ./build/rollup.mjs",
     "lint": "eslint \"./src/**/*.ts\""
   },
   "main": "./dist/index.js",
@@ -30,7 +30,7 @@
     "dist",
     "types"
   ],
-  "types": "src/index.ts",
+  "types": "types/index.d.ts",
   "repository": {
     "type": "git",
     "url": "git+ssh://git@github.com/jdtdevops/jmodule.git"

@@ -86,5 +86,3 @@ export class ModuleHook {
         }
     }
 }
-
-export default {};

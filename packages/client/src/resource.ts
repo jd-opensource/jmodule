@@ -30,7 +30,7 @@ function loadScript(
     script.setAttribute('src', url); // skip proxy
     script.async = false;
     script.dataset.jmoduleFrom = from;
-    Object.keys(attributes).forEach(attr => {
+    Object.keys(attributes || {}).forEach(attr => {
         if (['src', 'async'].includes(attr)) {
             return;
         }

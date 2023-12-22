@@ -53,8 +53,8 @@ function define(moduleKey: any, metadata?: any): Promise<JModule> {
         localKey = moduleKey;
         localMetadata = metadata;
     }
-    const moduleDefer = manager.jmodule(localKey)
-        ? Promise.resolve(manager.jmodule(localKey))
+    const moduleDefer: Promise<JModule> = manager.jmodule(localKey)
+        ? Promise.resolve(manager.jmodule(localKey) as JModule)
         : eventToPromise(`module.${moduleKey}.${ModuleStatus.init}`);
     // 在定义之前执行将出现异常
     return moduleDefer.then((module: JModule) => {
@@ -84,4 +84,4 @@ function define(moduleKey: any, metadata?: any): Promise<JModule> {
     });
 }
 
-export default define;
+export const defineModule = define;

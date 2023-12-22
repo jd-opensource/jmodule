@@ -48,5 +48,3 @@ export class ModuleDebug {
         enableDebugStatus = false;
     }
 }
-
-export default {};

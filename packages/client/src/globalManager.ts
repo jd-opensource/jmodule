@@ -6,7 +6,7 @@ import { JModule } from './module';
 import { Resource } from './resource';
 import { createDocument } from './utils/fakeDocument';
 import { patchCreateElement } from './utils/patchCreateElement';
-import defineModule from './utils/defineModule';
+import { defineModule } from './utils/defineModule';
 import { enableDevtool } from './utils/enableDevtool'
 import { eventToPromise } from './utils/eventToPromise';
 import { Matcher } from './utils/matcher';

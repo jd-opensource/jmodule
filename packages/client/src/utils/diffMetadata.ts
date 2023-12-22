@@ -4,7 +4,7 @@ export function diffMetadata(source?: ResourceMetadata, target?: ResourceMetadat
     if (!source || !target) {
         return true;
     }
-    return ['js', 'css', 'asyncFiles'].some(
+    return (<Array<keyof ResourceMetadata>>['js', 'css', 'asyncFiles']).some(
         (key: keyof ResourceMetadata) => (source[key] || []).sort().join(',') !== (target[key] || []).sort().join(','),
     );
 }
