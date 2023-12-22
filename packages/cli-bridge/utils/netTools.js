@@ -11,7 +11,7 @@ const resolveOrigin = (origin) => {
     }
 };
 
-const timeout = 2000;
+const timeout = 1000;
 function testServer(origin) {
     let timer;
     try {

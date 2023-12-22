@@ -157,19 +157,29 @@ export declare class JModule extends ModuleHook {
      *     exports: {},
      * });
      */
-    static define: typeof import("./utils/defineModule").default;
+    static define: {
+        (moduleKey: string, metadata: ModuleMetadata & Record<string, any>): Promise<JModule>;
+        (metadata: ModuleMetadata & Record<string, any>): Promise<JModule>;
+    };
+    /**
+     * 根据 resourceLoaderUrl 设置资源
+     * 当 resourceLoaderUrl 为空时, 该函数只能在 resource.url 文件对应的脚本中执行
+     *
+     * @param { ResourceMetadata } resourceMetadata 资源元数据
+     * @param { string|undefined } resourceLoaderUrl 加载资源的初始脚本地址, 默认为执行当前函数的脚本文件
+     * @returns { Resource }
+     */
     static applyResource(resourceMetadata: ResourceMetadata, resourceLoaderUrl?: string): Resource;
     static getMeta(): {
         url?: undefined;
         server?: undefined;
-        resourceUrl?: undefined;
     } | {
         url: string;
         server: string;
-        resourceUrl: string | undefined;
     };
     /**
      * 引用平台暴露的对象
+     * 如果查找失败, 最终将回退到 JModuleManager.import 进行查找
      *
      * @ignore
      * @param  {String} namespace
@@ -179,7 +189,6 @@ export declare class JModule extends ModuleHook {
     static import<T>(namespace?: string, config?: HashObject | Matcher, force?: boolean): T | {
         url?: string;
         server?: string;
-        resourceUrl?: string;
     };
     static _import(namespace?: string, config?: {}): unknown;
     private setCompleteHook;

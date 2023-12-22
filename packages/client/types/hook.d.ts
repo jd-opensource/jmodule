@@ -40,5 +40,4 @@ export declare class ModuleHook {
      */
     static runHookSync(hookName: string, ...inputArgs: any[]): any[];
 }
-declare const _default: {};
-export default _default;
+export {};

@@ -5,6 +5,7 @@ export interface ResourceMetadata {
     js: string[];
     css: string[];
     asyncFiles: string[];
+    jsAttributes?: Record<string, any>;
 }
 export interface ResourceOptions {
     type?: string;
@@ -24,6 +25,7 @@ export declare class Resource extends ModuleHook {
     private scriptLoading?;
     private appliedScript;
     private static asyncFilesMap;
+    private resolvedUrlMap;
     static initTimeout: number;
     resolveInit?: (metadata: ResourceMetadata) => void;
     rejectInit?: (error: Error) => void;
@@ -63,6 +65,7 @@ export declare class Resource extends ModuleHook {
     setStatus(status: ResourceStatus): void;
     applyScript(elementModifier?: ElementModifier): Promise<HTMLScriptElement[]>;
     applyStyle(elementModifier?: ElementModifier): Promise<HTMLLinkElement[]>;
+    isESM(url: string): boolean;
     preload(elementModifier?: ElementModifier): void;
     /**
      * 移除样式

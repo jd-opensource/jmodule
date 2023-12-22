@@ -8,5 +8,3 @@ export declare class ModuleDebug {
     static enable(): void;
     static disable(): void;
 }
-declare const _default: {};
-export default _default;

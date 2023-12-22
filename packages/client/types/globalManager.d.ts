@@ -1,7 +1,7 @@
 import { ModuleHook } from './hook';
 import { JModule } from './module';
 import { Resource } from './resource';
-import defineModule from './utils/defineModule';
+import { Matcher } from './utils/matcher';
 export declare class JModuleManager extends ModuleHook {
     private static resourceCache;
     private static jmoduleCache;
@@ -75,7 +75,34 @@ export declare class JModuleManager extends ModuleHook {
      *     exports: {},
      * });
      */
-    static define: typeof defineModule;
+    static define: {
+        (moduleKey: string, metadata: import("./config").ModuleMetadata & Record<string, any>): Promise<JModule>;
+        (metadata: import("./config").ModuleMetadata & Record<string, any>): Promise<JModule>;
+    };
+    /**
+     * 暴露平台功能给模块使用
+     * 与 JModuleManager.defaultJModule 数据一致
+     * @param  {object} obj 需要暴露的对象
+     * @example
+     * JModuleManager.export({
+     *     $platform: {
+     *         utils, event, router,
+     *     },
+     *     $node_modules: {
+     *         vue: Vue,
+     *     },
+     * }, { scope: 'default' });
+     */
+    static export(obj?: {}, matcher?: Matcher): void;
+    /**
+     * 引用平台暴露的对象
+     *
+     * @ignore
+     * @param  {String} namespace
+     * @param  {Object} config      通过编译工具注入的相关环境参数
+     * @return {var}
+     */
+    static import<T>(namespace?: string, config?: Record<string, string | number> | Matcher): T;
 }
 declare const _default: typeof JModuleManager;
 export default _default;

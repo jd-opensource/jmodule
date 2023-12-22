@@ -13,10 +13,13 @@ interface WrapperOptions {
 }
 
 export async function wrapperFetchedCodeHook(options: WrapperOptions) {
-    if (!options.type.includes('javascript') || !(options.buffer instanceof Uint8Array)) {
+    const { buffer, resource, ...others } = options;
+    if (!options.type.includes('javascript')
+        || !(buffer instanceof Uint8Array)
+        || resource.isESM(options.currentUrl)
+    ) {
         return [options];
     }
-    const { buffer, resource, ...others } = options;
     const encoder = new TextEncoder();
     // 扩展钩子，可以定义私有变量以覆盖原全局变量，比如 history, addEventListener 以处理子应用路由
     const [{ code = '' }] = await (resource.constructor as any).runHook(

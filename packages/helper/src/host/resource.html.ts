@@ -1,18 +1,30 @@
 import { Resource } from '@jmodule/client';
 
+function cloneAttributes(attributes: NamedNodeMap) {
+    const res: Record<string, string> = {};
+    [...attributes].forEach(item => res[item.name] = item.value);
+    return res;
+}
+
 const htmlParser = (htmlString: string) => {
     const parser = new DOMParser();
     const doc = parser.parseFromString(htmlString, 'text/html');
+    const jsAttributes: Record<string, Record<string, string>> = {};
     const js = [...doc.scripts].map((script) => {
+        let src;
         if (script.attributes.getNamedItem('src')) {
-            return script.attributes.getNamedItem('src')?.value;
+            src = script.attributes.getNamedItem('src')?.value;
         }
         if (script.textContent) {
-            return URL.createObjectURL(new Blob(
+            src = URL.createObjectURL(new Blob(
                 [script.textContent],
                 { type: script.type || 'application/javascript' },
             ));
         }
+        if (src) {
+            jsAttributes[src] = cloneAttributes(script.attributes);
+        }
+        return src;
     }).filter(item => !!item);
     const css = [...doc.querySelectorAll('style, link[rel="stylesheet"]')].map(item => {
         if (item.tagName === 'LINK') {
@@ -25,7 +37,7 @@ const htmlParser = (htmlString: string) => {
             ));
         }
     });
-    return { js, css };
+    return { js, css, jsAttributes };
 }
 
 export default async function htmlResolver(resource: Resource, url: string) {

@@ -14,7 +14,8 @@
         "downlevelIteration": true,
         "declaration": true,
         "declarationDir": "./types",
-        "strictFunctionTypes": false
+        "strictFunctionTypes": false,
+        "module": "esnext"
     },
     "include": [
         "src/**/*.ts",

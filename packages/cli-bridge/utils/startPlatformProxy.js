@@ -66,8 +66,8 @@ module.exports = function startPlatformProxy({
     platformProxyTable = {},
 }) {
     const { reject, resolve, defer } = usePromise();
-    if (!platformServer || !platformLocalPort) {
-        reject(new Error('startPlatformProxy 异常: platformServer、platformLocalPort 参数不能为空'));
+    if (!platformServer) {
+        reject(new Error('startPlatformProxy 异常: platformServer 参数不能为空'));
         return defer;
     }
     const originProxy = new HttpProxy();
@@ -114,13 +114,13 @@ module.exports = function startPlatformProxy({
         }
     });
 
-    app.listen(platformLocalPort, (err) => {
+    const server = app.listen(platformLocalPort || 0, (err) => {
         if (err) {
             console.error(err);
             reject(err);
             return;
         }
-        waitServer(platformServer).then(() => resolve(platformLocalPort));
+        waitServer(platformServer).then(() => resolve(server.address().port));
     });
     proxy.on('proxyRes', (proxyRes, req, res) => {
         const { statusCode, headers } = proxyRes;

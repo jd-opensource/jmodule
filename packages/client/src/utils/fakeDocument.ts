@@ -20,7 +20,9 @@ function fakeCreateElement(sourceUrl: string, currentUrl: string, originalCreate
                     return originRes.dataset.srcRaw;
                 },
                 set(val) {
-                    const url = new URL(val, currentUrl || sourceUrl).href;
+                    const resource = window.JModuleManager.resource(sourceUrl);
+                    // 理论上不会执行 || 后面的代码
+                    const url = resource?.resolveUrl(val) || new URL(val, currentUrl || sourceUrl).href;
                     originRes.dataset.srcRaw = url;
                     resolveUrlByFetch(url, sourceUrl, resourceType).then((targetUrl) => {
                         originRes.setAttribute(prop, targetUrl);

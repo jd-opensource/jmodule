@@ -4,7 +4,7 @@ import { Resource } from './resource';
 
 export enum ResourceType {
     Style = 'text/css',
-    Script = 'application/javascript',
+    Script = 'text/javascript',
 }
 
 export enum ResourceStatus {

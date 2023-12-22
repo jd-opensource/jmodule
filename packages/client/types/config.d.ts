@@ -2,7 +2,7 @@ import { JModule } from './module';
 import { Resource } from './resource';
 export declare enum ResourceType {
     Style = "text/css",
-    Script = "application/javascript"
+    Script = "text/javascript"
 }
 export declare enum ResourceStatus {
     Init = "Init",
