@@ -26,7 +26,7 @@ class JModulePlugin {
             modulesConfig,
             platformProxyTable = {},
         } = this;
-        if (!isModulesMode) {
+        if (!isModulesMode || !platformServer) {
             return;
         }
         startPlatformProxy({
