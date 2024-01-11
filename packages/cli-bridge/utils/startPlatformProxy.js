@@ -7,11 +7,12 @@ const { waitServer } = require('./netTools');
 const app = express();
 
 function proxyErrorHandle(err, req, res) {
-    console.log('远程连接断开');
-    res.writeHead(500, {
-        'Content-Type': 'text/plain',
-    });
-    res.end('平台数据代理服务异常.');
+    console.error(err);
+    try {
+        res.status(500).end();
+    } catch (e) {
+        console.log('尝试关闭连接: ', e?.message || '');
+    }
 }
 
 function defineModule(moduleKey, modulesConfig = {}) {

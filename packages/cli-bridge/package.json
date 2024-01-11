@@ -1,6 +1,6 @@
 {
   "name": "@jmodule/cli-bridge",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "JModule 应用集成调试工具",
   "main": "index.js",
   "scripts": {
