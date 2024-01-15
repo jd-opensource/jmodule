@@ -42,5 +42,8 @@
   "bugs": {
     "url": "https://github.com/jdtdevops/jmodule/issues"
   },
-  "homepage": "https://jmodule.jd.com"
+  "homepage": "https://jmodule.jd.com",
+  "dependencies": {
+    "error-stack-parser": "^2.1.4"
+  }
 }

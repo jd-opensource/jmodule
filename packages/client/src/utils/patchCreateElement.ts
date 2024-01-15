@@ -1,6 +1,10 @@
 // 处理script加载时异步文件加载问题
 
 // 处理 webpack 的async chunk
+import * as ErrorStackParser from 'error-stack-parser';
+
+console.log(ErrorStackParser);
+
 export function patchCreateElement(originalCreateElement: typeof document.createElement) {
     const manager = window.JModuleManager;
     // eslint-disable-next-line no-underscore-dangle
@@ -8,20 +12,27 @@ export function patchCreateElement(originalCreateElement: typeof document.create
         return;
     }
 
-    const patchElement = (val: string, element: HTMLElement) => {
+    const tryGetJmoduleFrom = (val: string) => {
         const files: string[] = manager.getFileList();
         const file = files.find(item => item && val.includes(item));
-        const value = manager.getFileMapCache(file);
-        const [targetUrl, jmoduleFrom] = value || [val, undefined];
-        element.dataset.jmoduleFrom = jmoduleFrom;
-        return targetUrl;
+        return manager.getFileMapCache(file) || [1];
     };
 
     (document.createElement as any).__original__ = originalCreateElement;
     document.createElement = new Proxy(document.createElement, {
         apply(target, context, args) {
             const originRes: HTMLElement = originalCreateElement(args[0], args[1]);
-            if (!['script', 'link'].includes(args[0])) {
+            if (!['script', 'link', 'style'].includes(args[0])) {
+                return originRes;
+            }
+
+            // 查找执行 createElement 的脚本
+            const { fileName } = (ErrorStackParser.parse(new Error('JModule trace test')) || [])
+                .find((stackFrame) => manager.getAsyncResourceAndSourceUrlMap(stackFrame.fileName))
+                || {};
+            const jmoduleFrom = manager.getAsyncResourceAndSourceUrlMap(fileName);
+            originRes.dataset.jmoduleFrom = jmoduleFrom || '[host]';
+            if (args[0] === 'style') {
                 return originRes;
             }
             const prop = args[0] === 'script' ? 'src' : 'href';
@@ -34,7 +45,10 @@ export function patchCreateElement(originalCreateElement: typeof document.create
                     return originRes.getAttribute(prop);
                 },
                 set(val) {
-                    originRes.setAttribute(prop, patchElement(val, originRes));
+                    const resource = manager.resource(jmoduleFrom || tryGetJmoduleFrom(val));
+                    const resolvedUrl = resource?.resolveUrl(val) || val;
+                    manager.setAsyncResourceAndSourceUrlMap(resolvedUrl, jmoduleFrom);
+                    originRes.setAttribute(prop, resolvedUrl);
                 },
             });
             return originRes;

@@ -6,6 +6,7 @@ export declare class JModuleManager extends ModuleHook {
     private static resourceCache;
     private static jmoduleCache;
     private static resourceUrlAndModuleKeyMap;
+    static asyncResourceAndSourceUrlMap: Record<string, string>;
     private static fileMapCache;
     private static fileListCache;
     private static moduleExportsCache;
@@ -103,6 +104,8 @@ export declare class JModuleManager extends ModuleHook {
      * @return {var}
      */
     static import<T>(namespace?: string, config?: Record<string, string | number> | Matcher): T;
+    static setAsyncResourceAndSourceUrlMap(url: string, from: string): void;
+    static getAsyncResourceAndSourceUrlMap(url: string): string;
 }
 declare const _default: typeof JModuleManager;
 export default _default;

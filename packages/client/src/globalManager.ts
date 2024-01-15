@@ -24,6 +24,8 @@ export class JModuleManager extends ModuleHook {
 
     private static resourceUrlAndModuleKeyMap: Record<string, string[]> = {};
 
+    static asyncResourceAndSourceUrlMap: Record<string, string> = {};
+
     private static fileMapCache: Record<string, [string, string|undefined]> = {};
 
     private static fileListCache: string[] = [];
@@ -226,10 +228,19 @@ export class JModuleManager extends ModuleHook {
         }
         return res;
     }
+
+    static setAsyncResourceAndSourceUrlMap(url: string, from: string) {
+        this.asyncResourceAndSourceUrlMap[url] = from;
+    }
+
+    static getAsyncResourceAndSourceUrlMap(url: string) {
+        return this.asyncResourceAndSourceUrlMap[url];
+    }
 }
 
 if (!(window as any).JModuleManager) {
     (window as any).JModuleManager = JModuleManager;
+    console.log(1);
     patchCreateElement(originCreateElement);
     enableDevtool();
 }
