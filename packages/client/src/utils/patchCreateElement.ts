@@ -3,20 +3,12 @@
 // 处理 webpack 的async chunk
 import * as ErrorStackParser from 'error-stack-parser';
 
-console.log(ErrorStackParser);
-
 export function patchCreateElement(originalCreateElement: typeof document.createElement) {
     const manager = window.JModuleManager;
     // eslint-disable-next-line no-underscore-dangle
     if ((document.createElement as any).__original__) {
         return;
     }
-
-    const tryGetJmoduleFrom = (val: string) => {
-        const files: string[] = manager.getFileList();
-        const file = files.find(item => item && val.includes(item));
-        return manager.getFileMapCache(file) || [1];
-    };
 
     (document.createElement as any).__original__ = originalCreateElement;
     document.createElement = new Proxy(document.createElement, {
@@ -28,9 +20,9 @@ export function patchCreateElement(originalCreateElement: typeof document.create
 
             // 查找执行 createElement 的脚本
             const { fileName } = (ErrorStackParser.parse(new Error('JModule trace test')) || [])
-                .find((stackFrame) => manager.getAsyncResourceAndSourceUrlMap(stackFrame.fileName))
+                .find((stackFrame) => manager.getAsyncFilesMap(stackFrame.fileName))
                 || {};
-            const jmoduleFrom = manager.getAsyncResourceAndSourceUrlMap(fileName);
+            const jmoduleFrom = manager.getAsyncFilesMap(fileName);
             originRes.dataset.jmoduleFrom = jmoduleFrom || '[host]';
             if (args[0] === 'style') {
                 return originRes;
@@ -44,10 +36,10 @@ export function patchCreateElement(originalCreateElement: typeof document.create
                 get() {
                     return originRes.getAttribute(prop);
                 },
-                set(val) {
-                    const resource = manager.resource(jmoduleFrom || tryGetJmoduleFrom(val));
-                    const resolvedUrl = resource?.resolveUrl(val) || val;
-                    manager.setAsyncResourceAndSourceUrlMap(resolvedUrl, jmoduleFrom);
+                set(targetUrl) {
+                    const resource = manager.resource(jmoduleFrom || targetUrl);
+                    const resolvedUrl = resource?.resolveUrl(targetUrl) || targetUrl;
+                    manager.setAsyncFilesMap(resolvedUrl, jmoduleFrom);
                     originRes.setAttribute(prop, resolvedUrl);
                 },
             });

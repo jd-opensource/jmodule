@@ -30,7 +30,7 @@ function loadScript(
     script.setAttribute('src', url); // skip proxy
     script.async = false;
     script.dataset.jmoduleFrom = from;
-    manager.setAsyncResourceAndSourceUrlMap(url, from);
+    manager.setAsyncFilesMap(url, from);
     Object.keys(attributes || {}).forEach(attr => {
         if (['src', 'async'].includes(attr)) {
             return;
@@ -50,7 +50,7 @@ function createLink(url: string, from: string, elementModifier?: (element: HTMLE
     styleDom.setAttribute('rel', 'preload');
     styleDom.setAttribute('as', 'style');
     styleDom.setAttribute('href', url);
-    manager.setAsyncResourceAndSourceUrlMap(url, from);
+    manager.setAsyncFilesMap(url, from);
     styleDom.dataset.jmoduleFrom = from;
     elementModifier && elementModifier(styleDom);
     return styleDom;
@@ -62,13 +62,10 @@ function patchInitUrl(url: string): string {
 
 const queryReg = /\?.+$/;
 
-function cacheUrlMap(metadata: ResourceMetadata, sourceUrl: string, prefix?: string) {
-    const { asyncFiles = [] } = metadata;
-    asyncFiles.forEach(file => {
-        const key = file.replace(queryReg, '');
-        const targetUrl = resolveUrl(file, sourceUrl, metadata, prefix);
-        manager.setFileMapCache(key, [targetUrl, sourceUrl]);
-        manager.appendFileList(key);
+function cacheAsyncFiles(metadata: ResourceMetadata, sourceUrl: string) {
+    const { asyncFiles = [], css = [] } = metadata;
+    [...asyncFiles, ...css].forEach(file => {
+        manager.setAsyncFilesMap(file.replace(queryReg, ''), sourceUrl);
     });
 }
 
@@ -83,10 +80,7 @@ function resolveUrl(url: string, sourceUrl: string, metadata?: ResourceMetadata,
                 url = url.replace(/^X_WEBPACK_SERVER/, '');
             }
         }
-        if (!prefix) {
-            return new URL(url, sourceUrl).href;
-        }
-        return `${prefix}${url}`;
+        return new URL(`${prefix || ''}${url}`, sourceUrl).href;
     } catch (e) {
         // ignore error: 浏览器不支持（IE）或者 参数异常
         return url;
@@ -307,7 +301,7 @@ export class Resource extends ModuleHook {
                 this.url,
                 ResourceType.Script,
             )))
-            : (cacheUrlMap(this.metadata as ResourceMetadata, this.url, this.prefix), jsUrls);
+            : (cacheAsyncFiles(this.metadata as ResourceMetadata, this.url), jsUrls);
         this.scriptLoading = getEntryUrls().then((entryUrls) => Promise.all(entryUrls.map((url, index) => loadScript(
             url,
             this.url,

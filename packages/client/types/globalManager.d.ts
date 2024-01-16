@@ -6,9 +6,7 @@ export declare class JModuleManager extends ModuleHook {
     private static resourceCache;
     private static jmoduleCache;
     private static resourceUrlAndModuleKeyMap;
-    static asyncResourceAndSourceUrlMap: Record<string, string>;
-    private static fileMapCache;
-    private static fileListCache;
+    private static asyncFilesMap;
     private static moduleExportsCache;
     private static moduleExports;
     static nextJModuleId: number;
@@ -18,10 +16,21 @@ export declare class JModuleManager extends ModuleHook {
         currentUrl: string;
     }): Document;
     static getInitialConfig(): any;
-    static getFileMapCache(key: string): [string, string | undefined];
-    static setFileMapCache(key: string, val: [string, string]): [string, string];
-    static appendFileList(url: string): void;
-    static getFileList(): string[];
+    /**
+     * 从异步资源查找ResourceUrl
+     *
+     * @param  {String} url
+     * @return {string|undefined}
+     */
+    static getResourceUrlByAsyncFile(url: string): string | undefined;
+    /**
+     * 记录异步资源与ResourceUrl的关系
+     *
+     * @param  {String} url
+     * @param  {String} resourceUrl
+     * @return {String|undefined}
+     */
+    static setAsyncFilesMap(url: string, resourceUrl: string): string;
     static resource(sourceUrl: string, instance?: Resource | null): Resource | undefined;
     static jmodule(moduleKey: string, instance?: JModule | null): JModule | undefined;
     /**
@@ -104,8 +113,6 @@ export declare class JModuleManager extends ModuleHook {
      * @return {var}
      */
     static import<T>(namespace?: string, config?: Record<string, string | number> | Matcher): T;
-    static setAsyncResourceAndSourceUrlMap(url: string, from: string): void;
-    static getAsyncResourceAndSourceUrlMap(url: string): string;
 }
 declare const _default: typeof JModuleManager;
 export default _default;

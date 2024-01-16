@@ -24,11 +24,8 @@ export class JModuleManager extends ModuleHook {
 
     private static resourceUrlAndModuleKeyMap: Record<string, string[]> = {};
 
-    static asyncResourceAndSourceUrlMap: Record<string, string> = {};
-
-    private static fileMapCache: Record<string, [string, string|undefined]> = {};
-
-    private static fileListCache: string[] = [];
+    /* AsyncFiles to JmoduleFrom */
+    private static asyncFilesMap: Record<string, string> = {};
 
     private static moduleExportsCache: Record<string, any> = {};
 
@@ -42,43 +39,72 @@ export class JModuleManager extends ModuleHook {
         return createDocument(originDocument, originCreateElement, options);
     }
 
+    /**
+     * 读取全局初始化配置
+     *
+     * @return {Object|undefined}
+     */
     static getInitialConfig() {
         return initialConfig;
     }
 
-    static getFileMapCache(key: string) {
-        return this.fileMapCache[key];
-    }
-
-    static setFileMapCache(key: string, val: [string, string]) {
-        const oldTarget = this.fileMapCache[key]?.[0];
-        if (oldTarget && oldTarget !== val[0]) {
-            const errorMessage = `建立异步组件索引 "${key}" 出现冲突，可能会导致异步组件加载异常`;
-            console.error(errorMessage, val);
+    /**
+     * 从异步资源查找ResourceUrl
+     *
+     * @param  {String} url
+     * @return {string|undefined}
+     */
+    static getResourceUrlByAsyncFile(url: string) {
+        let resourceUrl: string|undefined = this.asyncFilesMap[url];
+        // 无精确匹配时执行模糊匹配
+        if (!resourceUrl) {
+            const matchedKey = Object.keys(this.asyncFilesMap).find(item => item && url.includes(item));
+            resourceUrl = matchedKey ? this.asyncFilesMap[matchedKey] : undefined;
         }
-        return this.fileMapCache[key] = val;
+        return resourceUrl;
     }
 
-    static appendFileList(url: string) {
-        this.fileListCache.push(url);
+    /**
+     * 记录异步资源与ResourceUrl的关系
+     *
+     * @param  {String} url
+     * @param  {String} resourceUrl
+     * @return {String|undefined}
+     */
+    static setAsyncFilesMap(url: string, resourceUrl: string) {
+        const oldTarget = this.asyncFilesMap[url];
+        if (oldTarget && oldTarget !== resourceUrl) {
+            const errorMessage = `建立异步资源索引 "${url}" 出现冲突，可能会导致异步组件加载异常`;
+            console.error(errorMessage, resourceUrl);
+        }
+        return this.asyncFilesMap[url] = resourceUrl;
     }
 
-    static getFileList() {
-        return this.fileListCache;
-    }
-
-    static resource(sourceUrl: string, instance?: Resource|null): Resource|undefined {
-        if (instance === null) {
-            delete this.resourceCache[sourceUrl];
+    /**
+     * 读取/设置 url(包括异步资源) 与 Resource 之间的关系
+     * @param {String} url 
+     * @param {Resource|null} resource 
+     * @returns {Resource|undefined}
+     */
+    static resource(url: string, resource?: Resource|null): Resource|undefined {
+        if (resource === null) {
+            delete this.resourceCache[url];
             return;
         }
-        if (instance) {
-            this.resourceCache[sourceUrl] = instance;
-            return instance;
+        if (resource) {
+            this.resourceCache[url] = resource;
+            return resource;
         }
-        return this.resourceCache[sourceUrl];
+        // 优先执行精确匹配, 否则当作异步资源先匹配resourceUrl再查找
+        return this.resourceCache[url] || this.resourceCache[this.getResourceUrlByAsyncFile(url) || ''];
     }
 
+    /**
+     * 读取/设置 moduleKey 与 Module 之间的关系
+     * @param {String} moduleKey 
+     * @param {JModule|null} instance 
+     * @returns {JModule|undefined}
+     */
     static jmodule(moduleKey: string, instance?: JModule|null): JModule|undefined {
         if (instance === null) {
             delete this.jmoduleCache[moduleKey];
@@ -101,6 +127,11 @@ export class JModuleManager extends ModuleHook {
             .filter(item => !!item) as JModule[];
     }
 
+    /**
+     * 登记资源地址 与 moduleKey 之间的映射关系
+     * @param {String} resourceUrl 
+     * @param {String} moduleKey 
+     */
     static mapResourceUrlAndModuleKey(resourceUrl: string, moduleKey: string) {
         this.resourceUrlAndModuleKeyMap[resourceUrl] = [
             ...(this.resourceUrlAndModuleKeyMap[resourceUrl] || []),
@@ -108,12 +139,22 @@ export class JModuleManager extends ModuleHook {
         ];
     }
 
+    /**
+     * 基于 resourceUrl 查找关联的 Modules
+     * @param resourceUrl
+     * @returns { Array<JModule> }
+     */
     static getModulesByResourceUrl(resourceUrl: string): JModule[] {
         return (this.resourceUrlAndModuleKeyMap[resourceUrl] || [])
             .map(key => this.jmodule(key))
             .filter(item => !!item) as JModule[];
     }
 
+    /**
+     * 读取 moduleKey 对应的 JModule 构造函数
+     * @param moduleKey 
+     * @returns { typeof JModule }
+     */
     static getJModuleConstructor(moduleKey: string) {
         const module = this.jmodule(moduleKey);
         if (!module) {
@@ -227,14 +268,6 @@ export class JModuleManager extends ModuleHook {
             return res.resolve(config);
         }
         return res;
-    }
-
-    static setAsyncResourceAndSourceUrlMap(url: string, from: string) {
-        this.asyncResourceAndSourceUrlMap[url] = from;
-    }
-
-    static getAsyncResourceAndSourceUrlMap(url: string) {
-        return this.asyncResourceAndSourceUrlMap[url];
     }
 }
 
