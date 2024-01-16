@@ -273,7 +273,6 @@ export class JModuleManager extends ModuleHook {
 
 if (!(window as any).JModuleManager) {
     (window as any).JModuleManager = JModuleManager;
-    console.log(1);
     patchCreateElement(originCreateElement);
     enableDevtool();
 }

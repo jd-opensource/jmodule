@@ -2,9 +2,10 @@
 
 // 处理 webpack 的async chunk
 import * as ErrorStackParser from 'error-stack-parser';
+import type { JModuleManager } from '../globalManager';
 
 export function patchCreateElement(originalCreateElement: typeof document.createElement) {
-    const manager = window.JModuleManager;
+    const manager: typeof JModuleManager = window.JModuleManager;
     // eslint-disable-next-line no-underscore-dangle
     if ((document.createElement as any).__original__) {
         return;
@@ -20,9 +21,10 @@ export function patchCreateElement(originalCreateElement: typeof document.create
 
             // 查找执行 createElement 的脚本
             const { fileName } = (ErrorStackParser.parse(new Error('JModule trace test')) || [])
-                .find((stackFrame) => manager.getAsyncFilesMap(stackFrame.fileName))
+                .find((stackFrame) => stackFrame.fileName
+                    && manager.getResourceUrlByAsyncFile(stackFrame.fileName))
                 || {};
-            const jmoduleFrom = manager.getAsyncFilesMap(fileName);
+            const jmoduleFrom = fileName ? manager.getResourceUrlByAsyncFile(fileName) : null;
             originRes.dataset.jmoduleFrom = jmoduleFrom || '[host]';
             if (args[0] === 'style') {
                 return originRes;
@@ -39,7 +41,7 @@ export function patchCreateElement(originalCreateElement: typeof document.create
                 set(targetUrl) {
                     const resource = manager.resource(jmoduleFrom || targetUrl);
                     const resolvedUrl = resource?.resolveUrl(targetUrl) || targetUrl;
-                    manager.setAsyncFilesMap(resolvedUrl, jmoduleFrom);
+                    resource && manager.setAsyncFilesMap(resolvedUrl, resource?.url);
                     originRes.setAttribute(prop, resolvedUrl);
                 },
             });

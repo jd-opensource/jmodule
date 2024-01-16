@@ -112,7 +112,7 @@ const scriptCacheByUrl: { [url: string]: HTMLScriptElement } = {};
 export class Resource extends ModuleHook {
     private resolveScript!: (elements: HTMLScriptElement[]) => void;
     private rejectScript!: (error: Error) => void;
-    private styleLoading?: Promise<HTMLLinkElement[]>;
+    private styleLoading?: Promise<(HTMLLinkElement | HTMLStyleElement)[]>;
     private scriptLoading?: Promise<HTMLScriptElement[]>;
     private appliedScript = false;
     private static asyncFilesMap: { [key: string]: Resource | undefined } = {};
@@ -124,7 +124,7 @@ export class Resource extends ModuleHook {
     metadata?: ResourceMetadata;
     url = '';
     initScriptElement?: HTMLScriptElement;
-    styleElements: HTMLLinkElement[] = [];
+    styleElements: (HTMLLinkElement|HTMLStyleElement)[] = [];
     appendedAsyncStyleElements?: NodeListOf<Element>;
     scriptElements: HTMLScriptElement[] = [];
     server!: string;
@@ -322,7 +322,7 @@ export class Resource extends ModuleHook {
         return this.scriptLoading;
     }
 
-    async applyStyle(elementModifier?: ElementModifier): Promise<HTMLLinkElement[]> {
+    async applyStyle(elementModifier?: ElementModifier): Promise<(HTMLLinkElement | HTMLStyleElement)[]> {
         if (!this.metadata) {
             return Promise.reject(new Error('no resource metadata'));
         }
@@ -447,6 +447,7 @@ export class Resource extends ModuleHook {
         ];
         [...document.styleSheets].forEach((styleSheet) => {
             if (allStyles.includes(styleSheet.ownerNode as Element)) {
+                console.log(styleSheet);
                 styleSheet.disabled = disabled;
             }
         });

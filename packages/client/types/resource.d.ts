@@ -32,7 +32,7 @@ export declare class Resource extends ModuleHook {
     metadata?: ResourceMetadata;
     url: string;
     initScriptElement?: HTMLScriptElement;
-    styleElements: HTMLLinkElement[];
+    styleElements: (HTMLLinkElement | HTMLStyleElement)[];
     appendedAsyncStyleElements?: NodeListOf<Element>;
     scriptElements: HTMLScriptElement[];
     server: string;
@@ -64,7 +64,7 @@ export declare class Resource extends ModuleHook {
     resolveUrl(url: string): string;
     setStatus(status: ResourceStatus): void;
     applyScript(elementModifier?: ElementModifier): Promise<HTMLScriptElement[]>;
-    applyStyle(elementModifier?: ElementModifier): Promise<HTMLLinkElement[]>;
+    applyStyle(elementModifier?: ElementModifier): Promise<(HTMLLinkElement | HTMLStyleElement)[]>;
     isESM(url: string): boolean;
     preload(elementModifier?: ElementModifier): void;
     /**
