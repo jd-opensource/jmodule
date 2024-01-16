@@ -15,6 +15,11 @@ export declare class JModuleManager extends ModuleHook {
         sourceUrl: string;
         currentUrl: string;
     }): Document;
+    /**
+     * 读取全局初始化配置
+     *
+     * @return {Object|undefined}
+     */
     static getInitialConfig(): any;
     /**
      * 从异步资源查找ResourceUrl
@@ -31,15 +36,42 @@ export declare class JModuleManager extends ModuleHook {
      * @return {String|undefined}
      */
     static setAsyncFilesMap(url: string, resourceUrl: string): string;
-    static resource(sourceUrl: string, instance?: Resource | null): Resource | undefined;
+    /**
+     * 读取/设置 url(包括异步资源) 与 Resource 之间的关系
+     * @param {String} url
+     * @param {Resource|null} resource
+     * @returns {Resource|undefined}
+     */
+    static resource(url: string, resource?: Resource | null): Resource | undefined;
+    /**
+     * 读取/设置 moduleKey 与 Module 之间的关系
+     * @param {String} moduleKey
+     * @param {JModule|null} instance
+     * @returns {JModule|undefined}
+     */
     static jmodule(moduleKey: string, instance?: JModule | null): JModule | undefined;
     /**
      * 获取已注册的应用列表
      * @readOnly
      */
     static get registeredModules(): JModule[];
+    /**
+     * 登记资源地址 与 moduleKey 之间的映射关系
+     * @param {String} resourceUrl
+     * @param {String} moduleKey
+     */
     static mapResourceUrlAndModuleKey(resourceUrl: string, moduleKey: string): void;
+    /**
+     * 基于 resourceUrl 查找关联的 Modules
+     * @param resourceUrl
+     * @returns { Array<JModule> }
+     */
     static getModulesByResourceUrl(resourceUrl: string): JModule[];
+    /**
+     * 读取 moduleKey 对应的 JModule 构造函数
+     * @param moduleKey
+     * @returns { typeof JModule }
+     */
     static getJModuleConstructor(moduleKey: string): Function;
     static registerJModule(JModuleConstructor: typeof JModule): number;
     /**
