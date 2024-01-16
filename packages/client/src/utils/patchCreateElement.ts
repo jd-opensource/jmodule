@@ -4,6 +4,14 @@
 import * as ErrorStackParser from 'error-stack-parser';
 import type { JModuleManager } from '../globalManager';
 
+function getJModuleFromByFakeError(err: Error, manager: typeof JModuleManager) {
+    let jmoduleFrom: string|null = null;
+    (ErrorStackParser.parse(err) || []).find(
+        ({ fileName }) => (jmoduleFrom = manager.getResourceUrlByAsyncFile(fileName), !!jmoduleFrom)
+    );
+    return jmoduleFrom;
+}
+
 export function patchCreateElement(originalCreateElement: typeof document.createElement) {
     const manager: typeof JModuleManager = window.JModuleManager;
     // eslint-disable-next-line no-underscore-dangle
@@ -20,16 +28,13 @@ export function patchCreateElement(originalCreateElement: typeof document.create
             }
 
             // 查找执行 createElement 的脚本
-            const { fileName } = (ErrorStackParser.parse(new Error('JModule trace test')) || [])
-                .find((stackFrame) => stackFrame.fileName
-                    && manager.getResourceUrlByAsyncFile(stackFrame.fileName))
-                || {};
-            const jmoduleFrom = fileName ? manager.getResourceUrlByAsyncFile(fileName) : null;
+            const jmoduleFrom = getJModuleFromByFakeError(new Error('[JModule]'), manager);
             originRes.dataset.jmoduleFrom = jmoduleFrom || '[host]';
             if (args[0] === 'style') {
                 return originRes;
             }
             const prop = args[0] === 'script' ? 'src' : 'href';
+            // 防御性代码
             const descriptor = Object.getOwnPropertyDescriptor(originRes, prop);
             if (descriptor && !descriptor.configurable) {
                 return originRes;
@@ -41,7 +46,6 @@ export function patchCreateElement(originalCreateElement: typeof document.create
                 set(targetUrl) {
                     const resource = manager.resource(jmoduleFrom || targetUrl);
                     const resolvedUrl = resource?.resolveUrl(targetUrl) || targetUrl;
-                    resource && manager.setAsyncFilesMap(resolvedUrl, resource?.url);
                     originRes.setAttribute(prop, resolvedUrl);
                 },
             });

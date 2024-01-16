@@ -30,7 +30,6 @@ function loadScript(
     script.setAttribute('src', url); // skip proxy
     script.async = false;
     script.dataset.jmoduleFrom = from;
-    manager.setAsyncFilesMap(url, from);
     Object.keys(attributes || {}).forEach(attr => {
         if (['src', 'async'].includes(attr)) {
             return;
@@ -50,7 +49,6 @@ function createLink(url: string, from: string, elementModifier?: (element: HTMLE
     styleDom.setAttribute('rel', 'preload');
     styleDom.setAttribute('as', 'style');
     styleDom.setAttribute('href', url);
-    manager.setAsyncFilesMap(url, from);
     styleDom.dataset.jmoduleFrom = from;
     elementModifier && elementModifier(styleDom);
     return styleDom;

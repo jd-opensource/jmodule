@@ -49,19 +49,30 @@ export class JModuleManager extends ModuleHook {
     }
 
     /**
-     * 从异步资源查找ResourceUrl
+     * 根据资源地址查找ResourceUrl
      *
      * @param  {String} url
      * @return {string|undefined}
      */
-    static getResourceUrlByAsyncFile(url: string) {
-        let resourceUrl: string|undefined = this.asyncFilesMap[url];
-        // 无精确匹配时执行模糊匹配
-        if (!resourceUrl) {
-            const matchedKey = Object.keys(this.asyncFilesMap).find(item => item && url.includes(item));
-            resourceUrl = matchedKey ? this.asyncFilesMap[matchedKey] : undefined;
+    static getResourceUrlByUrl(url: string|undefined|null) {
+        if (!url) {
+            return null;
+        }
+        let resourceUrl: string|null = null;
+        for (const scriptNode of document.scripts) {
+            resourceUrl = scriptNode.getAttribute('data-jmodule-from');
+            if (resourceUrl && scriptNode.src === url) {
+                break;
+            }
         }
         return resourceUrl;
+        // let resourceUrl: string|undefined = this.asyncFilesMap[url];
+        // // 无精确匹配时执行模糊匹配
+        // if (!resourceUrl) {
+        //     const matchedKey = Object.keys(this.asyncFilesMap).find(item => item && url.includes(item));
+        //     resourceUrl = matchedKey ? this.asyncFilesMap[matchedKey] : undefined;
+        // }
+        // return resourceUrl;
     }
 
     /**
@@ -96,7 +107,7 @@ export class JModuleManager extends ModuleHook {
             return resource;
         }
         // 优先执行精确匹配, 否则当作异步资源先匹配resourceUrl再查找
-        return this.resourceCache[url] || this.resourceCache[this.getResourceUrlByAsyncFile(url) || ''];
+        return this.resourceCache[url] || this.resourceCache[this.getResourceUrlByUrl(url) || ''];
     }
 
     /**
