@@ -3,13 +3,14 @@
 // 处理 webpack 的async chunk
 import * as ErrorStackParser from 'error-stack-parser';
 import type { JModuleManager } from '../globalManager';
+import type { Resource } from '../resource';
 
-function getJModuleFromByFakeError(err: Error, manager: typeof JModuleManager) {
-    let jmoduleFrom: string|null = null;
+function getJModuleFromByFakeError(err: Error, manager: typeof JModuleManager): Resource|undefined {
+    let resource: Resource | undefined = undefined;
     (ErrorStackParser.parse(err) || []).find(
-        ({ fileName }) => (jmoduleFrom = manager.getResourceUrlByAsyncFile(fileName), !!jmoduleFrom)
+        ({ fileName }) => (fileName && (resource = manager.resource(fileName)), !!resource)
     );
-    return jmoduleFrom;
+    return resource;
 }
 
 export function patchCreateElement(originalCreateElement: typeof document.createElement) {
@@ -28,8 +29,8 @@ export function patchCreateElement(originalCreateElement: typeof document.create
             }
 
             // 查找执行 createElement 的脚本
-            const jmoduleFrom = getJModuleFromByFakeError(new Error('[JModule]'), manager);
-            originRes.dataset.jmoduleFrom = jmoduleFrom || '[host]';
+            const resource = getJModuleFromByFakeError(new Error('[JModule]'), manager);
+            originRes.dataset.jmoduleFrom = resource?.url || '[host]';
             if (args[0] === 'style') {
                 return originRes;
             }
@@ -44,9 +45,7 @@ export function patchCreateElement(originalCreateElement: typeof document.create
                     return originRes.getAttribute(prop);
                 },
                 set(targetUrl) {
-                    const resource = manager.resource(jmoduleFrom || targetUrl);
-                    const resolvedUrl = resource?.resolveUrl(targetUrl) || targetUrl;
-                    originRes.setAttribute(prop, resolvedUrl);
+                    originRes.setAttribute(prop, resource?.resolveUrl(targetUrl) || targetUrl);
                 },
             });
             return originRes;

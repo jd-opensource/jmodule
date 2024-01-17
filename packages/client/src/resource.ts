@@ -4,7 +4,6 @@ import JModuleManager from './globalManager';
 import { ModuleHook } from './hook';
 import { wrapperFetchedCodeHook } from './utils/wrapperFetchedCode';
 import { resourceTypes } from './utils/resourceResolver';
-import manager from './globalManager';
 import { JModule } from './module';
 import { elementsToPromise } from './utils/elementsToPromise';
 import { timeoutToPromise } from './utils/timeoutToPromise';
@@ -58,12 +57,16 @@ function patchInitUrl(url: string): string {
     return `${new URL(url, window.location.href)}${url.indexOf('?') > 0 ? '&' : '?'}__v__=${Date.now()}`;
 }
 
+// 兼容旧版 manager
 const queryReg = /\?.+$/;
 
-function cacheAsyncFiles(metadata: ResourceMetadata, sourceUrl: string) {
-    const { asyncFiles = [], css = [] } = metadata;
-    [...asyncFiles, ...css].forEach(file => {
-        manager.setAsyncFilesMap(file.replace(queryReg, ''), sourceUrl);
+function cacheUrlMap(metadata: ResourceMetadata, sourceUrl: string, prefix?: string) {
+    const { asyncFiles = [] } = metadata;
+    asyncFiles.forEach(file => {
+        const key = file.replace(queryReg, '');
+        const targetUrl = resolveUrl(file, sourceUrl, metadata, prefix);
+        JModuleManager.setFileMapCache(key, [targetUrl, sourceUrl]);
+        JModuleManager.appendFileList(key);
     });
 }
 
@@ -299,7 +302,7 @@ export class Resource extends ModuleHook {
                 this.url,
                 ResourceType.Script,
             )))
-            : (cacheAsyncFiles(this.metadata as ResourceMetadata, this.url), jsUrls);
+            : (cacheUrlMap(this.metadata as ResourceMetadata, this.url, this.prefix), jsUrls);
         this.scriptLoading = getEntryUrls().then((entryUrls) => Promise.all(entryUrls.map((url, index) => loadScript(
             url,
             this.url,

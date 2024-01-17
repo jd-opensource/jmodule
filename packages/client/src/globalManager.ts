@@ -17,15 +17,32 @@ const originCreateElement = originDocument.createElement.bind(originDocument);
 const initialConfig = (((window as any).JModule || {}) as any).config || {};
 const defaultExportsMatcher = new Matcher({});
 
+/**
+ * 根据资源地址查找ResourceUrl
+ *
+ * @param  {String} url
+ * @return {string|undefined}
+ */
+function getResourceUrlByUrl(url: string | undefined | null) {
+    if (!url) {
+        return null;
+    }
+    let resourceUrl: string | null = null;
+    for (const scriptNode of document.scripts) {
+        resourceUrl = scriptNode.getAttribute('data-jmodule-from');
+        if (resourceUrl && scriptNode.src === url) {
+            break;
+        }
+    }
+    return resourceUrl;
+}
+
 export class JModuleManager extends ModuleHook {
     private static resourceCache: { [id: string]: Resource } = {};
 
     private static jmoduleCache: { [id: string]: JModule } = {};
 
     private static resourceUrlAndModuleKeyMap: Record<string, string[]> = {};
-
-    /* AsyncFiles to JmoduleFrom */
-    private static asyncFilesMap: Record<string, string> = {};
 
     private static moduleExportsCache: Record<string, any> = {};
 
@@ -49,49 +66,6 @@ export class JModuleManager extends ModuleHook {
     }
 
     /**
-     * 根据资源地址查找ResourceUrl
-     *
-     * @param  {String} url
-     * @return {string|undefined}
-     */
-    static getResourceUrlByUrl(url: string|undefined|null) {
-        if (!url) {
-            return null;
-        }
-        let resourceUrl: string|null = null;
-        for (const scriptNode of document.scripts) {
-            resourceUrl = scriptNode.getAttribute('data-jmodule-from');
-            if (resourceUrl && scriptNode.src === url) {
-                break;
-            }
-        }
-        return resourceUrl;
-        // let resourceUrl: string|undefined = this.asyncFilesMap[url];
-        // // 无精确匹配时执行模糊匹配
-        // if (!resourceUrl) {
-        //     const matchedKey = Object.keys(this.asyncFilesMap).find(item => item && url.includes(item));
-        //     resourceUrl = matchedKey ? this.asyncFilesMap[matchedKey] : undefined;
-        // }
-        // return resourceUrl;
-    }
-
-    /**
-     * 记录异步资源与ResourceUrl的关系
-     *
-     * @param  {String} url
-     * @param  {String} resourceUrl
-     * @return {String|undefined}
-     */
-    static setAsyncFilesMap(url: string, resourceUrl: string) {
-        const oldTarget = this.asyncFilesMap[url];
-        if (oldTarget && oldTarget !== resourceUrl) {
-            const errorMessage = `建立异步资源索引 "${url}" 出现冲突，可能会导致异步组件加载异常`;
-            console.error(errorMessage, resourceUrl);
-        }
-        return this.asyncFilesMap[url] = resourceUrl;
-    }
-
-    /**
      * 读取/设置 url(包括异步资源) 与 Resource 之间的关系
      * @param {String} url 
      * @param {Resource|null} resource 
@@ -107,7 +81,7 @@ export class JModuleManager extends ModuleHook {
             return resource;
         }
         // 优先执行精确匹配, 否则当作异步资源先匹配resourceUrl再查找
-        return this.resourceCache[url] || this.resourceCache[this.getResourceUrlByUrl(url) || ''];
+        return this.resourceCache[url] || this.resourceCache[getResourceUrlByUrl(url) || ''];
     }
 
     /**
@@ -279,6 +253,24 @@ export class JModuleManager extends ModuleHook {
             return res.resolve(config);
         }
         return res;
+    }
+
+    static getFileMapCache() {
+        console.warn('getFileMapCache 已弃用: 子应用使用的 @jmodule/client 版本较低, 请尽快升级');
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    static setFileMapCache(_key: string, _val: [string, string]) {
+        console.warn('setFileMapCache 已弃用: 子应用使用的 @jmodule/client 版本较低, 请尽快升级');
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    static appendFileList(url: string) {
+        console.warn('appendFileList 已弃用: 子应用使用的 @jmodule/client 版本较低, 请尽快升级');
+    }
+
+    static getFileList() {
+        console.warn('getFileList 已弃用: 子应用使用的 @jmodule/client 版本较低, 请尽快升级');
     }
 }
 
