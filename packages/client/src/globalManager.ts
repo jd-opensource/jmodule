@@ -56,6 +56,13 @@ export class JModuleManager extends ModuleHook {
         return createDocument(originDocument, originCreateElement, options);
     }
 
+    static testApi(apiName: string) {
+        if (['setFileMapCache', 'appendFileList'].includes(apiName)) {
+            return 0;
+        }
+        return apiName in this ? 1 : -1;
+    }
+
     /**
      * 读取全局初始化配置
      *
@@ -255,22 +262,20 @@ export class JModuleManager extends ModuleHook {
         return res;
     }
 
-    static getFileMapCache() {
-        console.warn('getFileMapCache 已弃用: 子应用使用的 @jmodule/client 版本较低, 请尽快升级');
-    }
-
+    /**
+     * @ignore
+     */
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     static setFileMapCache(_key: string, _val: [string, string]) {
         console.warn('setFileMapCache 已弃用: 子应用使用的 @jmodule/client 版本较低, 请尽快升级');
     }
 
+    /**
+     * @ignore
+     */
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     static appendFileList(url: string) {
         console.warn('appendFileList 已弃用: 子应用使用的 @jmodule/client 版本较低, 请尽快升级');
-    }
-
-    static getFileList() {
-        console.warn('getFileList 已弃用: 子应用使用的 @jmodule/client 版本较低, 请尽快升级');
     }
 }
 

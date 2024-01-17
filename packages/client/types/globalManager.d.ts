@@ -14,6 +14,7 @@ export declare class JModuleManager extends ModuleHook {
         sourceUrl: string;
         currentUrl: string;
     }): Document;
+    static testApi(apiName: string): 1 | -1 | 0;
     /**
      * 读取全局初始化配置
      *
@@ -129,10 +130,14 @@ export declare class JModuleManager extends ModuleHook {
      * @return {var}
      */
     static import<T>(namespace?: string, config?: Record<string, string | number> | Matcher): T;
-    static getFileMapCache(): void;
+    /**
+     * @ignore
+     */
     static setFileMapCache(_key: string, _val: [string, string]): void;
+    /**
+     * @ignore
+     */
     static appendFileList(url: string): void;
-    static getFileList(): void;
 }
 declare const _default: typeof JModuleManager;
 export default _default;

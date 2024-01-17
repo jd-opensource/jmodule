@@ -57,10 +57,13 @@ function patchInitUrl(url: string): string {
     return `${new URL(url, window.location.href)}${url.indexOf('?') > 0 ? '&' : '?'}__v__=${Date.now()}`;
 }
 
-// 兼容旧版 manager
 const queryReg = /\?.+$/;
 
+// 兼容性处理: 新版 manager 不使用这个接口.
 function cacheUrlMap(metadata: ResourceMetadata, sourceUrl: string, prefix?: string) {
+    if ([0, -1].includes(JModuleManager.testApi?.('setFileMapCache'))) {
+        return;
+    }
     const { asyncFiles = [] } = metadata;
     asyncFiles.forEach(file => {
         const key = file.replace(queryReg, '');
@@ -448,7 +451,6 @@ export class Resource extends ModuleHook {
         ];
         [...document.styleSheets].forEach((styleSheet) => {
             if (allStyles.includes(styleSheet.ownerNode as Element)) {
-                console.log(styleSheet);
                 styleSheet.disabled = disabled;
             }
         });
