@@ -29,8 +29,8 @@ function getResourceUrlByUrl(url: string | undefined | null) {
     }
     let resourceUrl: string | null = null;
     for (const scriptNode of document.scripts) {
-        resourceUrl = scriptNode.getAttribute('data-jmodule-from');
-        if (resourceUrl && scriptNode.src === url) {
+        if (scriptNode.src === url) {
+            resourceUrl = scriptNode.getAttribute('data-jmodule-from');
             break;
         }
     }

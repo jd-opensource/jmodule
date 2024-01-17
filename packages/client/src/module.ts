@@ -118,7 +118,7 @@ export class JModule extends ModuleHook {
      */
     constructor({
         key, url, server, name, autoBootstrap = true,
-        resourceType, resourcePrefix, resource, type,
+        resourceType, resource, type,
         resourceLoadStrategy,
         ...others
     }: ModuleOptions) {
@@ -182,7 +182,6 @@ export class JModule extends ModuleHook {
             ? resource
             : new Resource(url, {
                 type: resourceType,
-                prefix: resourcePrefix,
                 strategy: resourceLoadStrategy,
             });
         /**

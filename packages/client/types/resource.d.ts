@@ -6,6 +6,7 @@ export interface ResourceMetadata {
     css: string[];
     asyncFiles: string[];
     jsAttributes?: Record<string, any>;
+    publicPath?: string | undefined;
 }
 export interface ResourceOptions {
     type?: string;
@@ -39,7 +40,7 @@ export declare class Resource extends ModuleHook {
     styleMounted: boolean;
     status: ResourceStatus;
     type: string;
-    prefix?: string;
+    urlAdapter?: (sourceUrl: string, resource: Resource) => string;
     afterApplyScript: Promise<HTMLScriptElement[]>;
     afterInit?: Promise<void>;
     strategy: ResourceLoadStrategy;

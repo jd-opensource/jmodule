@@ -7,6 +7,7 @@ import type { Resource } from '../resource';
 
 function getJModuleFromByFakeError(err: Error, manager: typeof JModuleManager): Resource|undefined {
     let resource: Resource | undefined = undefined;
+    console.log(ErrorStackParser.parse(err));
     (ErrorStackParser.parse(err) || []).find(
         ({ fileName }) => (fileName && (resource = manager.resource(fileName)), !!resource)
     );
@@ -30,7 +31,10 @@ export function patchCreateElement(originalCreateElement: typeof document.create
 
             // 查找执行 createElement 的脚本
             const resource = getJModuleFromByFakeError(new Error('[JModule]'), manager);
-            originRes.dataset.jmoduleFrom = resource?.url || '[host]';
+            if (!resource) {
+                return originRes;
+            }
+            originRes.dataset.jmoduleFrom = resource?.url;
             if (args[0] === 'style') {
                 return originRes;
             }

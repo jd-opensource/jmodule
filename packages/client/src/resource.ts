@@ -60,35 +60,17 @@ function patchInitUrl(url: string): string {
 const queryReg = /\?.+$/;
 
 // 兼容性处理: 新版 manager 不使用这个接口.
-function cacheUrlMap(metadata: ResourceMetadata, sourceUrl: string, prefix?: string) {
+function cacheUrlMap(resource: Resource) {
     if ([0, -1].includes(JModuleManager.testApi?.('setFileMapCache'))) {
         return;
     }
-    const { asyncFiles = [] } = metadata;
+    const { asyncFiles = [] } = resource.metadata || {};
     asyncFiles.forEach(file => {
         const key = file.replace(queryReg, '');
-        const targetUrl = resolveUrl(file, sourceUrl, metadata, prefix);
-        JModuleManager.setFileMapCache(key, [targetUrl, sourceUrl]);
+        const targetUrl = resource.resolveUrl(file);
+        JModuleManager.setFileMapCache(key, [targetUrl, resource.url]);
         JModuleManager.appendFileList(key);
     });
-}
-
-function resolveUrl(url: string, sourceUrl: string, metadata?: ResourceMetadata, prefix?: string): string {
-    try {
-        if (url.startsWith('X_WEBPACK_SERVER')) {
-            console.warn('X_WEBPACK_SERVER 已废弃, 下个版本将弃用');
-            if (metadata?.asyncFiles) {
-                // 新版：相对路径
-                url = url.replace(/^X_WEBPACK_SERVER\/?/, '');
-            } else { // 旧版：绝对路径
-                url = url.replace(/^X_WEBPACK_SERVER/, '');
-            }
-        }
-        return new URL(`${prefix || ''}${url}`, sourceUrl).href;
-    } catch (e) {
-        // ignore error: 浏览器不支持（IE）或者 参数异常
-        return url;
-    }
 }
 
 export interface ResourceMetadata {
@@ -96,6 +78,7 @@ export interface ResourceMetadata {
     css: string[],
     asyncFiles: string[],
     jsAttributes?: Record<string, any>,
+    publicPath?: string | undefined,
 }
 
 export interface ResourceOptions {
@@ -135,7 +118,7 @@ export class Resource extends ModuleHook {
     styleMounted = false;
     status: ResourceStatus = ResourceStatus.Init;
     type!: string; // 入口资源类型
-    prefix?: string;
+    urlAdapter?: (sourceUrl: string, resource: Resource) => string;
     afterApplyScript!: Promise<HTMLScriptElement[]>;
     afterInit?: Promise<void>;
     strategy!: ResourceLoadStrategy; // 默认，直接用标签方式加载
@@ -159,7 +142,6 @@ export class Resource extends ModuleHook {
         this.url = wholeUrl;
         this.server = server;
         this.type = (options?.type || url.split('.').pop() || 'js').replace(/\?.*$/, '');
-        this.prefix = options?.prefix?.replace('[resourceOrigin]', this.server);
         this.afterApplyScript = new Promise((resolve, reject) => {
             this.resolveScript = resolve;
             this.rejectScript = reject;
@@ -263,7 +245,28 @@ export class Resource extends ModuleHook {
     }
 
     resolveUrl(url: string) {
-        const resolvedUrl = resolveUrl(url, this.url, this.metadata, this.prefix);
+        let resolvedUrl = url;
+        try {
+            if (url.startsWith('X_WEBPACK_SERVER')) {
+                console.warn('X_WEBPACK_SERVER 已废弃, 下个版本将弃用');
+                if (this.metadata?.asyncFiles) {
+                    // 新版：相对路径
+                    url = url.replace(/^X_WEBPACK_SERVER\/?/, '');
+                } else { // 旧版：绝对路径
+                    url = url.replace(/^X_WEBPACK_SERVER/, '');
+                }
+            }
+            if (url.startsWith('http')) {
+                console.log(url, this);
+            }
+            if (this.urlAdapter) {
+                resolvedUrl = this.urlAdapter(url, this);
+            } else {
+                resolvedUrl = new URL(url, this.url).href;
+            }
+        } catch (e) {
+            // ignore error: 浏览器不支持或者 参数异常
+        }
         this.resolvedUrlMap[resolvedUrl] = url;
         return resolvedUrl;
     }
@@ -297,15 +300,16 @@ export class Resource extends ModuleHook {
         }
         this.setStatus(ResourceStatus.ApplyScript);
         this.scriptElements = [];
+        const publicPath = this.metadata.publicPath || '';
         const jsAttributes = (this.metadata.js || []).map(url => this.metadata?.jsAttributes?.[url]);
-        const jsUrls = (this.metadata.js || []).map(url => this.resolveUrl(url));
+        const jsUrls = (this.metadata.js || []).map(url => this.resolveUrl(`${publicPath}${url}`));
         const getEntryUrls = async () => this.strategy === ResourceLoadStrategy.Fetch
             ? await Promise.all(jsUrls.map(url => resolveUrlByFetch(
                 url,
                 this.url,
                 ResourceType.Script,
             )))
-            : (cacheUrlMap(this.metadata as ResourceMetadata, this.url, this.prefix), jsUrls);
+            : (cacheUrlMap(this), jsUrls);
         this.scriptLoading = getEntryUrls().then((entryUrls) => Promise.all(entryUrls.map((url, index) => loadScript(
             url,
             this.url,
@@ -330,12 +334,12 @@ export class Resource extends ModuleHook {
         if (!this.metadata) {
             return Promise.reject(new Error('no resource metadata'));
         }
-        const { css = [] } = this.metadata;
+        const { css = [], publicPath = '' } = this.metadata;
         const { length } = this.styleElements;
         if (!this.styleLoading) {
             this.setStatus(ResourceStatus.ApplyStyle);
             if (css.length !== length) {
-                const cssUrls = (this.metadata.css || []).map(url => this.resolveUrl(url));
+                const cssUrls = (this.metadata.css || []).map(url => this.resolveUrl(`${publicPath}${url}`));
                 const entryUrls = await (async () => this.strategy === ResourceLoadStrategy.Fetch
                     ? await Promise.all(cssUrls.map(url => resolveUrlByFetch(
                         url,
