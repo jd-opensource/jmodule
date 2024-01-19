@@ -16,7 +16,6 @@ export declare class JModuleManager extends ModuleHook {
         sourceUrl: string;
         currentUrl: string;
     }): Document;
-    static testApi(apiName: string): 1 | -1 | 0;
     /**
      * 读取全局初始化配置
      *
