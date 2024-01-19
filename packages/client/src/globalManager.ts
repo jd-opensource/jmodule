@@ -40,13 +40,6 @@ export class JModuleManager extends ModuleHook {
         return createDocument(originDocument, originCreateElement, options);
     }
 
-    static testApi(apiName: string) {
-        if (['setFileMapCache', 'appendFileList'].includes(apiName)) {
-            return 0;
-        }
-        return apiName in this ? 1 : -1;
-    }
-
     /**
      * 读取全局初始化配置
      *
