@@ -58,12 +58,7 @@ function patchInitUrl(url: string): string {
 }
 
 const queryReg = /\?.+$/;
-
-// 兼容性处理: 新版 manager 不使用这个接口.
 function cacheUrlMap(resource: Resource) {
-    if ([0, -1].includes(JModuleManager.testApi?.('setFileMapCache'))) {
-        return;
-    }
     const { asyncFiles = [] } = resource.metadata || {};
     asyncFiles.forEach(file => {
         const key = file.replace(queryReg, '');
@@ -78,7 +73,6 @@ export interface ResourceMetadata {
     css: string[],
     asyncFiles: string[],
     jsAttributes?: Record<string, any>,
-    publicPath?: string | undefined,
 }
 
 export interface ResourceOptions {
@@ -256,9 +250,6 @@ export class Resource extends ModuleHook {
                     url = url.replace(/^X_WEBPACK_SERVER/, '');
                 }
             }
-            if (url.startsWith('http')) {
-                console.log(url, this);
-            }
             if (this.urlAdapter) {
                 resolvedUrl = this.urlAdapter(url, this);
             } else {
@@ -300,9 +291,8 @@ export class Resource extends ModuleHook {
         }
         this.setStatus(ResourceStatus.ApplyScript);
         this.scriptElements = [];
-        const publicPath = this.metadata.publicPath || '';
         const jsAttributes = (this.metadata.js || []).map(url => this.metadata?.jsAttributes?.[url]);
-        const jsUrls = (this.metadata.js || []).map(url => this.resolveUrl(`${publicPath}${url}`));
+        const jsUrls = (this.metadata.js || []).map(url => this.resolveUrl(url));
         const getEntryUrls = async () => this.strategy === ResourceLoadStrategy.Fetch
             ? await Promise.all(jsUrls.map(url => resolveUrlByFetch(
                 url,
@@ -334,12 +324,12 @@ export class Resource extends ModuleHook {
         if (!this.metadata) {
             return Promise.reject(new Error('no resource metadata'));
         }
-        const { css = [], publicPath = '' } = this.metadata;
+        const { css = [] } = this.metadata;
         const { length } = this.styleElements;
         if (!this.styleLoading) {
             this.setStatus(ResourceStatus.ApplyStyle);
             if (css.length !== length) {
-                const cssUrls = (this.metadata.css || []).map(url => this.resolveUrl(`${publicPath}${url}`));
+                const cssUrls = (this.metadata.css || []).map(url => this.resolveUrl(url));
                 const entryUrls = await (async () => this.strategy === ResourceLoadStrategy.Fetch
                     ? await Promise.all(cssUrls.map(url => resolveUrlByFetch(
                         url,
@@ -404,7 +394,7 @@ export class Resource extends ModuleHook {
                 } else {
                     return new Promise((resolve, reject) => {
                         const preloadLink = document.createElement("link");
-                        preloadLink.href = targetUrl;
+                        preloadLink.setAttribute('href', targetUrl);
                         preloadLink.rel = "preload";
                         preloadLink.as = type;
                         preloadLink.onload = resolve;

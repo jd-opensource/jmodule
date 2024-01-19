@@ -6,6 +6,8 @@ export declare class JModuleManager extends ModuleHook {
     private static resourceCache;
     private static jmoduleCache;
     private static resourceUrlAndModuleKeyMap;
+    private static fileMapCache;
+    private static fileListCache;
     private static moduleExportsCache;
     private static moduleExports;
     static nextJModuleId: number;
@@ -22,7 +24,26 @@ export declare class JModuleManager extends ModuleHook {
      */
     static getInitialConfig(): any;
     /**
-     * 读取/设置 url(包括异步资源) 与 Resource 之间的关系
+     * @ignore
+     */
+    static setFileMapCache(key: string, val: [string, string]): [string, string];
+    /**
+     * @ignore
+     */
+    static appendFileList(url: string): void;
+    /**
+     * @ignore
+     */
+    static findResolvedUrlByUrl(urlWithPublicPath: string): string[] | [string, string | undefined];
+    /**
+     * 根据资源地址查找对应的 resourceUrl
+     *
+     * @param {String} url
+     * @returns {String|undefined}
+     */
+    static getResourceUrlByUrl(url: string | undefined | null): string | undefined;
+    /**
+     * 读取/设置 url 与 Resource 之间的关系
      * @param {String} url
      * @param {Resource|null} resource
      * @returns {Resource|undefined}
@@ -130,14 +151,6 @@ export declare class JModuleManager extends ModuleHook {
      * @return {var}
      */
     static import<T>(namespace?: string, config?: Record<string, string | number> | Matcher): T;
-    /**
-     * @ignore
-     */
-    static setFileMapCache(_key: string, _val: [string, string]): void;
-    /**
-     * @ignore
-     */
-    static appendFileList(url: string): void;
 }
 declare const _default: typeof JModuleManager;
 export default _default;

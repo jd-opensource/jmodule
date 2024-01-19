@@ -17,32 +17,16 @@ const originCreateElement = originDocument.createElement.bind(originDocument);
 const initialConfig = (((window as any).JModule || {}) as any).config || {};
 const defaultExportsMatcher = new Matcher({});
 
-/**
- * 根据资源地址查找ResourceUrl
- *
- * @param  {String} url
- * @return {string|undefined}
- */
-function getResourceUrlByUrl(url: string | undefined | null) {
-    if (!url) {
-        return null;
-    }
-    let resourceUrl: string | null = null;
-    for (const scriptNode of document.scripts) {
-        if (scriptNode.src === url) {
-            resourceUrl = scriptNode.getAttribute('data-jmodule-from');
-            break;
-        }
-    }
-    return resourceUrl;
-}
-
 export class JModuleManager extends ModuleHook {
     private static resourceCache: { [id: string]: Resource } = {};
 
     private static jmoduleCache: { [id: string]: JModule } = {};
 
     private static resourceUrlAndModuleKeyMap: Record<string, string[]> = {};
+
+    private static fileMapCache: Record<string, [string, string | undefined]> = {};
+
+    private static fileListCache: string[] = [];
 
     private static moduleExportsCache: Record<string, any> = {};
 
@@ -73,7 +57,60 @@ export class JModuleManager extends ModuleHook {
     }
 
     /**
-     * 读取/设置 url(包括异步资源) 与 Resource 之间的关系
+     * @ignore 
+     */
+    static setFileMapCache(key: string, val: [string, string]) {
+        const oldTarget = this.fileMapCache[key]?.[0];
+        if (oldTarget && oldTarget !== val[0]) {
+            const errorMessage = `建立异步组件索引 "${key}" 出现冲突，可能会导致异步组件加载异常`;
+            console.error(errorMessage, val);
+        }
+        return this.fileMapCache[key] = val;
+    }
+
+    /**
+     * @ignore 
+     */
+    static appendFileList(url: string) {
+        this.fileListCache.push(url);
+    }
+
+    /**
+     * @ignore
+     */
+    static findResolvedUrlByUrl(urlWithPublicPath: string) {
+        const file = this.fileListCache.find(item => item && urlWithPublicPath.includes(item));
+        if (!file || !this.fileMapCache[file]) {
+            return [urlWithPublicPath];
+        }
+        return this.fileMapCache[file];
+    }
+
+    /**
+     * 根据资源地址查找对应的 resourceUrl
+     * 
+     * @param {String} url
+     * @returns {String|undefined}
+     */
+    static getResourceUrlByUrl(url: string | undefined | null) {
+        if (!url) {
+            return undefined;
+        }
+        if (this.resourceCache[url]) {
+            return url;
+        }
+        let resourceUrl: string | undefined = undefined;
+        for (const scriptNode of document.scripts) {
+            if (scriptNode.src === url) {
+                resourceUrl = scriptNode.getAttribute('data-jmodule-from') || undefined;
+                break;
+            }
+        }
+        return resourceUrl;
+    }
+
+    /**
+     * 读取/设置 url 与 Resource 之间的关系
      * @param {String} url 
      * @param {Resource|null} resource 
      * @returns {Resource|undefined}
@@ -88,7 +125,7 @@ export class JModuleManager extends ModuleHook {
             return resource;
         }
         // 优先执行精确匹配, 否则当作异步资源先匹配resourceUrl再查找
-        return this.resourceCache[url] || this.resourceCache[getResourceUrlByUrl(url) || ''];
+        return this.resourceCache[url];
     }
 
     /**
@@ -260,22 +297,6 @@ export class JModuleManager extends ModuleHook {
             return res.resolve(config);
         }
         return res;
-    }
-
-    /**
-     * @ignore
-     */
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    static setFileMapCache(_key: string, _val: [string, string]) {
-        console.warn('setFileMapCache 已弃用: 子应用使用的 @jmodule/client 版本较低, 请尽快升级');
-    }
-
-    /**
-     * @ignore
-     */
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    static appendFileList(url: string) {
-        console.warn('appendFileList 已弃用: 子应用使用的 @jmodule/client 版本较低, 请尽快升级');
     }
 }
 
