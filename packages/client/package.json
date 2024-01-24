@@ -1,21 +1,31 @@
 {
   "name": "@jmodule/client",
-  "version": "4.6.1-0",
+  "version": "4.6.2-0",
   "description": "JModule运行时",
   "author": "feirpri <feirpri@gmail.com>",
   "license": "MIT",
   "scripts": {
-    "build": "pnpm run lint && tsc --emitDeclarationOnly & rollup --config ./build/rollup.mjs",
+    "build": "pnpm run lint && tsc --emitDeclarationOnly & rollup --config ./build/rollup.mjs & rollup --config ./build/rollup.esm.mjs",
     "lint": "eslint \"./src/**/*.ts\""
   },
   "main": "./dist/index.js",
-  "module": "./dist/index.esm.js",
+  "exports": {
+    ".": {
+      "import": {
+        "default": "./dist/index.esm.js"
+      },
+      "require": "./dist/index.js",
+      "types": "./types/index.d.ts"
+    }
+  },
   "browserslist": [
     "> 1%",
     "last 2 versions",
     "not ie <= 10"
   ],
   "devDependencies": {
+    "@rollup/plugin-commonjs": "^25.0.7",
+    "@rollup/plugin-node-resolve": "^15.2.3",
     "@types/requestidlecallback": "^0.3.4",
     "@typescript-eslint/eslint-plugin": "^5.27.1",
     "eslint": "8",
