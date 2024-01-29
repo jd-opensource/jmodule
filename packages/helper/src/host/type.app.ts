@@ -20,12 +20,13 @@ async function bootstrapModule(module: JModule) {
 async function mountModule(module: JModule, parentEl: Element) {
     // 执行子函数 mount, 附加传递挂载次数等信息
     module.resource.applyStyle();
-    mountTimes[module.key] = (mountTimes[module.key] || 0) + 1;
-    return await module.metadata?.mount?.(
+    const unmountFn = await module.metadata?.mount?.(
         module,
         await initAndGetArea(module, parentEl),
         { mountTimes: mountTimes[module.key] || 0 },
     );
+    mountTimes[module.key] = (mountTimes[module.key] || 0) + 1;
+    return unmountFn;
 }
 
 export type AppTypeMetadata = ModuleMetadata & {
