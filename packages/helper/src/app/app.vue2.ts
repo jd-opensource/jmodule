@@ -2,7 +2,6 @@ import { JModule } from '@jmodule/client';
 import Vue from 'vue';
 import VueRouter from 'vue-router';
 
-let instance: Vue;
 let router: VueRouter|undefined;
 
 interface CreateInstance {
@@ -24,12 +23,14 @@ export default (
         router = createRouter?.(`/${module.key}`);
     },
     mount(module: JModule, el: HTMLDivElement) {
-        instance = createInstance(router);
-        instance = instance.$mount(el);
-    },
-    unmount() {
-        instance?.$destroy();
-        instance?.$el?.remove();
+        const instance = createInstance(router);
+        instance.$mount(el);
+
+        // unmount
+        return () => {
+            instance?.$destroy();
+            instance?.$el?.remove();
+        };
     },
     exports,
     imports,

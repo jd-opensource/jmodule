@@ -1,6 +1,6 @@
 {
   "name": "@jmodule/helper",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "JModule使用助手",
   "author": "feirpri <feirpri@gmail.com>",
   "license": "MIT",
@@ -18,7 +18,7 @@
     "not ie <= 10"
   ],
   "devDependencies": {
-    "@jmodule/client": "^4.3.0-0",
+    "@jmodule/client": "4",
     "@types/requestidlecallback": "^0.3.4",
     "@typescript-eslint/eslint-plugin": "^5.27.1",
     "eslint": "8",
@@ -34,7 +34,7 @@
     "webpack": "^5"
   },
   "peerDependencies": {
-    "@jmodule/client": "^4.3.0-0"
+    "@jmodule/client": "4"
   },
   "optionalDependencies": {
     "vue": "2",
