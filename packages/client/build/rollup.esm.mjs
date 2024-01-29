@@ -5,9 +5,8 @@ import { nodeResolve } from '@rollup/plugin-node-resolve';
 export default {
     input: 'src/index.ts',
     output: [{
-        file: 'dist/index.js',
-        format: 'umd',
-        name: 'JModule',
+        file: 'dist/index.esm.js',
+        format: 'es',
         sourcemap: true,
     }],
     plugins: [
@@ -20,6 +19,7 @@ export default {
             minify: true,
             target: 'ES2015',
             tsconfig: 'tsconfig.json',
+            format: 'esm',
             supported: {
                 'import-meta': true,
             },

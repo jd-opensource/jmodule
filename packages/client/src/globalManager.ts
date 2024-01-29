@@ -24,7 +24,7 @@ export class JModuleManager extends ModuleHook {
 
     private static resourceUrlAndModuleKeyMap: Record<string, string[]> = {};
 
-    private static fileMapCache: Record<string, [string, string|undefined]> = {};
+    private static fileMapCache: Record<string, [string, string | undefined]> = {};
 
     private static fileListCache: string[] = [];
 
@@ -40,14 +40,18 @@ export class JModuleManager extends ModuleHook {
         return createDocument(originDocument, originCreateElement, options);
     }
 
+    /**
+     * 读取全局初始化配置
+     *
+     * @return {Object|undefined}
+     */
     static getInitialConfig() {
         return initialConfig;
     }
 
-    static getFileMapCache(key: string) {
-        return this.fileMapCache[key];
-    }
-
+    /**
+     * @ignore 
+     */
     static setFileMapCache(key: string, val: [string, string]) {
         const oldTarget = this.fileMapCache[key]?.[0];
         if (oldTarget && oldTarget !== val[0]) {
@@ -57,26 +61,72 @@ export class JModuleManager extends ModuleHook {
         return this.fileMapCache[key] = val;
     }
 
+    /**
+     * @ignore 
+     */
     static appendFileList(url: string) {
         this.fileListCache.push(url);
     }
 
-    static getFileList() {
-        return this.fileListCache;
+    /**
+     * @ignore
+     */
+    static findResolvedUrlByUrl(urlWithPublicPath: string) {
+        const file = this.fileListCache.find(item => item && urlWithPublicPath.includes(item));
+        if (!file || !this.fileMapCache[file]) {
+            return [urlWithPublicPath];
+        }
+        return this.fileMapCache[file];
     }
 
-    static resource(sourceUrl: string, instance?: Resource|null): Resource|undefined {
-        if (instance === null) {
-            delete this.resourceCache[sourceUrl];
+    /**
+     * 根据资源地址查找对应的 resourceUrl
+     * 
+     * @param {String} url
+     * @returns {String|undefined}
+     */
+    static getResourceUrlByUrl(url: string | undefined | null) {
+        if (!url) {
+            return undefined;
+        }
+        if (this.resourceCache[url]) {
+            return url;
+        }
+        let resourceUrl: string | undefined = undefined;
+        for (const scriptNode of document.scripts) {
+            if (scriptNode.src === url) {
+                resourceUrl = scriptNode.getAttribute('data-jmodule-from') || undefined;
+                break;
+            }
+        }
+        return resourceUrl;
+    }
+
+    /**
+     * 读取/设置 url 与 Resource 之间的关系
+     * @param {String} url 
+     * @param {Resource|null} resource 
+     * @returns {Resource|undefined}
+     */
+    static resource(url: string, resource?: Resource|null): Resource|undefined {
+        if (resource === null) {
+            delete this.resourceCache[url];
             return;
         }
-        if (instance) {
-            this.resourceCache[sourceUrl] = instance;
-            return instance;
+        if (resource) {
+            this.resourceCache[url] = resource;
+            return resource;
         }
-        return this.resourceCache[sourceUrl];
+        // 优先执行精确匹配, 否则当作异步资源先匹配resourceUrl再查找
+        return this.resourceCache[url];
     }
 
+    /**
+     * 读取/设置 moduleKey 与 Module 之间的关系
+     * @param {String} moduleKey 
+     * @param {JModule|null} instance 
+     * @returns {JModule|undefined}
+     */
     static jmodule(moduleKey: string, instance?: JModule|null): JModule|undefined {
         if (instance === null) {
             delete this.jmoduleCache[moduleKey];
@@ -99,6 +149,11 @@ export class JModuleManager extends ModuleHook {
             .filter(item => !!item) as JModule[];
     }
 
+    /**
+     * 登记资源地址 与 moduleKey 之间的映射关系
+     * @param {String} resourceUrl 
+     * @param {String} moduleKey 
+     */
     static mapResourceUrlAndModuleKey(resourceUrl: string, moduleKey: string) {
         this.resourceUrlAndModuleKeyMap[resourceUrl] = [
             ...(this.resourceUrlAndModuleKeyMap[resourceUrl] || []),
@@ -106,12 +161,22 @@ export class JModuleManager extends ModuleHook {
         ];
     }
 
+    /**
+     * 基于 resourceUrl 查找关联的 Modules
+     * @param resourceUrl
+     * @returns { Array<JModule> }
+     */
     static getModulesByResourceUrl(resourceUrl: string): JModule[] {
         return (this.resourceUrlAndModuleKeyMap[resourceUrl] || [])
             .map(key => this.jmodule(key))
             .filter(item => !!item) as JModule[];
     }
 
+    /**
+     * 读取 moduleKey 对应的 JModule 构造函数
+     * @param moduleKey 
+     * @returns { typeof JModule }
+     */
     static getJModuleConstructor(moduleKey: string) {
         const module = this.jmodule(moduleKey);
         if (!module) {

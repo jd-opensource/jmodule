@@ -58,7 +58,7 @@ export declare class JModule extends ModuleHook {
     /**
      * @constructor
      */
-    constructor({ key, url, server, name, autoBootstrap, resourceType, resourcePrefix, resource, type, resourceLoadStrategy, ...others }: ModuleOptions);
+    constructor({ key, url, server, name, autoBootstrap, resourceType, resource, type, resourceLoadStrategy, ...others }: ModuleOptions);
     set status(status: ModuleStatus);
     /**
      * 获取模块状态

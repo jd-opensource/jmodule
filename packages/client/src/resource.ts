@@ -4,7 +4,6 @@ import JModuleManager from './globalManager';
 import { ModuleHook } from './hook';
 import { wrapperFetchedCodeHook } from './utils/wrapperFetchedCode';
 import { resourceTypes } from './utils/resourceResolver';
-import manager from './globalManager';
 import { JModule } from './module';
 import { elementsToPromise } from './utils/elementsToPromise';
 import { timeoutToPromise } from './utils/timeoutToPromise';
@@ -59,36 +58,14 @@ function patchInitUrl(url: string): string {
 }
 
 const queryReg = /\?.+$/;
-
-function cacheUrlMap(metadata: ResourceMetadata, sourceUrl: string, prefix?: string) {
-    const { asyncFiles = [] } = metadata;
+function cacheUrlMap(resource: Resource) {
+    const { asyncFiles = [] } = resource.metadata || {};
     asyncFiles.forEach(file => {
         const key = file.replace(queryReg, '');
-        const targetUrl = resolveUrl(file, sourceUrl, metadata, prefix);
-        manager.setFileMapCache(key, [targetUrl, sourceUrl]);
-        manager.appendFileList(key);
+        const targetUrl = resource.resolveUrl(file);
+        JModuleManager.setFileMapCache(key, [targetUrl, resource.url]);
+        JModuleManager.appendFileList(key);
     });
-}
-
-function resolveUrl(url: string, sourceUrl: string, metadata?: ResourceMetadata, prefix?: string): string {
-    try {
-        if (url.startsWith('X_WEBPACK_SERVER')) {
-            console.warn('X_WEBPACK_SERVER 已废弃, 下个版本将弃用');
-            if (metadata?.asyncFiles) {
-                // 新版：相对路径
-                url = url.replace(/^X_WEBPACK_SERVER\/?/, '');
-            } else { // 旧版：绝对路径
-                url = url.replace(/^X_WEBPACK_SERVER/, '');
-            }
-        }
-        if (!prefix) {
-            return new URL(url, sourceUrl).href;
-        }
-        return `${prefix}${url}`;
-    } catch (e) {
-        // ignore error: 浏览器不支持（IE）或者 参数异常
-        return url;
-    }
 }
 
 export interface ResourceMetadata {
@@ -116,7 +93,7 @@ const scriptCacheByUrl: { [url: string]: HTMLScriptElement } = {};
 export class Resource extends ModuleHook {
     private resolveScript!: (elements: HTMLScriptElement[]) => void;
     private rejectScript!: (error: Error) => void;
-    private styleLoading?: Promise<HTMLLinkElement[]>;
+    private styleLoading?: Promise<(HTMLLinkElement | HTMLStyleElement)[]>;
     private scriptLoading?: Promise<HTMLScriptElement[]>;
     private appliedScript = false;
     private static asyncFilesMap: { [key: string]: Resource | undefined } = {};
@@ -128,14 +105,14 @@ export class Resource extends ModuleHook {
     metadata?: ResourceMetadata;
     url = '';
     initScriptElement?: HTMLScriptElement;
-    styleElements: HTMLLinkElement[] = [];
+    styleElements: (HTMLLinkElement|HTMLStyleElement)[] = [];
     appendedAsyncStyleElements?: NodeListOf<Element>;
     scriptElements: HTMLScriptElement[] = [];
     server!: string;
     styleMounted = false;
     status: ResourceStatus = ResourceStatus.Init;
     type!: string; // 入口资源类型
-    prefix?: string;
+    urlAdapter?: (sourceUrl: string, resource: Resource) => string;
     afterApplyScript!: Promise<HTMLScriptElement[]>;
     afterInit?: Promise<void>;
     strategy!: ResourceLoadStrategy; // 默认，直接用标签方式加载
@@ -159,7 +136,6 @@ export class Resource extends ModuleHook {
         this.url = wholeUrl;
         this.server = server;
         this.type = (options?.type || url.split('.').pop() || 'js').replace(/\?.*$/, '');
-        this.prefix = options?.prefix?.replace('[resourceOrigin]', this.server);
         this.afterApplyScript = new Promise((resolve, reject) => {
             this.resolveScript = resolve;
             this.rejectScript = reject;
@@ -263,7 +239,25 @@ export class Resource extends ModuleHook {
     }
 
     resolveUrl(url: string) {
-        const resolvedUrl = resolveUrl(url, this.url, this.metadata, this.prefix);
+        let resolvedUrl = url;
+        try {
+            if (url.startsWith('X_WEBPACK_SERVER')) {
+                console.warn('X_WEBPACK_SERVER 已废弃, 下个版本将弃用');
+                if (this.metadata?.asyncFiles) {
+                    // 新版：相对路径
+                    url = url.replace(/^X_WEBPACK_SERVER\/?/, '');
+                } else { // 旧版：绝对路径
+                    url = url.replace(/^X_WEBPACK_SERVER/, '');
+                }
+            }
+            if (this.urlAdapter) {
+                resolvedUrl = this.urlAdapter(url, this);
+            } else {
+                resolvedUrl = new URL(url, this.url).href;
+            }
+        } catch (e) {
+            // ignore error: 浏览器不支持或者 参数异常
+        }
         this.resolvedUrlMap[resolvedUrl] = url;
         return resolvedUrl;
     }
@@ -305,7 +299,7 @@ export class Resource extends ModuleHook {
                 this.url,
                 ResourceType.Script,
             )))
-            : (cacheUrlMap(this.metadata as ResourceMetadata, this.url, this.prefix), jsUrls);
+            : (cacheUrlMap(this), jsUrls);
         this.scriptLoading = getEntryUrls().then((entryUrls) => Promise.all(entryUrls.map((url, index) => loadScript(
             url,
             this.url,
@@ -326,7 +320,7 @@ export class Resource extends ModuleHook {
         return this.scriptLoading;
     }
 
-    async applyStyle(elementModifier?: ElementModifier): Promise<HTMLLinkElement[]> {
+    async applyStyle(elementModifier?: ElementModifier): Promise<(HTMLLinkElement | HTMLStyleElement)[]> {
         if (!this.metadata) {
             return Promise.reject(new Error('no resource metadata'));
         }
@@ -400,7 +394,7 @@ export class Resource extends ModuleHook {
                 } else {
                     return new Promise((resolve, reject) => {
                         const preloadLink = document.createElement("link");
-                        preloadLink.href = targetUrl;
+                        preloadLink.setAttribute('href', targetUrl);
                         preloadLink.rel = "preload";
                         preloadLink.as = type;
                         preloadLink.onload = resolve;
