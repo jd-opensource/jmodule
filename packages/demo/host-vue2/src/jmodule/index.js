@@ -28,6 +28,10 @@ JModule.addHook('afterInit', (module) => {
     });
 });
 
+JModule.addHook('afterRegisterModules', (modules) => {
+    modules.forEach((module) => module.load());
+});
+
 // 可以给子应用共享一些组件
 // 共享宿主应用的接口给子应用
 JModule.export({
