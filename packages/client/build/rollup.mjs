@@ -21,7 +21,7 @@ export default {
             target: 'ES2015',
             tsconfig: 'tsconfig.json',
             supported: {
-                'import-meta': true,
+                'import-meta': false,
             },
         }),
     ],

@@ -6,9 +6,11 @@ import { LoadOptions } from './types';
 declare type HashObject = {
     [key: string]: any;
 };
+declare type DeactivateHandler = () => void | Promise<void>;
+declare type ActivateHandler = (parentEl: Element) => void | Promise<void> | DeactivateHandler;
 export declare type TypeHandler = (module: JModule, options: ModuleMetadata) => ({
-    activate: (parentEl: Element) => Promise<void>;
-    deactivate: () => Promise<void>;
+    activate: ActivateHandler;
+    deactivate: DeactivateHandler;
 });
 /**
  * @class
@@ -41,12 +43,8 @@ export declare class JModule extends ModuleHook {
     bootstrap?: {
         (): Promise<JModule>;
     };
-    activate?: {
-        (parentEl: Element): Promise<void>;
-    };
-    deactivate?: {
-        (): Promise<void>;
-    };
+    activate?: ActivateHandler;
+    deactivate?: DeactivateHandler;
     resource: Resource;
     metadata: {
         [key: string]: any;

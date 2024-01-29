@@ -70,9 +70,11 @@ function extractOrigin(url = '') {
         : '';
 }
 
+type DeactivateHandler = () => void | Promise<void>;
+type ActivateHandler = (parentEl: Element) => void | Promise<void> | DeactivateHandler;
 export type TypeHandler = (module: JModule, options: ModuleMetadata) => ({
-    activate: (parentEl: Element) => Promise <void>,
-    deactivate: () => Promise <void>,
+    activate: ActivateHandler,
+    deactivate: DeactivateHandler,
 })
 
 /**
@@ -104,8 +106,8 @@ export class JModule extends ModuleHook {
     isRemoteModule?: boolean;
     domain: string;
     bootstrap?: { (): Promise<JModule> };
-    activate?: { (parentEl: Element): Promise<void> };
-    deactivate?: { (): Promise<void> };
+    activate?: ActivateHandler;
+    deactivate?: DeactivateHandler;
     resource: Resource;
     metadata:{[key: string]: any};
     hooks: {
