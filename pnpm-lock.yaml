@@ -77,7 +77,6 @@ importers:
   packages/demo/child-app-and-module-vue2:
     specifiers:
       '@jmodule/client': workspace:*
-      '@jmodule/helper': workspace:*
       '@jmodule/plugin-webpack': workspace:*
       '@vue/cli-plugin-babel': '5'
       '@vue/cli-plugin-eslint': '5'
@@ -95,7 +94,6 @@ importers:
       vuex: ^2.3.1
     dependencies:
       '@jmodule/client': link:../../client
-      '@jmodule/helper': link:../../helper
       chokidar: 3.5.1
       core-js: 3.21.1
       prettier: 1.19.1
@@ -271,7 +269,7 @@ importers:
 
   packages/helper:
     specifiers:
-      '@jmodule/client': ^4.3.0-0
+      '@jmodule/client': '4'
       '@types/requestidlecallback': ^0.3.4
       '@typescript-eslint/eslint-plugin': ^5.27.1
       eslint: '8'
@@ -292,7 +290,7 @@ importers:
       vue3: /vue/3.2.37
       vuex: 3.6.2_vue@2.6.14
     devDependencies:
-      '@jmodule/client': 4.5.9
+      '@jmodule/client': link:../client
       '@types/requestidlecallback': 0.3.4
       '@typescript-eslint/eslint-plugin': 5.27.1_n4lrrl552kqf5nk4rgej5xdcha
       eslint: 8.17.0
@@ -4706,10 +4704,6 @@ packages:
       '@types/node': 17.0.41
       '@types/yargs': 17.0.10
       chalk: 4.1.2
-    dev: true
-
-  /@jmodule/client/4.5.9:
-    resolution: {integrity: sha512-ROwr8RWVcp2lNgODVefwmeQNWNLick2UvCVick72nHWpRlAoLC1CW3sqrd5xSiFePOI88RE5tXRALsk8k8o6tQ==}
     dev: true
 
   /@jridgewell/gen-mapping/0.1.1:
