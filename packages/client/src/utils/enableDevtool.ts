@@ -1,5 +1,5 @@
-import { JModule } from '../module.js';
-import { Resource } from '../resource.js';
+import { JModule } from '../module';
+import { Resource } from '../resource';
 import { ModuleStatus, ResourceLoadStrategy, ResourceStatus } from '../config';
 
 // 时间、模块、动作、结果/状态

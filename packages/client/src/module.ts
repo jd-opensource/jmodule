@@ -5,7 +5,7 @@ import { ModuleHook } from './hook';
 import { Matcher } from './utils/matcher';
 import { ModuleOptions, ModuleMetadata, ModuleStatus } from './config';
 import manager from './globalManager';
-import { LoadOptions } from './types';
+import { ElementModifier, LoadOptions } from './types';
 import { eventToPromise } from './utils/eventToPromise';
 
 /* 调试模式打印信息：路由变更信息，初始化模块实例、资源实例信息，模块状态变更信息 */
@@ -17,10 +17,7 @@ const getCurrentUrl = () => {
 
 // 指向解析时脚本
 const currentScript = document.currentScript;
-
-type HashObject = { [key: string]: any };
 const moduleMap: { [key: string]: JModule } = {};
-const defaultExportsMatcher = new Matcher({});
 
 const moduleLog = {
     [ModuleStatus.init]: '已创建模块实例',
@@ -70,53 +67,90 @@ function extractOrigin(url = '') {
         : '';
 }
 
-type DeactivateHandler = () => void | Promise<void>;
-type ActivateHandler = (parentEl: Element) => void | Promise<void> | DeactivateHandler;
+export type DeactivateHandler = () => void | Promise<void>;
+export type ActivateHandler = (parentEl: Element) => void | Promise<void> | DeactivateHandler;
 export type TypeHandler = (module: JModule, options: ModuleMetadata) => ({
     activate: ActivateHandler,
     deactivate: DeactivateHandler,
 })
 
 /**
+ * JModule 实例
  * @class
- * @constructor
- * @param  {Object} moduleConfig        模块配置
- * @param  {String} moduleConfig.server 模块资源服务器
- * @param  {String} moduleConfig.key    模块Key值
- * @param  {String} moduleConfig.name    模块名字
- * @param  {String} moduleConfig.url    远程模块地址
- * @property {Array<jModuleInstance>} registeredModules (只读)已注册的模块列表
- * @property {Boolean} debug (只写)debug模式开关
- * @example
- * new JModule({
- *     key: 'pipeline',
- *     server: 'http://localhost:8080/',
- *     url: 'http://localhost:8080/modules/pipeline/index.json',
- * });
  */
 export class JModule extends ModuleHook {
     private static _debug?: boolean;
     static id: number;
+    /**
+     * 模块类型
+     */
     type?: string;
+    /**
+     * 模块的key, 全局唯一
+     */
     key: string;
+    /**
+     * 模块别名
+     */
     name?: string;
+    /**
+     * 模块资源地址
+     */
     url: string;
+    /**
+     * 远程资源服务器
+     * @ignore
+     */
     server?: string;
-    autoBootstrap?: boolean;
+    /**
+     * 是否为远程模块, 根据url和当前origin计算
+     * @ignore
+     * @deprecated since version 1.1.0
+     * @type {Boolean}
+     */
     isRemoteModule?: boolean;
+    /**
+     * 远程模块所在域
+     * @ignore
+     * @deprecated since version 1.1.0
+     * @type {String}
+     */
     domain: string;
+    /**
+     * [不可配置] JModule.define 执行时自动生成的模块启动函数
+     * 全局仅执行一次, 内部依次处理: 执行init函数、加载 imports 声明的依赖模块、记录 exports 信息
+     */
     bootstrap?: { (): Promise<JModule> };
+    /**
+     * 模块加载后自动执行 bootstrap 函数, 默认为: true
+     */
+    autoBootstrap?: boolean;
+    /** 约定的模块激活函数, 通常由 JModule.defineType 进行实现 */
     activate?: ActivateHandler;
+    /** 约定的模块卸载函数, 通常由 JModule.defineType 进行实现 */
     deactivate?: DeactivateHandler;
+    /** 模块对应的资源实例 */
     resource: Resource;
+    /** 模块扩展信息 */
     metadata:{[key: string]: any};
+    /**
+     * 模块内置的 hooks 信息, 仅支持 hooks.complete
+     * @example
+     * await module.hooks.complete
+     */
     hooks: {
         complete: undefined|Promise<JModule>;
     };
+    /**@ignore */
     _status!: ModuleStatus;
 
     /**
      * @constructor
+     * @example
+     * new JModule({
+     *     key: 'pipeline',
+     *     url: 'http://localhost:8080/modules/pipeline/index.json',
+     * });
      */
     constructor({
         key, url, server, name, autoBootstrap = true,
@@ -133,83 +167,33 @@ export class JModule extends ModuleHook {
          * @type {Promise<JModule>}
          */
         this.hooks = { complete: undefined };
-
-        /**
-         * 模块类型
-         * @type {String}
-         */
         this.type = type;
-        /**
-         * 模块的key属性
-         * @type {String}
-         */
         this.key = key;
-        /**
-         * 模块的name属性, 模块名字
-         * @type {String}
-         */
         this.name = name;
-        /**
-         * 模块加载地址
-         * @type {String<url>}
-         */
         this.url = url;
-        /**
-         * 模块状态
-         * @type {ModuleStatus}
-         */
         this.status = ModuleStatus.init;
-        /**
-         * 远程资源服务器
-         * @type {String}
-         */
         this.server = domain;
-        /**
-         * 是否为远程模块, 根据url和当前origin计算
-         * @deprecated since version 1.1.0
-         * @type {Boolean}
-         */
         this.isRemoteModule = isRemoteModule;
-        /**
-         * 远程模块所在域
-         * @deprecated since version 1.1.0
-         * @type {String}
-         */
         this.domain = domain;
-        /**
-         * 模块资源实例
-         * @type {Resource}
-         */
         this.resource = resource && resource instanceof Resource
             ? resource
             : new Resource(url, {
                 type: resourceType,
                 strategy: resourceLoadStrategy,
             });
-        /**
-         * 加载模块后自动运行
-         * @type {Boolean}
-         */
         this.autoBootstrap = autoBootstrap;
-        /**
-         * 执行模块初始化函数，当状态变为 defined 之后初始化该值
-         * @type {Function}
-         */
         this.bootstrap = undefined;
-
-        /**
-         * 存放模块初始化时非必须参数
-         * @type {any}
-         */
         this.metadata = others;
 
         // 登记资源地址 与 moduleKey 之间的映射关系
         manager.mapResourceUrlAndModuleKey(this.resource.url, this.key);
-
         manager.jmodule(this.key, this);
     }
 
-    set status(status) {
+    /**
+     * 设置模块状态, 更新后会自动触发 `module.${this.key}.statusChange`事件
+     */
+    set status(status: ModuleStatus) {
         if (status === ModuleStatus.loaded && this._status !== ModuleStatus.loading) {
             return; // 异常状态事件
         }
@@ -241,8 +225,7 @@ export class JModule extends ModuleHook {
 
     /**
      * 获取模块状态
-     * @member
-     * @enum {String}
+     * @enum {ModuleStatus}
      */
     get status() {
         return this._status;
@@ -297,7 +280,7 @@ export class JModule extends ModuleHook {
      * 根据 moduleKey 获取模块实例
      * @static
      * @param  {String} key moduleKey
-     * @return {jModuleInstance}
+     * @return {JModule|undefined}
      */
     static getModule(key: string): JModule|undefined {
         return manager.jmodule(key);
@@ -307,7 +290,7 @@ export class JModule extends ModuleHook {
      * 根据 moduleKey 异步获取模块实例
      * @static
      * @param  {String} key moduleKey
-     * @return {Promise<jModuleInstance>}
+     * @return {Promise<JModule>}
      */
     static async getModuleAsync(key: string, timeout?: number): Promise<JModule> {
         const module = manager.jmodule(key);
@@ -346,7 +329,8 @@ export class JModule extends ModuleHook {
     }
 
     /**
-     * @param  {array<moduleConfig>} arr 注册模块
+     * 注册模块
+     * @fires window#module.afterRegister
      * @example
      * JModule.registerModules([{
      *     type: 'page',
@@ -357,8 +341,6 @@ export class JModule extends ModuleHook {
      * window.addEventListener('module.afterRegister', ({ detail:modules }) => {
      *     // do sth;
      * })
-     * @fires window#module.afterRegister
-     * @return {array<jModuleInstance>} 新注册的模块实例
      */
     static async registerModules(moduleOptions: ModuleOptions[] = []): Promise<JModule[]> {
         ModuleDebug.print({
@@ -399,7 +381,7 @@ export class JModule extends ModuleHook {
      * import Vue from '$node_modules.vue';
      * @return {JModule}
      */
-    static export(obj = {}, matcher = defaultExportsMatcher) {
+    static export(obj = {}, matcher = {}) {
         new Matcher(matcher).cache(obj);
         return JModule;
     }
@@ -413,8 +395,9 @@ export class JModule extends ModuleHook {
      * @param  {Object} [metadata.exports] 对外暴露的功能
      * @example
      * JModule.define('pipeline', {
-     *     init(module) {},
-     *     routes,
+     *     init(module) {
+     *         console.log(module); 
+     *     },
      *     imports: [],
      *     exports: {},
      * });
@@ -438,6 +421,10 @@ export class JModule extends ModuleHook {
         return Resource.setResourceData(resourceMetadata, loaderUrl.replace(/(\?|&)__v__=\d+$/, ''));
     }
 
+    /**
+     * @ignore 
+     * @deprecated
+     */
     static getMeta() {
         const url = getCurrentUrl();
         if (!url) {
@@ -451,6 +438,7 @@ export class JModule extends ModuleHook {
 
     /**
      * 引用平台暴露的对象
+     * 优先从初始化自身Module实例的 JModule.exports 对象中查找
      * 如果查找失败, 最终将回退到 JModuleManager.import 进行查找
      *
      * @ignore
@@ -458,7 +446,7 @@ export class JModule extends ModuleHook {
      * @param  {Object} config      通过编译工具注入的相关环境参数
      * @return {var}
      */
-    static import<T>(namespace = '', config: HashObject|Matcher = defaultExportsMatcher, force = false): T|{
+    static import<T>(namespace = '', config: Record<string, string|number> = {}, force = false): T|{
         url?: string,
         server?: string,
     } { // 用于导入平台接口
@@ -489,7 +477,8 @@ export class JModule extends ModuleHook {
         return res;
     }
 
-    // 向下兼容 cli
+    // 兼容以前的 cli 工具
+    /**@ignore */
     static _import(namespace = '', config = {}) {
         console.warn('JModule._import is deprecated');
         return this.import(namespace, config);
@@ -510,16 +499,15 @@ export class JModule extends ModuleHook {
 
     /**
      * 加载模块
+     * @async
      * @method
-     * @param  {'init'|'preload'|'load'} targetStatus 期望目标，默认 load 向下兼容
-     * @param  {Object} options
-     * @param  {(element: HTMLElement) => void} options.elementModifier preload 元素修改器
-     * @param  {Boolean} options.autoApplyStyle load的同时加载样式
-     * @return {Promise}
+     * @param  {'init'|'preload'|'load'} [targetStatus='load'] - 期望达到的目标状态，默认为 'load'，向下兼容。
+     * @param  {LoadOptions<HTMLScriptElement|HTMLLinkElement>} [options={ autoApplyStyle: true }] - 选项参数。
+     * @return {Promise<Resource|void>} - 返回一个承诺，该承诺在模块加载完成时解决。
      */
     async load(
         targetStatus: 'init'|'preload'|'load' = 'load',
-        options: LoadOptions = { autoApplyStyle: true },
+        options: LoadOptions<HTMLScriptElement|HTMLLinkElement> = { autoApplyStyle: true },
     ): Promise<Resource|void> {
         const { resource } = this;
         const {
@@ -555,7 +543,7 @@ export class JModule extends ModuleHook {
         if (targetStatus === 'load') {
             this.status = ModuleStatus.loading;
             this.setCompleteHook();
-            resource.applyScript(options.elementModifier);
+            resource.applyScript(options.elementModifier as ElementModifier<HTMLScriptElement>);
             if (options.autoApplyStyle) {
                 resource.applyStyle(options.elementModifier);
             }

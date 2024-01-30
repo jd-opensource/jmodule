@@ -1,8 +1,8 @@
 /* eslint-disable no-console */
-interface handle { (...args: any[]): any[] | Promise<any[]> }
-const hooks: { [key: string]: handle[] } = {};
+export interface ModuleHookHandle { (...args: any[]): any[] | Promise<any[]> }
+const hooks: { [key: string]: ModuleHookHandle[] } = {};
 
-async function runEach(inputArgs: any[], i: number, fns: handle[] = []): Promise<any[]> {
+async function runEach(inputArgs: any[], i: number, fns: ModuleHookHandle[] = []): Promise<any[]> {
     const fn = fns[i];
     if (!fn) {
         return inputArgs;
@@ -10,7 +10,7 @@ async function runEach(inputArgs: any[], i: number, fns: handle[] = []): Promise
     return runEach(await fn(...inputArgs), i + 1, fns);
 }
 
-function runEachSync(inputArgs: any[], i: number, fns: handle[] = []): any[] {
+function runEachSync(inputArgs: any[], i: number, fns: ModuleHookHandle[] = []): any[] {
     const fn = fns[i];
     if (!fn) {
         return inputArgs;
@@ -26,7 +26,7 @@ export class ModuleHook {
      * @param  {Function} handle      需要新增的hook函数
      * @return {var}
      */
-    static addHook(hookName: string, handle: handle) {
+    static addHook(hookName: string, handle: ModuleHookHandle) {
         hooks[hookName] = hooks[hookName] || [];
         hooks[hookName].push(handle);
     }
@@ -38,7 +38,7 @@ export class ModuleHook {
      * @param  {Function} handle      需要移除的hook函数
      * @return {var}
      */
-    static removeHook(hookName: string, handle: handle) {
+    static removeHook(hookName: string, handle: ModuleHookHandle) {
         const index = hooks[hookName].indexOf(handle);
         hooks[hookName] = hooks[hookName] || [];
         if (index > -1) {

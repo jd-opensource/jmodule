@@ -1,8 +1,8 @@
-export interface ElementModifier {
-    (element: HTMLElement): void;
+export interface ElementModifier<T> {
+    (element: T): void;
 }
 
-export interface LoadOptions {
-    elementModifier?: ElementModifier,
+export interface LoadOptions<T> {
+    elementModifier?: ElementModifier<T>,
     autoApplyStyle?: boolean,
 }

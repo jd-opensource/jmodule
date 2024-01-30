@@ -1,6 +1,7 @@
 import { DebugInfoOptions } from './utils/printDebugInfo';
 /**
  * @class
+ * @ignore
  */
 export declare class ModuleDebug {
     static print(options: DebugInfoOptions): void;

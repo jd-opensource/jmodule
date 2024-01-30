@@ -23,6 +23,7 @@ function clone<T extends { __proto__: any }>(obj?: T): T | '' {
 
 /**
  * @class
+ * @ignore
  */
 export class ModuleDebug {
     static print(options: DebugInfoOptions) {

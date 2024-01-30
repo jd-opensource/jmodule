@@ -1,67 +1,102 @@
 import { ResourceMetadata, Resource } from './resource';
 import { ModuleHook } from './hook';
-import { Matcher } from './utils/matcher';
 import { ModuleOptions, ModuleMetadata, ModuleStatus } from './config';
 import { LoadOptions } from './types';
-declare type HashObject = {
-    [key: string]: any;
-};
-declare type DeactivateHandler = () => void | Promise<void>;
-declare type ActivateHandler = (parentEl: Element) => void | Promise<void> | DeactivateHandler;
+export declare type DeactivateHandler = () => void | Promise<void>;
+export declare type ActivateHandler = (parentEl: Element) => void | Promise<void> | DeactivateHandler;
 export declare type TypeHandler = (module: JModule, options: ModuleMetadata) => ({
     activate: ActivateHandler;
     deactivate: DeactivateHandler;
 });
 /**
+ * JModule 实例
  * @class
- * @constructor
- * @param  {Object} moduleConfig        模块配置
- * @param  {String} moduleConfig.server 模块资源服务器
- * @param  {String} moduleConfig.key    模块Key值
- * @param  {String} moduleConfig.name    模块名字
- * @param  {String} moduleConfig.url    远程模块地址
- * @property {Array<jModuleInstance>} registeredModules (只读)已注册的模块列表
- * @property {Boolean} debug (只写)debug模式开关
- * @example
- * new JModule({
- *     key: 'pipeline',
- *     server: 'http://localhost:8080/',
- *     url: 'http://localhost:8080/modules/pipeline/index.json',
- * });
  */
 export declare class JModule extends ModuleHook {
     private static _debug?;
     static id: number;
+    /**
+     * 模块类型
+     */
     type?: string;
+    /**
+     * 模块的key, 全局唯一
+     */
     key: string;
+    /**
+     * 模块别名
+     */
     name?: string;
+    /**
+     * 模块资源地址
+     */
     url: string;
+    /**
+     * 远程资源服务器
+     * @ignore
+     */
     server?: string;
-    autoBootstrap?: boolean;
+    /**
+     * 是否为远程模块, 根据url和当前origin计算
+     * @ignore
+     * @deprecated since version 1.1.0
+     * @type {Boolean}
+     */
     isRemoteModule?: boolean;
+    /**
+     * 远程模块所在域
+     * @ignore
+     * @deprecated since version 1.1.0
+     * @type {String}
+     */
     domain: string;
+    /**
+     * [不可配置] JModule.define 执行时自动生成的模块启动函数
+     * 全局仅执行一次, 内部依次处理: 执行init函数、加载 imports 声明的依赖模块、记录 exports 信息
+     */
     bootstrap?: {
         (): Promise<JModule>;
     };
+    /**
+     * 模块加载后自动执行 bootstrap 函数, 默认为: true
+     */
+    autoBootstrap?: boolean;
+    /** 约定的模块激活函数, 通常由 JModule.defineType 进行实现 */
     activate?: ActivateHandler;
+    /** 约定的模块卸载函数, 通常由 JModule.defineType 进行实现 */
     deactivate?: DeactivateHandler;
+    /** 模块对应的资源实例 */
     resource: Resource;
+    /** 模块扩展信息 */
     metadata: {
         [key: string]: any;
     };
+    /**
+     * 模块内置的 hooks 信息, 仅支持 hooks.complete
+     * @example
+     * await module.hooks.complete
+     */
     hooks: {
         complete: undefined | Promise<JModule>;
     };
+    /**@ignore */
     _status: ModuleStatus;
     /**
      * @constructor
+     * @example
+     * new JModule({
+     *     key: 'pipeline',
+     *     url: 'http://localhost:8080/modules/pipeline/index.json',
+     * });
      */
     constructor({ key, url, server, name, autoBootstrap, resourceType, resource, type, resourceLoadStrategy, ...others }: ModuleOptions);
+    /**
+     * 设置模块状态, 更新后会自动触发 `module.${this.key}.statusChange`事件
+     */
     set status(status: ModuleStatus);
     /**
      * 获取模块状态
-     * @member
-     * @enum {String}
+     * @enum {ModuleStatus}
      */
     get status(): ModuleStatus;
     /**
@@ -86,14 +121,14 @@ export declare class JModule extends ModuleHook {
      * 根据 moduleKey 获取模块实例
      * @static
      * @param  {String} key moduleKey
-     * @return {jModuleInstance}
+     * @return {JModule|undefined}
      */
     static getModule(key: string): JModule | undefined;
     /**
      * 根据 moduleKey 异步获取模块实例
      * @static
      * @param  {String} key moduleKey
-     * @return {Promise<jModuleInstance>}
+     * @return {Promise<JModule>}
      */
     static getModuleAsync(key: string, timeout?: number): Promise<JModule>;
     /**
@@ -109,7 +144,8 @@ export declare class JModule extends ModuleHook {
      */
     static require(namespace: string): Promise<any>;
     /**
-     * @param  {array<moduleConfig>} arr 注册模块
+     * 注册模块
+     * @fires window#module.afterRegister
      * @example
      * JModule.registerModules([{
      *     type: 'page',
@@ -120,8 +156,6 @@ export declare class JModule extends ModuleHook {
      * window.addEventListener('module.afterRegister', ({ detail:modules }) => {
      *     // do sth;
      * })
-     * @fires window#module.afterRegister
-     * @return {array<jModuleInstance>} 新注册的模块实例
      */
     static registerModules(moduleOptions?: ModuleOptions[]): Promise<JModule[]>;
     /**
@@ -139,7 +173,7 @@ export declare class JModule extends ModuleHook {
      * import Vue from '$node_modules.vue';
      * @return {JModule}
      */
-    static export(obj?: {}, matcher?: Matcher): typeof JModule;
+    static export(obj?: {}, matcher?: {}): typeof JModule;
     /**
      * 定义模块
      * @param  {String} moduleKey 定义模块唯一标识
@@ -149,8 +183,9 @@ export declare class JModule extends ModuleHook {
      * @param  {Object} [metadata.exports] 对外暴露的功能
      * @example
      * JModule.define('pipeline', {
-     *     init(module) {},
-     *     routes,
+     *     init(module) {
+     *         console.log(module);
+     *     },
      *     imports: [],
      *     exports: {},
      * });
@@ -168,6 +203,10 @@ export declare class JModule extends ModuleHook {
      * @returns { Resource }
      */
     static applyResource(resourceMetadata: ResourceMetadata, resourceLoaderUrl?: string): Resource;
+    /**
+     * @ignore
+     * @deprecated
+     */
     static getMeta(): {
         url?: undefined;
         server?: undefined;
@@ -177,6 +216,7 @@ export declare class JModule extends ModuleHook {
     };
     /**
      * 引用平台暴露的对象
+     * 优先从初始化自身Module实例的 JModule.exports 对象中查找
      * 如果查找失败, 最终将回退到 JModuleManager.import 进行查找
      *
      * @ignore
@@ -184,21 +224,20 @@ export declare class JModule extends ModuleHook {
      * @param  {Object} config      通过编译工具注入的相关环境参数
      * @return {var}
      */
-    static import<T>(namespace?: string, config?: HashObject | Matcher, force?: boolean): T | {
+    static import<T>(namespace?: string, config?: Record<string, string | number>, force?: boolean): T | {
         url?: string;
         server?: string;
     };
+    /**@ignore */
     static _import(namespace?: string, config?: {}): unknown;
     private setCompleteHook;
     /**
      * 加载模块
+     * @async
      * @method
-     * @param  {'init'|'preload'|'load'} targetStatus 期望目标，默认 load 向下兼容
-     * @param  {Object} options
-     * @param  {(element: HTMLElement) => void} options.elementModifier preload 元素修改器
-     * @param  {Boolean} options.autoApplyStyle load的同时加载样式
-     * @return {Promise}
+     * @param  {'init'|'preload'|'load'} [targetStatus='load'] - 期望达到的目标状态，默认为 'load'，向下兼容。
+     * @param  {LoadOptions<HTMLScriptElement|HTMLLinkElement>} [options={ autoApplyStyle: true }] - 选项参数。
+     * @return {Promise<Resource|void>} - 返回一个承诺，该承诺在模块加载完成时解决。
      */
-    load(targetStatus?: 'init' | 'preload' | 'load', options?: LoadOptions): Promise<Resource | void>;
+    load(targetStatus?: 'init' | 'preload' | 'load', options?: LoadOptions<HTMLScriptElement | HTMLLinkElement>): Promise<Resource | void>;
 }
-export {};

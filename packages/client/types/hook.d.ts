@@ -1,4 +1,4 @@
-interface handle {
+export interface ModuleHookHandle {
     (...args: any[]): any[] | Promise<any[]>;
 }
 export declare class ModuleHook {
@@ -9,7 +9,7 @@ export declare class ModuleHook {
      * @param  {Function} handle      需要新增的hook函数
      * @return {var}
      */
-    static addHook(hookName: string, handle: handle): void;
+    static addHook(hookName: string, handle: ModuleHookHandle): void;
     /**
      * 移除模块过程 hook
      *
@@ -17,7 +17,7 @@ export declare class ModuleHook {
      * @param  {Function} handle      需要移除的hook函数
      * @return {var}
      */
-    static removeHook(hookName: string, handle: handle): void;
+    static removeHook(hookName: string, handle: ModuleHookHandle): void;
     /**
      * 清理所有 hook
      *
@@ -40,4 +40,3 @@ export declare class ModuleHook {
      */
     static runHookSync(hookName: string, ...inputArgs: any[]): any[];
 }
-export {};

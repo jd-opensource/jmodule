@@ -1,7 +1,6 @@
 import { ModuleHook } from './hook';
 import { JModule } from './module';
 import { Resource } from './resource';
-import { Matcher } from './utils/matcher';
 export declare class JModuleManager extends ModuleHook {
     private static resourceCache;
     private static jmoduleCache;
@@ -61,7 +60,8 @@ export declare class JModuleManager extends ModuleHook {
      */
     static get registeredModules(): JModule[];
     /**
-     * 登记资源地址 与 moduleKey 之间的映射关系
+     * 记录 resourceUrl 与 moduleKey 之间的映射关系
+     * @ignore
      * @param {String} resourceUrl
      * @param {String} moduleKey
      */
@@ -82,6 +82,7 @@ export declare class JModuleManager extends ModuleHook {
     /**
      * 存储模块暴露的组件
      *
+     * @ignore
      * @param  {String} moduleKey
      * @param  {any} data
      */
@@ -140,16 +141,15 @@ export declare class JModuleManager extends ModuleHook {
      *     },
      * }, { scope: 'default' });
      */
-    static export(obj?: {}, matcher?: Matcher): void;
+    static export(obj?: {}, matcher?: {}): void;
     /**
      * 引用平台暴露的对象
      *
-     * @ignore
      * @param  {String} namespace
      * @param  {Object} config      通过编译工具注入的相关环境参数
      * @return {var}
      */
-    static import<T>(namespace?: string, config?: Record<string, string | number> | Matcher): T;
+    static import<T>(namespace?: string, config?: Record<string, string | number>): T;
 }
 declare const _default: typeof JModuleManager;
 export default _default;

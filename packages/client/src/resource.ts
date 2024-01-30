@@ -10,20 +10,11 @@ import { timeoutToPromise } from './utils/timeoutToPromise';
 import { diffMetadata } from './utils/diffMetadata';
 import { ElementModifier } from './types';
 
-function injectElementModifier(
-    element: HTMLElement,
-    elementModifier?: (element: HTMLElement) => void
-): HTMLElement {
-    if (elementModifier && typeof elementModifier === 'function') {
-        elementModifier(element);
-    }
-    return element;
-}
 function loadScript(
     url: string,
     from: string,
     attributes: Record<string, string>,
-    elementModifier?: (script: HTMLScriptElement) => void,
+    elementModifier?: ElementModifier<HTMLScriptElement>,
 ): Promise<HTMLScriptElement> {
     const script = document.createElement('script');
     script.setAttribute('src', url); // skip proxy
@@ -43,7 +34,7 @@ function loadScript(
     });
 }
 
-function createLink(url: string, from: string, elementModifier?: (element: HTMLElement) => void): HTMLLinkElement {
+function createLink(url: string, from: string, elementModifier?: ElementModifier<HTMLLinkElement>): HTMLLinkElement {
     const styleDom = document.createElement('link');
     styleDom.setAttribute('rel', 'preload');
     styleDom.setAttribute('as', 'style');
@@ -75,10 +66,21 @@ export interface ResourceMetadata {
     jsAttributes?: Record<string, any>,
 }
 
+/**
+ * 创建资源实例的选项接口。
+ */
 export interface ResourceOptions {
+    /**
+     * 资源类型。此属性是可选的。
+     */
     type?: string,
-    prefix?: string,
+    /**
+     * 资源加载策略。此属性是可选的。
+     */
     strategy?: ResourceLoadStrategy,
+    /**
+     * 初始化超时时间（单位：毫秒）。此属性是可选的。
+     */
     initTimeout?: number,
 }
 
@@ -86,9 +88,9 @@ export interface ResourceOptions {
 const scriptCacheByUrl: { [url: string]: HTMLScriptElement } = {};
 
 /**
- * 基于URL的资源管理，与模块无关
+ * 资源实例, 负责模块资源的加载以及样式的启用/禁用
  * @class
- * @param {String<url>} 资源地址
+ * @param {String} 资源地址
  */
 export class Resource extends ModuleHook {
     private resolveScript!: (elements: HTMLScriptElement[]) => void;
@@ -99,26 +101,66 @@ export class Resource extends ModuleHook {
     private static asyncFilesMap: { [key: string]: Resource | undefined } = {};
     private resolvedUrlMap: Record<string, string> = {};
 
+    /**
+     * 初始化超时的静态默认值，单位毫秒。
+     */
     static initTimeout = 10000;
+    /**
+     * @ignore
+     */
     resolveInit?: (metadata: ResourceMetadata) => void;
+    /**
+     * @ignore
+     */
     rejectInit?: (error: Error) => void;
+    /**
+     * 资源元数据。
+     */
     metadata?: ResourceMetadata;
+    /**
+     * 资源实例索引, 也是资源的元数据的 URL 地址。
+     */
     url = '';
     initScriptElement?: HTMLScriptElement;
     styleElements: (HTMLLinkElement|HTMLStyleElement)[] = [];
     appendedAsyncStyleElements?: NodeListOf<Element>;
     scriptElements: HTMLScriptElement[] = [];
     server!: string;
+    /**
+     * 标记样式是否已经挂载。
+     */
     styleMounted = false;
+    /**
+     * 资源状态，默认为初始化状态。
+     */
     status: ResourceStatus = ResourceStatus.Init;
-    type!: string; // 入口资源类型
+    /**
+     * 入口资源类型。
+     */
+    type!: string;
+    /**
+     * URL 适配器函数，可以根据资源和源 URL 自定义最终的 URL 地址。
+     */
     urlAdapter?: (sourceUrl: string, resource: Resource) => string;
+    /**
+     * 应用脚本后的 Promise。
+     */
     afterApplyScript!: Promise<HTMLScriptElement[]>;
+    /**
+     * 初始化后的 Promise。
+     */
     afterInit?: Promise<void>;
+    /**
+     * 资源加载策略，默认使用标签方式加载。
+     */
     strategy!: ResourceLoadStrategy; // 默认，直接用标签方式加载
+    /** @ignore */
     cachedUrlMap: {
         [key: string]: string
     } = {};
+    /**
+     * 初始化超时时间，单位毫秒。
+     */
     initTimeout!: number;
 
     /**
@@ -145,15 +187,27 @@ export class Resource extends ModuleHook {
         JModuleManager.resource(this.url, this);
     }
 
+    /**
+     * @ignore
+     * @deprecated
+     */
     static enableAsyncChunk() {
         console.warn('Resource.enableAsyncChunk() is deprecated, just remove it');
     }
 
+    /**
+     * @ignore
+     * @deprecated
+     */
     static getResource(sourceUrl?: string): Resource | void {
         console.warn('Resource.getResource() is deprecated, use JModuleManager.getInstance() instead');
         return sourceUrl ? JModuleManager.resource(sourceUrl) : undefined;
     }
 
+    /**
+     * @ignore
+     * @deprecated
+     */
     static getTrueResourceUrl(url: string): { resource: Resource, filepath: string } | void {
         let resource: Resource | undefined;
         let filepath: string | undefined;
@@ -167,10 +221,11 @@ export class Resource extends ModuleHook {
         return resource && filepath ? { resource, filepath } : undefined;
     }
 
-    static setResourceData(metadata: ResourceMetadata, sourceUrl: string): Resource {
-        const resource: Resource|undefined = JModuleManager.resource(sourceUrl);
+    /** 根据 resourceUrl 查找 resource 并设置资源清单 */
+    static setResourceData(metadata: ResourceMetadata, resourceUrl: string): Resource {
+        const resource: Resource | undefined = JModuleManager.resource(resourceUrl);
         if (!resource) {
-            throw new Error(`未找到${sourceUrl}对应的 resource 实例`);
+            throw new Error(`未找到${resourceUrl}对应的 resource 实例`);
         }
         if (resource.metadata && diffMetadata(resource.metadata, metadata)) {
             Resource.runHookSync('resource:upgrade', resource);
@@ -181,6 +236,7 @@ export class Resource extends ModuleHook {
         return resource;
     }
 
+    /** 扩展入口资源类型 */
     static defineType(type: string, typeHandler: (resource: Resource, defaultUrl: string) => Promise<string>) {
         Resource.addHook('resource:resolveEntry', async (resource: Resource, defaultUrl: string) => {
             if (resource.type === type && typeof typeHandler === 'function') {
@@ -212,7 +268,7 @@ export class Resource extends ModuleHook {
         });
     }
 
-    // 加载资源元数据, 默认不重复执行
+    /** 加载资源清单数据, 默认(forceInit = false)不重复执行 */
     async init(forceInit = false) {
         if (this.status === ResourceStatus.Initializing) {
             return this.afterInit;
@@ -238,6 +294,10 @@ export class Resource extends ModuleHook {
         }
     }
 
+    /**
+     * 加载资源时转换资源地址
+     * @return {string}
+     */
     resolveUrl(url: string) {
         let resolvedUrl = url;
         try {
@@ -262,6 +322,7 @@ export class Resource extends ModuleHook {
         return resolvedUrl;
     }
 
+    /** 设置Resource实例的状态, 同时触发Resource实例关联的所有JModule实例的状态改变 */
     setStatus(status: ResourceStatus) {
         if (this.status === status) {
             return;
@@ -279,7 +340,8 @@ export class Resource extends ModuleHook {
         });
     }
 
-    async applyScript(elementModifier?: ElementModifier): Promise<HTMLScriptElement[]> {
+    /** 加载模块的脚本资源 */
+    async applyScript(elementModifier?: ElementModifier<HTMLScriptElement>): Promise<HTMLScriptElement[]> {
         if (!this.metadata) {
             return Promise.reject(new Error(`no resource metadata: ${this.url}`));
         }
@@ -320,7 +382,8 @@ export class Resource extends ModuleHook {
         return this.scriptLoading;
     }
 
-    async applyStyle(elementModifier?: ElementModifier): Promise<(HTMLLinkElement | HTMLStyleElement)[]> {
+    /** 加载/启用模块的样式资源 */
+    async applyStyle(elementModifier?: ElementModifier<HTMLLinkElement>): Promise<(HTMLLinkElement | HTMLStyleElement)[]> {
         if (!this.metadata) {
             return Promise.reject(new Error('no resource metadata'));
         }
@@ -361,6 +424,7 @@ export class Resource extends ModuleHook {
         return this.styleLoading;
     }
 
+    /** 判断制定 url 是否为 esm 模块 */
     isESM(url: string) {
         const originUrl = this.resolvedUrlMap[url] || url;
         const attrs = this.metadata?.jsAttributes?.[originUrl];
@@ -371,7 +435,8 @@ export class Resource extends ModuleHook {
         return !!document.querySelector(`script[type="module"][data-src-raw="${url}"]`);
     } 
 
-    preload(elementModifier?: ElementModifier) {
+    /** 预加载资源 */
+    preload(elementModifier?: ElementModifier<HTMLLinkElement>) {
         if (!this.metadata) {
             throw new Error('no resource metadata');
         }
@@ -399,7 +464,7 @@ export class Resource extends ModuleHook {
                         preloadLink.as = type;
                         preloadLink.onload = resolve;
                         preloadLink.onerror = reject;
-                        document.head.appendChild(injectElementModifier(preloadLink, elementModifier))
+                        document.head.appendChild((elementModifier?.(preloadLink), preloadLink));
                     });
                 }
             });

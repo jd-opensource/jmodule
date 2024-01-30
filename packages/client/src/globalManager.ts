@@ -15,7 +15,7 @@ import { DepResolver } from './depResolver';
 const originDocument = document;
 const originCreateElement = originDocument.createElement.bind(originDocument);
 const initialConfig = (((window as any).JModule || {}) as any).config || {};
-const defaultExportsMatcher = new Matcher({});
+
 
 export class JModuleManager extends ModuleHook {
     private static resourceCache: { [id: string]: Resource } = {};
@@ -150,7 +150,8 @@ export class JModuleManager extends ModuleHook {
     }
 
     /**
-     * 登记资源地址 与 moduleKey 之间的映射关系
+     * 记录 resourceUrl 与 moduleKey 之间的映射关系
+     * @ignore
      * @param {String} resourceUrl 
      * @param {String} moduleKey 
      */
@@ -196,6 +197,7 @@ export class JModuleManager extends ModuleHook {
     /**
      * 存储模块暴露的组件
      *
+     * @ignore
      * @param  {String} moduleKey
      * @param  {any} data
      */
@@ -271,19 +273,18 @@ export class JModuleManager extends ModuleHook {
      *     },
      * }, { scope: 'default' });
      */
-    static export(obj = {}, matcher = defaultExportsMatcher) {
+    static export(obj = {}, matcher = {}) {
         new Matcher(matcher).cache(obj);
     }
 
     /**
      * 引用平台暴露的对象
      *
-     * @ignore
      * @param  {String} namespace
      * @param  {Object} config      通过编译工具注入的相关环境参数
      * @return {var}
      */
-    static import<T>(namespace = '', config: Record<string, string | number> | Matcher = defaultExportsMatcher): T { // 用于导入平台接口
+    static import<T>(namespace = '', config: Record<string, string | number> = {}): T { // 用于导入平台接口
         const matchedExports = new Matcher(config).getCache();
         const res = namespace.split('.').reduce((res, key) => (res || {})[key], matchedExports);
         if (res && res instanceof DepResolver) {

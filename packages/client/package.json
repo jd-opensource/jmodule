@@ -6,7 +6,8 @@
   "license": "MIT",
   "scripts": {
     "build": "pnpm run lint && tsc --emitDeclarationOnly & rollup --config ./build/rollup.mjs & rollup --config ./build/rollup.esm.mjs",
-    "lint": "eslint \"./src/**/*.ts\""
+    "lint": "eslint \"./src/**/*.ts\"",
+    "doc": "typedoc  --plugin typedoc-material-theme ./src/index.ts"
   },
   "main": "./dist/index.js",
   "exports": {
@@ -35,7 +36,8 @@
     "rollup": "^4.9.1",
     "rollup-plugin-esbuild": "^6.1.0",
     "tslib": "^2.0.0",
-    "typedoc": "^0.22.15",
+    "typedoc": "^0.25.7",
+    "typedoc-material-theme": "^1.0.2",
     "typescript": "^4"
   },
   "files": [
