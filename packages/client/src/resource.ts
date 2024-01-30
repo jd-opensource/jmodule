@@ -322,7 +322,10 @@ export class Resource extends ModuleHook {
         return resolvedUrl;
     }
 
-    /** 设置Resource实例的状态, 同时触发Resource实例关联的所有JModule实例的状态改变 */
+    /**
+     * 设置Resource实例的状态, 同时触发Resource实例关联的所有JModule实例的状态改变
+     * @fires window#resource.[moduleKey].statusChange
+     */
     setStatus(status: ResourceStatus) {
         if (this.status === status) {
             return;
