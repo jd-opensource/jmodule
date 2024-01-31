@@ -177,7 +177,8 @@ export class Resource extends ModuleHook {
         }
         this.url = wholeUrl;
         this.server = server;
-        this.type = (options?.type || url.split('.').pop() || 'js').replace(/\?.*$/, '');
+        const type = url.split('.').pop()?.replace(/\?.*$/, '') || '';
+        this.type = options?.type || ['js', 'json'].includes(type) ? type : 'auto';
         this.afterApplyScript = new Promise((resolve, reject) => {
             this.resolveScript = resolve;
             this.rejectScript = reject;
