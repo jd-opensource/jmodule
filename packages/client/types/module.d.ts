@@ -4,7 +4,7 @@ import { ModuleOptions, ModuleMetadata, ModuleStatus } from './config';
 import { LoadOptions } from './types';
 export declare type DeactivateHandler = () => void | Promise<void>;
 export declare type ActivateHandler = (parentEl: Element) => void | Promise<void> | DeactivateHandler;
-export declare type TypeHandler = (module: JModule, options: ModuleMetadata) => ({
+export declare type TypeHandler<T extends ModuleMetadata = ModuleMetadata> = (module: JModule, options: T) => ({
     activate: ActivateHandler;
     deactivate: DeactivateHandler;
 });

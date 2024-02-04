@@ -69,7 +69,7 @@ function extractOrigin(url = '') {
 
 export type DeactivateHandler = () => void | Promise<void>;
 export type ActivateHandler = (parentEl: Element) => void | Promise<void> | DeactivateHandler;
-export type TypeHandler = (module: JModule, options: ModuleMetadata) => ({
+export type TypeHandler<T extends ModuleMetadata = ModuleMetadata> = (module: JModule, options: T) => ({
     activate: ActivateHandler,
     deactivate: DeactivateHandler,
 })
