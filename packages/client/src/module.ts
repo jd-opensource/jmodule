@@ -455,6 +455,10 @@ export class JModule extends ModuleHook {
         if (namespace === '$module.meta') {
             return this.getMeta();
         }
+        // 向下兼容: 如果直接使用的全局JModule, 则应直接使用全局JModule上的导出.
+        if (!force && this === window.JModule) {
+            return this.import(namespace, config, true);
+        }
         if (!force && this !== manager.defaultJModule && currentScript) {
             const { dataset } = <HTMLScriptElement>currentScript;
             const sourceUrl = dataset?.jmoduleFrom || '';
