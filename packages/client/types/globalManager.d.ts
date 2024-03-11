@@ -141,7 +141,7 @@ export declare class JModuleManager extends ModuleHook {
      *     },
      * }, { scope: 'default' });
      */
-    static export(obj?: {}, matcher?: {}): void;
+    static export(obj?: {}, matcher?: Record<string, string | number>): void;
     /**
      * 引用平台暴露的对象
      *

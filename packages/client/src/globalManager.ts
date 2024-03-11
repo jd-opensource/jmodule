@@ -273,7 +273,7 @@ export class JModuleManager extends ModuleHook {
      *     },
      * }, { scope: 'default' });
      */
-    static export(obj = {}, matcher = {}) {
+    static export(obj = {}, matcher: Record<string, string | number> = {}) {
         new Matcher(matcher).cache(obj);
     }
 

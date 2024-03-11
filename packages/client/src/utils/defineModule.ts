@@ -1,10 +1,10 @@
 import { ModuleDebug } from '../debug';
 import { JModule } from '../module';
 import { ModuleMetadata, ModuleStatus } from '../config';
-import manager from '../globalManager';
 import { eventToPromise } from './eventToPromise';
+import type { JModuleManager } from '../globalManager';
 
-async function initModule(module: JModule, pkg: ModuleMetadata): Promise<JModule> {
+async function initModule(this: typeof JModuleManager, module: JModule, pkg: ModuleMetadata): Promise<JModule> {
     const { key } = module;
     const runHook = (module.constructor as any).runHook;
     ModuleDebug.print({ key, message: '开始执行初始化函数', instance: pkg });
@@ -19,12 +19,12 @@ async function initModule(module: JModule, pkg: ModuleMetadata): Promise<JModule
         // imports
         (pkg.imports || []).forEach((moduleKey: string) => {
             ModuleDebug.printContinue('加载依赖模块');
-            manager.waitModuleComplete(moduleKey).then((item: JModule) => item.load());
+            this.waitModuleComplete(moduleKey).then((item: JModule) => item.load());
         });
         await runHook('afterImports', module, pkg);
 
         // exports
-        manager.cacheModuleExport(key, pkg.exports);
+        this.cacheModuleExport(key, pkg.exports);
         await runHook('afterExports', module, pkg);
 
         return module;
@@ -42,7 +42,7 @@ async function initModule(module: JModule, pkg: ModuleMetadata): Promise<JModule
 
 function define(moduleKey: string, metadata: ModuleMetadata & Record<string, any>): Promise<JModule>;
 function define(metadata: ModuleMetadata & Record<string, any>): Promise<JModule>;
-function define(moduleKey: any, metadata?: any): Promise<JModule> {
+function define(this: typeof JModuleManager, moduleKey: any, metadata?: any): Promise<JModule> {
     let localKey: string;
     let localMetadata: ModuleMetadata;
     /* eslint-disable */
@@ -53,8 +53,8 @@ function define(moduleKey: any, metadata?: any): Promise<JModule> {
         localKey = moduleKey;
         localMetadata = metadata;
     }
-    const moduleDefer: Promise<JModule> = manager.jmodule(localKey)
-        ? Promise.resolve(manager.jmodule(localKey) as JModule)
+    const moduleDefer: Promise<JModule> = this.jmodule(localKey)
+        ? Promise.resolve(this.jmodule(localKey) as JModule)
         : eventToPromise(`module.${moduleKey}.${ModuleStatus.init}`);
     // 在定义之前执行将出现异常
     return moduleDefer.then((module: JModule) => {
@@ -62,7 +62,7 @@ function define(moduleKey: any, metadata?: any): Promise<JModule> {
             module.status = ModuleStatus.booting;
             const targetConstructor = module.constructor as any;
             let defer = targetConstructor.runHook('beforeDefine', module, localMetadata)
-                .then(() => initModule(module, localMetadata))
+                .then(() => initModule.bind(this)(module, localMetadata))
                 .then(() => {
                     targetConstructor.runHook('afterDefine', module, localMetadata)
                     module.status = ModuleStatus.done; // 初始化完成
