@@ -257,7 +257,7 @@ export class JModuleManager extends ModuleHook {
      *     exports: {},
      * });
      */
-    static define = defineModule;
+    static define = defineModule.bind(this);
 
     /**
      * 暴露平台功能给模块使用

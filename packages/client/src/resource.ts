@@ -177,7 +177,7 @@ export class Resource extends ModuleHook {
         }
         this.url = wholeUrl;
         this.server = server;
-        const type = url.split('.').pop()?.replace(/\?.*$/, '') || '';
+        const type = url.split('.').pop()?.replace(/\s|(\?.*$)/g, '') || '';
         this.type = options?.type || (['js', 'json'].includes(type) ? type : 'auto');
         this.afterApplyScript = new Promise((resolve, reject) => {
             this.resolveScript = resolve;
@@ -263,7 +263,7 @@ export class Resource extends ModuleHook {
             };
             this.rejectInit = (error: Error) => {
                 this.setStatus(ResourceStatus.InitializeFailed);
-                console.error(`${this.url}加载失败: ${error.message}`);
+                console.error(`${this.url} 加载失败: ${error.message}`);
                 reject(error);
             };
         });
