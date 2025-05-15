@@ -257,7 +257,7 @@ export class JModuleManager extends ModuleHook {
      *     exports: {},
      * });
      */
-    static define = defineModule;
+    static define = defineModule.bind(this);
 
     /**
      * 暴露平台功能给模块使用
@@ -273,7 +273,7 @@ export class JModuleManager extends ModuleHook {
      *     },
      * }, { scope: 'default' });
      */
-    static export(obj = {}, matcher = {}) {
+    static export(obj = {}, matcher: Record<string, string | number> = {}) {
         new Matcher(matcher).cache(obj);
     }
 

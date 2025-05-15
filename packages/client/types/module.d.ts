@@ -4,7 +4,7 @@ import { ModuleOptions, ModuleMetadata, ModuleStatus } from './config';
 import { LoadOptions } from './types';
 export declare type DeactivateHandler = () => void | Promise<void>;
 export declare type ActivateHandler = (parentEl: Element) => void | Promise<void> | DeactivateHandler;
-export declare type TypeHandler = (module: JModule, options: ModuleMetadata) => ({
+export declare type TypeHandler<T extends ModuleMetadata = ModuleMetadata> = (module: JModule, options: T) => ({
     activate: ActivateHandler;
     deactivate: DeactivateHandler;
 });
@@ -92,6 +92,8 @@ export declare class JModule extends ModuleHook {
     constructor({ key, url, server, name, autoBootstrap, resourceType, resource, type, resourceLoadStrategy, ...others }: ModuleOptions);
     /**
      * 设置模块状态, 更新后会自动触发 `module.${this.key}.statusChange`事件
+     * @fires window#module.[moduleKey].statusChange
+     * @fires window#module.[moduleKey].[status]
      */
     set status(status: ModuleStatus);
     /**

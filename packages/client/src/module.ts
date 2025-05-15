@@ -69,7 +69,7 @@ function extractOrigin(url = '') {
 
 export type DeactivateHandler = () => void | Promise<void>;
 export type ActivateHandler = (parentEl: Element) => void | Promise<void> | DeactivateHandler;
-export type TypeHandler = (module: JModule, options: ModuleMetadata) => ({
+export type TypeHandler<T extends ModuleMetadata = ModuleMetadata> = (module: JModule, options: T) => ({
     activate: ActivateHandler,
     deactivate: DeactivateHandler,
 })
@@ -454,6 +454,10 @@ export class JModule extends ModuleHook {
     } { // 用于导入平台接口
         if (namespace === '$module.meta') {
             return this.getMeta();
+        }
+        // 向下兼容: 如果直接使用的全局JModule, 则应直接使用全局JModule上的导出.
+        if (!force && this === window.JModule) {
+            return this.import(namespace, config, true);
         }
         if (!force && this !== manager.defaultJModule && currentScript) {
             const { dataset } = <HTMLScriptElement>currentScript;

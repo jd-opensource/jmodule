@@ -1,4 +1,4 @@
-export * from './globalManager';
+export { JModuleManager } from './globalManager';
 import { JModule } from './module';
 import type { TypeHandler, ActivateHandler, DeactivateHandler } from './module';
 export type { ModuleHookHandle } from './hook';

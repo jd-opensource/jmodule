@@ -35,7 +35,7 @@ export type AppTypeMetadata = ModuleMetadata & {
     unmount?: (module: JModule, parentEl: Element) => Promise<void>;
 }
 
-export default function appTypeHandler(module: JModule, options: AppTypeMetadata) {
+export default function appTypeHandler<AppTypeMetadata>(module: JModule, options: AppTypeMetadata) {
     Object.assign(module.metadata, options);
     let unmountFn = () => void 0;
     return {

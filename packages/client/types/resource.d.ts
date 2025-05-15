@@ -132,7 +132,10 @@ export declare class Resource extends ModuleHook {
      * @return {string}
      */
     resolveUrl(url: string): string;
-    /** 设置Resource实例的状态, 同时触发Resource实例关联的所有JModule实例的状态改变 */
+    /**
+     * 设置Resource实例的状态, 同时触发Resource实例关联的所有JModule实例的状态改变
+     * @fires window#resource.[moduleKey].statusChange
+     */
     setStatus(status: ResourceStatus): void;
     /** 加载模块的脚本资源 */
     applyScript(elementModifier?: ElementModifier<HTMLScriptElement>): Promise<HTMLScriptElement[]>;

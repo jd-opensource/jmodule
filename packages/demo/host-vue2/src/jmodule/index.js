@@ -1,8 +1,7 @@
 import Vue from 'vue';
-import { JModule, Resource } from '@jmodule/client';
+import { JModule } from '@jmodule/client';
 import AppTypeDefine from '@jmodule/helper/host/type.app';
 import Vue2RoutesTypeDefine from '@jmodule/helper/host/type.routes.vue2';
-import ResourceHtmlResolver from '@jmodule/helper/host/resource.html';
 import ModuleRender from '../views/ModuleRender.vue';
 import router from '../router';
 import store from '../store';
@@ -15,9 +14,6 @@ JModule.defineType(JMODULE_TYPE_APP, AppTypeDefine);
 
 // 增加对动态路由类型的子应用（微模块）适配
 JModule.defineType(JMODULE_TYPE_MODULE, Vue2RoutesTypeDefine(router, store));
-
-// 
-Resource.defineType('html', ResourceHtmlResolver);
 
 // 为子应用增加自己的路由
 JModule.addHook('afterInit', (module) => {
