@@ -1,5 +1,10 @@
 # JModule 
+
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/jd-opensource/jmodule)
+
+
 一个微前端框架，用于帮助前端项目进行融合与拆解，适用于大型应用的拆分、插件系统实现、多应用融合场景。
+
 
 ## 特性
 ### 支持项目集成开发
@@ -10,7 +15,6 @@
 
 ### 多级应用结构
 支持子应用嵌套，子应用本身也可以是宿主应用，但仍以自应用的方式接入其它宿主应用。
-
 
 ## 安装
 
